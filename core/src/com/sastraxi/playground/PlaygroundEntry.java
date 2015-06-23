@@ -1,8 +1,7 @@
 package com.sastraxi.playground;
 
-import com.badlogic.gdx.ApplicationAdapter;
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.InputMultiplexer;
+import com.badlogic.gdx.*;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.graphics.g3d.Environment;
@@ -12,8 +11,9 @@ import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.utils.DefaultShaderProvider;
-import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Vector3;
+import com.sastraxi.playground.character.Person;
 import com.sastraxi.playground.character.PoleProp;
 import com.sastraxi.playground.collision.CircularCollider;
 import com.sastraxi.playground.collision.Collider;
@@ -21,7 +21,9 @@ import com.sastraxi.playground.shaders.CircularColliderShader;
 import com.sastraxi.playground.terrain.Grid;
 import org.lwjgl.opengl.GL30;
 
-public class PlaygroundEntry extends ApplicationAdapter {
+public class PlaygroundEntry extends ApplicationAdapter implements InputProcessor {
+
+    Grid grid;
 
 	ModelInstance gridModelInstance;
     ModelInstance gridModelWireframeInstance;
@@ -32,9 +34,18 @@ public class PlaygroundEntry extends ApplicationAdapter {
     private DefaultShaderProvider shaderProvider;
     private ModelBatch batch;
 
-    ModelInstance[] poleModelInstance = new ModelInstance[10];
-    ModelInstance[] poleCollisionModelInstance = new ModelInstance[10];
-    Circle[] poleCircles = new Circle[10];
+    public static final int NUM_POLES = 20;
+    public static final Object[][] POLE_TEMPLATES = new Object[][] {
+            /* height, radius, color */
+            new Object[] { 3.0f, 3.0f, Color.GREEN },
+            new Object[] { 5.0f, 0.5f, new Color(0.5f, 1.0f, 0.0f, 1.0f) },
+            new Object[] { 4.0f, 1.5f, Color.YELLOW }
+    };
+
+    ModelInstance[] poleModelInstance = new ModelInstance[NUM_POLES];
+    ModelInstance[] poleCollisionModelInstance = new ModelInstance[NUM_POLES];
+
+    ModelInstance personModelInstance;
 
     CircularColliderShader ccs;
 
@@ -49,7 +60,6 @@ public class PlaygroundEntry extends ApplicationAdapter {
         Gdx.gl.glLineWidth(1.0f);
 
         Gdx.gl.glEnable(GL30.GL_FRAMEBUFFER_SRGB);
-
 
         camera = new PerspectiveCamera(67.0f, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         camera.position.set(20f, 20f, 20f);
@@ -69,16 +79,17 @@ public class PlaygroundEntry extends ApplicationAdapter {
         batch = new ModelBatch(shaderProvider);
 
         InputMultiplexer multiplexer = new InputMultiplexer();
+        multiplexer.addProcessor(this);
         multiplexer.addProcessor(camController);
         // multiplexer.addProcessor(stage);
         Gdx.input.setInputProcessor(multiplexer);
 
         float mid = 6.5f;
 		float scale = 0.8f;
-		Grid grid = new Grid(43, 31, (x, y) ->
+		grid = new Grid(43, 63, (x, y) ->
                 10.0f +
                 x * -0.2f +
-                y * -0.12f +
+                y * -0.27f +
                 (float) Math.sin(scale *
                     (float) Math.sqrt((x - mid) * (x - mid) + (y - mid) * (y - mid)))
         );
@@ -89,25 +100,32 @@ public class PlaygroundEntry extends ApplicationAdapter {
 
         // create bunch of colliders
         final float PADDING = 2.0f;
-        for (int i = 0; i < 10; ++i)
+        for (int i = 0; i < NUM_POLES; ++i)
         {
             float x = PADDING + (float) Math.random() * (grid.getWidth() - 2f*PADDING);
             float y = PADDING + (float) Math.random() * (grid.getHeight() - 2f*PADDING);
 
-            float radius = 0.1f + (float) Math.random() * 1.5f;
-            float height = 4.0f - radius;
+            int t = (int) Math.floor(Math.random() * POLE_TEMPLATES.length);
+            float height = (Float) POLE_TEMPLATES[t][0];
+            float radius = (Float) POLE_TEMPLATES[t][1];
+            Color colour = (Color) POLE_TEMPLATES[t][2];
 
-            PoleProp pole = new PoleProp(new Vector2(x, y), radius, height);
+            PoleProp pole = new PoleProp(new Vector2(x, y), radius, height, colour);
             Collider c = pole.getCollider(0.5f);
 
             poleModelInstance[i] = pole.allocate(grid);
             poleCollisionModelInstance[i] = grid.allocateProjection((CircularCollider) c);
-            poleCircles[i] = ((CircularCollider) c).getCircle();
         }
 
         // the collider shader
         ccs = new CircularColliderShader();
         ccs.init();
+
+        // some dude
+        Vector2 pos = new Vector2(13f, 17f);
+        Person person = new Person(pos, 1.4f, 0.8f, Color.RED);
+        personModelInstance = new ModelInstance(person.allocate());
+        personModelInstance.transform.setTranslation(pos.x, pos.y, grid.interpSample(pos.x, pos.y));
 	}
 
     @Override
@@ -133,14 +151,12 @@ public class PlaygroundEntry extends ApplicationAdapter {
 
         batch.render(gridModelWireframeInstance, environment);
 
-        for (int i = 0; i < poleModelInstance.length; ++i) {
+        for (int i = 0; i < NUM_POLES; ++i) {
             batch.render(poleModelInstance[i], environment);
+            batch.render(poleCollisionModelInstance[i], environment, ccs);
         }
 
-        for (int i = 0; i < poleModelInstance.length; ++i) {
-            //batch.render(poleCollisionModelInstance[i], environment, ccs);
-            batch.render(poleCollisionModelInstance[i], environment);
-        }
+        batch.render(personModelInstance, environment);
 
         batch.end();
 
@@ -161,4 +177,54 @@ public class PlaygroundEntry extends ApplicationAdapter {
     @Override
     public void resume() { }
 
+    @Override
+    public boolean keyDown(int keycode) {
+        return false;
+    }
+
+    @Override
+    public boolean keyUp(int keycode) {
+        return false;
+    }
+
+    @Override
+    public boolean keyTyped(char character) {
+        return false;
+    }
+
+    @Override
+    public boolean touchDown(int screenX, int screenY, int pointer, int button)
+    {
+        if (button == Input.Buttons.RIGHT) {
+            Vector3 coord = grid.rayPickFlatNaive(camera.getPickRay(screenX, screenY));
+            if (coord != null) {
+                System.out.println(coord.toString());
+                personModelInstance.transform.setTranslation(coord);
+                return true;
+            } else {
+                System.out.println("missed grid");
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public boolean touchUp(int screenX, int screenY, int pointer, int button) {
+        return false;
+    }
+
+    @Override
+    public boolean touchDragged(int screenX, int screenY, int pointer) {
+        return false;
+    }
+
+    @Override
+    public boolean mouseMoved(int screenX, int screenY) {
+        return false;
+    }
+
+    @Override
+    public boolean scrolled(int amount) {
+        return false;
+    }
 }

@@ -172,37 +172,41 @@ public class StrategyCameraController extends GestureDetector {
     public boolean touchDragged (int screenX, int screenY, int pointer) {
         boolean result = super.touchDragged(screenX, screenY, pointer);
         if (result || this.button < 0) return result;
+
         // final float deltaX = (screenX - startX) / Gdx.graphics.getWidth();
         // final float deltaY = (startY - screenY) / Gdx.graphics.getHeight();
 
         // update movement preview
+        if (this.button == Input.Buttons.LEFT)
+        {
+            // apply different scales to make movement feel better
+            float dx = (invert ? -x_scale : x_scale) * (screenX - startX);
+            float dy = (invert ? -y_scale : y_scale) * (screenY - startY);
 
-        // apply different scales to make movement feel better
-        float dx = (invert ? -x_scale : x_scale) * (screenX - startX);
-        float dy = (invert ? -y_scale : y_scale) * (screenY - startY);
+            // create an orthographic camera with the same position, point and field-of-view
+            /*
+            OrthographicCamera dragCam = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+            dragCam.position.set(camera.position);
+            dragCam.up.set(camera.up);
+            dragCam.lookAt(target);
+            dragCam.update();
+            */
 
-        // create an orthographic camera with the same position, point and field-of-view
-        /*
-        OrthographicCamera dragCam = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-        dragCam.position.set(camera.position);
-        dragCam.up.set(camera.up);
-        dragCam.lookAt(target);
-        dragCam.update();
-        */
+            // determine movement as if on ground plane
+            Vector3 startPoint = new Vector3(), endPoint = new Vector3();
+            if (!Intersector.intersectRayPlane(camera.getPickRay(startX, startY), GROUND_PLANE, startPoint)) return false;
+            if (!Intersector.intersectRayPlane(camera.getPickRay(startX + dx, startY + dy), GROUND_PLANE, endPoint)) return false;
 
-        // determine movement as if on ground plane
-        Vector3 startPoint = new Vector3(), endPoint = new Vector3();
-        if (!Intersector.intersectRayPlane(camera.getPickRay(startX, startY), GROUND_PLANE, startPoint)) return false;
-        if (!Intersector.intersectRayPlane(camera.getPickRay(startX + dx, startY + dy), GROUND_PLANE, endPoint)) return false;
+            // update the camera and point of rotation
+            Vector3 offset = endPoint.sub(startPoint);
+            Vector3 previewPosition = new Vector3(originalCameraPosition).add(offset);
+            camera.position.set(previewPosition);
+            if (translateTarget) target.add(offset);
 
-        // update the camera and point of rotation
-        Vector3 offset = endPoint.sub(startPoint);
-        Vector3 previewPosition = new Vector3(originalCameraPosition).add(offset);
-        camera.position.set(previewPosition);
-        if (translateTarget) target.add(offset);
-        camera.update();
-
-        return true;
+            camera.update();
+            return true;
+        }
+        return false;
     }
 
     @Override

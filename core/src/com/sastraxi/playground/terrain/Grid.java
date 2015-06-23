@@ -9,9 +9,8 @@ import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
-import com.badlogic.gdx.math.Circle;
-import com.badlogic.gdx.math.Rectangle;
-import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.math.*;
+import com.badlogic.gdx.math.collision.Ray;
 import com.sastraxi.playground.collision.CircularCollider;
 import com.sastraxi.playground.found.MiscMath;
 
@@ -43,6 +42,61 @@ public class Grid {
     @Override
     public String toString() {
         return "Grid[" + w + "x" + h + "]";
+    }
+
+    /**
+     * Iterate through all triangles to see which ones hit.
+     * The closest collision to the ray's starting point is returned.
+     *
+     * Really not very fast at all.
+     */
+    public Vector3 rayPickFlatNaive(Ray ray)
+    {
+        int x, y;
+        Vector3 coord = null;
+        Vector3 candidate = new Vector3();
+        Vector3 off_pt;
+
+        for (y = 0; y < h-1; ++y) {
+            for (x = 0; x < w - 1; ++x) {
+                // top-left triangle; get basis vectors of triangle (implictly)
+                // and interpolate to the position on the
+
+                Vector3 v00 = new Vector3(x,    y,    f.getHeight(x,    y));
+                Vector3 v10 = new Vector3(x+1f, y,    f.getHeight(x+1f, y));
+                Vector3 v01 = new Vector3(x,    y+1f, f.getHeight(x,    y+1f));
+                Vector3 v11 = new Vector3(x+1f, y+1f, f.getHeight(x+1f, y+1f));
+
+                Plane topLeft = new Plane(v00, v10, v01);
+                if (Intersector.intersectRayPlane(ray, topLeft, candidate)) {
+                    off_pt = new Vector3(candidate).sub(v00);
+                    float a = new Vector3(v10).sub(v00).nor().dot(off_pt);
+                    float b = new Vector3(v01).sub(v00).nor().dot(off_pt);
+                    if (a >= 0 && b >= 0 && a + b <= 1f) { // in triangle
+                        System.out.println("x=" + x + ", y=" + y + " | a=" + a + ", b=" + b + " (upper-left)");
+                        if (coord == null || candidate.dst2(ray.origin) < coord.dst2(ray.origin)) { // better than our previous point
+                            coord = candidate;
+                        }
+                    }
+                }
+
+                Plane bottomRight = new Plane(v11, v01, v10);
+                if (Intersector.intersectRayPlane(ray, bottomRight, candidate)) {
+                    off_pt = new Vector3(candidate).sub(v11);
+                    float a = new Vector3(v01).sub(v11).nor().dot(off_pt); // N.B. no normalization needed as we
+                    float b = new Vector3(v10).sub(v11).nor().dot(off_pt); // know the grid basis vectors have len = 1
+                    if (a >= 0 && b >= 0 && a + b <= 1f) { // in triangle
+                        System.out.println("x=" + x + ", y=" + y + " | a=" + a + ", b=" + b + " (lower-right)");
+                        if (coord == null || candidate.dst2(ray.origin) < coord.dst2(ray.origin)) { // better than our previous point
+                            coord = candidate;
+                        }
+                    }
+                }
+
+            }
+        }
+
+        return coord;
     }
 
     /**
@@ -118,7 +172,7 @@ public class Grid {
         vertices[p++] = (float) x;
         vertices[p++] = (float) y;
         vertices[p++] = f.getHeight(x, y);
-        // System.out.println(x + "\t" + y + "\t" + f.getHeight(x, y));
+        System.out.println(x + "\t" + y + "\t" + f.getHeight(x, y));
 
         Vector3 normal = getFlatNormal(x, y);
         vertices[p++] = normal.x;
@@ -252,7 +306,7 @@ public class Grid {
                 Rectangle gridSquare = new Rectangle(x, y, 1f, 1f);
                 intersects[v] = MiscMath.intersects(colliderShape, gridSquare);
                 if (intersects[v]) {
-                    System.out.println("vertex[" + v + "]: " + x + "," + y);
+                    //System.out.println("vertex[" + v + "]: " + x + "," + y);
                     // ensure all vertices on this square are emitted (position, normal)
                     // store the packed vertex positions for later lookup
                     for (int _dy = 0; _dy < 2; ++_dy) {
@@ -260,7 +314,7 @@ public class Grid {
                             int _idx = w * (y+_dy) + (x+_dx);
                             if (packed_lookup[_idx] == -1) {
                                 packed_lookup[_idx] = (short) verts;
-                                p = __vertex_data(vertices, p, x, y);
+                                p = __vertex_data(vertices, p, x+_dx, y+_dy);
                                 verts += 1;
                             }
                         }
@@ -272,12 +326,14 @@ public class Grid {
         vertices = Arrays.copyOfRange(vertices, 0, p); // FIXME performance
 
         // DEBUG: visualize intersections between grid and circle
+        /*
         for (int y = 0; y < h-1; ++y) {
             for (int x = 0; x < w - 1; ++x) {
                 System.out.print(intersects[w*y + x] ? "#" : ".");
             }
             System.out.println();
         }
+        */
 
         // emit the indices for the squares
         short[] indices = new short[6 * verts]; // 2 triangles per square, 3 vertices per triangle
@@ -290,8 +346,8 @@ public class Grid {
                 v += 1;
             }
         }
-        System.out.println(Arrays.toString(packed_lookup));
-        System.out.println(Arrays.toString(indices));
+        //System.out.println(Arrays.toString(packed_lookup));
+        //System.out.println(Arrays.toString(indices));
 
         // arrange into a mesh TODO cache it!
         Mesh mesh = new Mesh(true, vertices.length, indices.length, VertexAttribute.Position(), VertexAttribute.Normal())

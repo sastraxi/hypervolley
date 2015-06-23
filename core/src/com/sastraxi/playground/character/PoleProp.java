@@ -25,18 +25,20 @@ public class PoleProp {
     private final Vector2 position;
     private final float radius;
     private final float height;
+    private Color color;
 
-    public PoleProp(Vector2 position, float radius, float halfHeight) {
+    public PoleProp(Vector2 position, float radius, float halfHeight, Color color) {
         this.position = position;
         this.radius = radius;
         this.height = 2f * halfHeight;
+        this.color = color;
     }
 
     public ModelInstance allocate(Grid grid)
     {
         Model cylinder = new ModelBuilder().createCylinder(2f*radius, height, 2f*radius,
                 SUBDIVISIONS,
-                new Material(ColorAttribute.createDiffuse(Color.GREEN)),
+                new Material(ColorAttribute.createDiffuse(color)),
                 VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal);
         ModelInstance thisCylinder = new ModelInstance(cylinder);
 
