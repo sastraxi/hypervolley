@@ -7,6 +7,7 @@ import com.sastraxi.playground.PlaygroundEntry;
 public class DesktopLauncher {
 	public static void main (String[] arg) {
 		LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
+		config.samples = 8;
 		new LwjglApplication(new PlaygroundEntry(), config);
 	}
 }

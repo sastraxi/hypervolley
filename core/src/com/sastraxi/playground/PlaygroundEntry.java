@@ -11,23 +11,27 @@ import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
-import com.badlogic.gdx.graphics.g3d.utils.CameraInputController;
 import com.badlogic.gdx.graphics.g3d.utils.DefaultShaderProvider;
-import com.badlogic.gdx.graphics.glutils.ShaderProgram;
-import com.sastraxi.playground.shaders.ConstRef;
-import com.sastraxi.playground.shaders.DefinedShaderProgram;
-import com.sastraxi.playground.shaders.GridShader;
+import com.badlogic.gdx.math.Vector2;
+import com.sastraxi.playground.character.PoleProp;
+import com.sastraxi.playground.collision.CircularCollider;
+import com.sastraxi.playground.collision.Collider;
+import com.sastraxi.playground.shaders.CircularColliderShader;
 import com.sastraxi.playground.terrain.Grid;
 
 public class PlaygroundEntry extends ApplicationAdapter {
 
 	ModelInstance gridModelInstance;
-	GridShader gridShader;
+    ModelInstance gridModelWireframeInstance;
+
     PerspectiveCamera camera;
-    CameraInputController camController;
+    StrategyCameraController camController;
     Environment environment;
     private DefaultShaderProvider shaderProvider;
     private ModelBatch batch;
+
+    ModelInstance poleModelInstance, poleCollisionModelInstance;
+    CircularColliderShader ccs;
 
     @Override
 	public void create()
@@ -35,15 +39,19 @@ public class PlaygroundEntry extends ApplicationAdapter {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glDisable(GL20.GL_CULL_FACE);
 
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glLineWidth(1.0f);
+
         camera = new PerspectiveCamera(67.0f, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         camera.position.set(10f, 10f, 10f);
-        camera.lookAt(0f, 0f, 0f);
         camera.up.set(0f, 0f, 1f);
+        camera.lookAt(0f, 0f, 0f);
         camera.near = 0.1f;
         camera.far = 300.0f;
         camera.update();
 
-        camController = new CameraInputController(camera);
+        camController = new StrategyCameraController(camera);
 
         environment = new Environment();
         environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.4f, 0.4f, 0.4f, 1f));
@@ -59,15 +67,27 @@ public class PlaygroundEntry extends ApplicationAdapter {
 
         float mid = 6.5f;
 		float scale = 0.8f;
-		Grid grid = new Grid(13, 13, (x, y) ->
+		Grid grid = new Grid(43, 31, (x, y) ->
+                x * -0.2f +
+                y * -0.12f +
                 (float) Math.sin(scale *
                     (float) Math.sqrt((x - mid) * (x - mid) + (y - mid) * (y - mid)))
         );
-		Model gridModel = grid.allocate();
+		Model gridModel = grid.allocate(Grid.ModelType.FULL);
         gridModelInstance = new ModelInstance(gridModel);
+        Model gridModelWireframe = grid.allocate(Grid.ModelType.WIREFRAME);
+        gridModelWireframeInstance = new ModelInstance(gridModelWireframe);
 
-        gridShader = new GridShader();
-        gridShader.init();
+        // create a collider
+        PoleProp pole = new PoleProp(new Vector2(18f, 11f), 0.3f, 6.0f);
+        poleModelInstance = pole.allocate(grid);
+        Collider c = pole.getCollider(3.5f);
+        poleCollisionModelInstance = grid.allocateProjection((CircularCollider) c);
+
+        // the collider shader
+        ccs = new CircularColliderShader();
+        ccs.init();
+        ccs.setCircle(((CircularCollider) c).getCircle());
 	}
 
     @Override
@@ -85,8 +105,17 @@ public class PlaygroundEntry extends ApplicationAdapter {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 
         batch.begin(camera);
-        //batch.render(gridModelInstance, environment);
-        batch.render(gridModelInstance, environment, gridShader);
+
+        Gdx.gl.glEnable(GL20.GL_POLYGON_OFFSET_FILL);
+        Gdx.gl.glPolygonOffset(2f, 1f);
+        batch.render(gridModelInstance, environment);
+        Gdx.gl.glDisable(GL20.GL_POLYGON_OFFSET_FILL);
+
+        //batch.render(gridModelWireframeInstance, environment);
+
+        batch.render(poleModelInstance, environment);
+        batch.render(poleCollisionModelInstance, environment);
+
         batch.end();
 
         //stage.act(Gdx.graphics.getDeltaTime());
