@@ -31,6 +31,9 @@ public class Grid {
     private final int h;
     private final HeightFunction f;
 
+    public float getWidth() { return w; }
+    public float getHeight() { return h; }
+
     public Grid(int w, int h, HeightFunction f) {
         this.w = w;
         this.h = h;
@@ -106,7 +109,7 @@ public class Grid {
         builder.begin();
         builder.part("grid", mesh,
                 wireframe ? GL20.GL_LINES : GL20.GL_TRIANGLES,
-                new Material(ColorAttribute.createDiffuse(wireframe ? new Color(0.3f, 0.3f, 0.3f, 0.1f) : Color.WHITE)));
+                new Material(ColorAttribute.createDiffuse(wireframe ? new Color(0.6f, 0.6f, 0.6f, 1.0f) : Color.WHITE)));
         return builder.end();
     }
 
@@ -191,13 +194,13 @@ public class Grid {
             float base = f.getHeight(xb, yb);
             float xvec = f.getHeight(xb + 1f, yb) - base;
             float yvec = f.getHeight(xb, yb + 1f) - base;
-            return xvec * dx + yvec * dy;
+            return base + xvec * dx + yvec * dy;
         } else {
             // as above but for bottom-right triangle
             float base = f.getHeight(xb + 1f, yb + 1f);
             float xvec = f.getHeight(xb + 1f, yb) - base;
             float yvec = f.getHeight(xb, yb + 1f) - base;
-            return xvec * (1f - dx) + yvec * (1f - dy);
+            return base + xvec * (1f - dx) + yvec * (1f - dy);
         }
     }
 
@@ -268,6 +271,14 @@ public class Grid {
         }
         vertices = Arrays.copyOfRange(vertices, 0, p); // FIXME performance
 
+        // DEBUG: visualize intersections between grid and circle
+        for (int y = 0; y < h-1; ++y) {
+            for (int x = 0; x < w - 1; ++x) {
+                System.out.print(intersects[w*y + x] ? "#" : ".");
+            }
+            System.out.println();
+        }
+
         // emit the indices for the squares
         short[] indices = new short[6 * verts]; // 2 triangles per square, 3 vertices per triangle
         p = 0; v = 0;
@@ -282,18 +293,22 @@ public class Grid {
         System.out.println(Arrays.toString(packed_lookup));
         System.out.println(Arrays.toString(indices));
 
-        // arrange into a model TODO cache it!
+        // arrange into a mesh TODO cache it!
         Mesh mesh = new Mesh(true, vertices.length, indices.length, VertexAttribute.Position(), VertexAttribute.Normal())
                 .setIndices(indices, 0, indices.length)
                 .setVertices(vertices, 0, vertices.length);
 
+        // build that into a model
+        Material material = new Material(ColorAttribute.createDiffuse(new Color(0.2f, 0.7f, 1.0f, 0.1f)));
         ModelBuilder builder = new ModelBuilder();
         builder.begin();
-        builder.part(c.toString(), mesh, GL20.GL_TRIANGLES, new Material(ColorAttribute.createDiffuse(new Color(0.2f, 0.7f, 1.0f, 0.1f))));
+        builder.part(c.toString(), mesh, GL20.GL_TRIANGLES, material);
         Model model = builder.end();
 
         // build an instance at the correct location
-        return new ModelInstance(model);
+        ModelInstance mi = new ModelInstance(model);
+        mi.userData = colliderShape;
+        return mi;
     }
 
 }

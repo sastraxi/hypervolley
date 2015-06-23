@@ -190,7 +190,6 @@ public class StrategyCameraController extends GestureDetector {
         dragCam.update();
         */
 
-
         // determine movement as if on ground plane
         Vector3 startPoint = new Vector3(), endPoint = new Vector3();
         if (!Intersector.intersectRayPlane(camera.getPickRay(startX, startY), GROUND_PLANE, startPoint)) return false;
@@ -199,7 +198,6 @@ public class StrategyCameraController extends GestureDetector {
         // update the camera and point of rotation
         Vector3 offset = endPoint.sub(startPoint);
         Vector3 previewPosition = new Vector3(originalCameraPosition).add(offset);
-        System.out.println(originalCameraPosition);
         camera.position.set(previewPosition);
         if (translateTarget) target.add(offset);
         camera.update();

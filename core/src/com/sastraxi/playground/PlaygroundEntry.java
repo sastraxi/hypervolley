@@ -12,12 +12,14 @@ import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.utils.DefaultShaderProvider;
+import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Vector2;
 import com.sastraxi.playground.character.PoleProp;
 import com.sastraxi.playground.collision.CircularCollider;
 import com.sastraxi.playground.collision.Collider;
 import com.sastraxi.playground.shaders.CircularColliderShader;
 import com.sastraxi.playground.terrain.Grid;
+import org.lwjgl.opengl.GL30;
 
 public class PlaygroundEntry extends ApplicationAdapter {
 
@@ -30,7 +32,10 @@ public class PlaygroundEntry extends ApplicationAdapter {
     private DefaultShaderProvider shaderProvider;
     private ModelBatch batch;
 
-    ModelInstance poleModelInstance, poleCollisionModelInstance;
+    ModelInstance[] poleModelInstance = new ModelInstance[10];
+    ModelInstance[] poleCollisionModelInstance = new ModelInstance[10];
+    Circle[] poleCircles = new Circle[10];
+
     CircularColliderShader ccs;
 
     @Override
@@ -39,12 +44,15 @@ public class PlaygroundEntry extends ApplicationAdapter {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glDisable(GL20.GL_CULL_FACE);
 
-        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
         Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
         Gdx.gl.glLineWidth(1.0f);
 
+        Gdx.gl.glEnable(GL30.GL_FRAMEBUFFER_SRGB);
+
+
         camera = new PerspectiveCamera(67.0f, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-        camera.position.set(10f, 10f, 10f);
+        camera.position.set(20f, 20f, 20f);
         camera.up.set(0f, 0f, 1f);
         camera.lookAt(0f, 0f, 0f);
         camera.near = 0.1f;
@@ -55,7 +63,7 @@ public class PlaygroundEntry extends ApplicationAdapter {
 
         environment = new Environment();
         environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.4f, 0.4f, 0.4f, 1f));
-        environment.add(new DirectionalLight().set(0.8f, 0.8f, 0.8f, -1f, -0.8f, -0.2f));
+        environment.add(new DirectionalLight().set(0.6f, 0.6f, 0.6f, 0f, 0.8f, -0.8f));
 
         shaderProvider = new DefaultShaderProvider();
         batch = new ModelBatch(shaderProvider);
@@ -68,6 +76,7 @@ public class PlaygroundEntry extends ApplicationAdapter {
         float mid = 6.5f;
 		float scale = 0.8f;
 		Grid grid = new Grid(43, 31, (x, y) ->
+                10.0f +
                 x * -0.2f +
                 y * -0.12f +
                 (float) Math.sin(scale *
@@ -78,16 +87,27 @@ public class PlaygroundEntry extends ApplicationAdapter {
         Model gridModelWireframe = grid.allocate(Grid.ModelType.WIREFRAME);
         gridModelWireframeInstance = new ModelInstance(gridModelWireframe);
 
-        // create a collider
-        PoleProp pole = new PoleProp(new Vector2(18f, 11f), 0.3f, 6.0f);
-        poleModelInstance = pole.allocate(grid);
-        Collider c = pole.getCollider(3.5f);
-        poleCollisionModelInstance = grid.allocateProjection((CircularCollider) c);
+        // create bunch of colliders
+        final float PADDING = 2.0f;
+        for (int i = 0; i < 10; ++i)
+        {
+            float x = PADDING + (float) Math.random() * (grid.getWidth() - 2f*PADDING);
+            float y = PADDING + (float) Math.random() * (grid.getHeight() - 2f*PADDING);
+
+            float radius = 0.1f + (float) Math.random() * 1.5f;
+            float height = 4.0f - radius;
+
+            PoleProp pole = new PoleProp(new Vector2(x, y), radius, height);
+            Collider c = pole.getCollider(0.5f);
+
+            poleModelInstance[i] = pole.allocate(grid);
+            poleCollisionModelInstance[i] = grid.allocateProjection((CircularCollider) c);
+            poleCircles[i] = ((CircularCollider) c).getCircle();
+        }
 
         // the collider shader
         ccs = new CircularColliderShader();
         ccs.init();
-        ccs.setCircle(((CircularCollider) c).getCircle());
 	}
 
     @Override
@@ -111,10 +131,16 @@ public class PlaygroundEntry extends ApplicationAdapter {
         batch.render(gridModelInstance, environment);
         Gdx.gl.glDisable(GL20.GL_POLYGON_OFFSET_FILL);
 
-        //batch.render(gridModelWireframeInstance, environment);
+        batch.render(gridModelWireframeInstance, environment);
 
-        batch.render(poleModelInstance, environment);
-        batch.render(poleCollisionModelInstance, environment);
+        for (int i = 0; i < poleModelInstance.length; ++i) {
+            batch.render(poleModelInstance[i], environment);
+        }
+
+        for (int i = 0; i < poleModelInstance.length; ++i) {
+            //batch.render(poleCollisionModelInstance[i], environment, ccs);
+            batch.render(poleCollisionModelInstance[i], environment);
+        }
 
         batch.end();
 

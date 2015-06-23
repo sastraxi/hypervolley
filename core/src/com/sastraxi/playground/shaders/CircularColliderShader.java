@@ -17,8 +17,6 @@ public class CircularColliderShader implements Shader {
 	int u_worldTrans;
     int u_centre, u_radius;
 
-    private Circle circle;
-
     public CircularColliderShader() {
     }
 
@@ -48,12 +46,16 @@ public class CircularColliderShader implements Shader {
 		this.context = context;
 		program.begin();
 		program.setUniformMatrix(u_projViewTrans, camera.combined);
-		program.setUniformf(u_centre, circle.x, circle.y);
-        program.setUniformf(u_radius, circle.radius);
-	}
+    }
 
 	@Override
-	public void render(Renderable renderable) {
+	public void render(Renderable renderable)
+    {
+        assert(renderable.userData instanceof Circle);
+        Circle circle = (Circle) renderable.userData;
+        program.setUniformf(u_centre, circle.x, circle.y);
+        program.setUniformf(u_radius, circle.radius);
+
 		program.setUniformMatrix(u_worldTrans, renderable.worldTransform);
 		renderable.mesh.render(program,
 				renderable.primitiveType,
@@ -75,7 +77,4 @@ public class CircularColliderShader implements Shader {
 		return true;
 	}
 
-	public void setCircle(Circle circle) {
-		this.circle = circle;
-	}
 }

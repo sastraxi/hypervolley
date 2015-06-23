@@ -5,6 +5,13 @@ sourceCompatibility = 1.8
 
 sourceSets.main.java.srcDirs = [ "src/" ]
 
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile group: 'org.lwjgl.lwjgl', name: 'lwjgl', version: '2.8.4'
+}
 
 eclipse.project {
     name = appName + "-core"
