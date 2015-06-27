@@ -1,5 +1,6 @@
 package com.sastraxi.playground.path;
 
+import com.badlogic.gdx.math.Vector2;
 import com.sastraxi.playground.collision.CircularCollider;
 
 import java.util.Objects;
@@ -10,6 +11,14 @@ import java.util.Objects;
 public class GraphNode {
     public final CircularCollider collider;
     public final float param;
+
+    @Override
+    public String toString() {
+        return "GraphNode{" +
+                "collider=" + collider +
+                ", param=" + param +
+                '}';
+    }
 
     public GraphNode(final CircularCollider collider, final float param) {
         this.collider = collider;
@@ -28,5 +37,9 @@ public class GraphNode {
     @Override
     public int hashCode() {
         return Objects.hash(collider, param);
+    }
+
+    public Vector2 getPoint() {
+        return collider.getPerimeterPoint(param);
     }
 }

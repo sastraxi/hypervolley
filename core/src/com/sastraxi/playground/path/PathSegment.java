@@ -16,4 +16,5 @@ public interface PathSegment {
 
     Model allocate(int tesselation);
 
+    PathSegment reversed();
 }

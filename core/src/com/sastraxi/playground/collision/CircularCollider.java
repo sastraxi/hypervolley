@@ -5,6 +5,8 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 
+import java.util.Objects;
+
 /**
  * Created by sastr on 2015-06-16.
  */
@@ -22,21 +24,50 @@ public class CircularCollider implements Collider<Float> {
     }
 
     @Override
-    public Float getPerimeterParam(Vector2 position)
+    public Float getPerimeterParam(Vector2 position) {
+        return getPerimeterParam(c, position);
+    }
+
+    public Vector2 getPerimeterPoint(float angle) {
+        return getPerimeterPoint(c, angle);
+    }
+
+    public static Vector2 getPerimeterPoint(Circle c, float angle)
+    {
+        return new Vector2(MathUtils.cosDeg(angle), MathUtils.sinDeg(angle))
+                .scl(c.radius)
+                .add(c.x, c.y);
+    }
+
+    public static float getPerimeterParam(Circle c, Vector2 position)
     {
         Vector2 dst = new Vector2(position).sub(c.x, c.y);
 
         float dist = dst.len();
         // assert(dist - c.radius < EPSILON);
 
-        float angle = 180f * (float) Math.atan2(dst.y, dst.x) / (float) Math.PI;
-        return new Float(angle);
+        float r = 180f * (float) Math.atan2(dst.y, dst.x) / (float) Math.PI;
+        if (r < 0f) r += 360f;
+        return r;
     }
 
-    public Vector2 getPerimeterPoint(float angle)
-    {
-        return new Vector2(MathUtils.cosDeg(angle), MathUtils.sinDeg(angle))
-                .scl(c.radius)
-                .add(c.x, c.y);
+    @Override
+    public String toString() {
+        return c.toString();
     }
+
+    /*
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        CircularCollider that = (CircularCollider) o;
+        return Objects.equals(c, that.c);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(c);
+    }
+    */
 }

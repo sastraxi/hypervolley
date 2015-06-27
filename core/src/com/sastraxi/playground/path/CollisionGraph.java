@@ -4,6 +4,7 @@ import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
+import com.google.common.collect.TreeMultimap;
 import com.sastraxi.playground.collision.CircularCollider;
 import com.sastraxi.playground.found.CircleTangents;
 
@@ -14,23 +15,32 @@ import java.util.*;
  */
 public class CollisionGraph {
 
+    public static class OutwardNodes {
+        public final float param;
+        public final NavigableSet<GraphNode> nodes;
+        public OutwardNodes(float param, NavigableSet<GraphNode> nodes) {
+            this.param = param;
+            this.nodes = nodes;
+        }
+    }
+
     public CollisionGraph(CircularCollider[] colliders) {
         _collider_nodes = new HashMap<>();
         _create_representation(colliders);
     }
 
-    private HashMap<CircularCollider, TreeMap<Float, GraphNode>> _collider_nodes;
+    private HashMap<CircularCollider, TreeMultimap> _collider_nodes;
     private void _add(CircularCollider a, float aEdgeParam, CircularCollider b, float bEdgeParam)
     {
-        TreeMap<Float, GraphNode> map;
+        TreeMultimap<Float, GraphNode> map;
 
         // from a to b
-        map = _collider_nodes.getOrDefault(a, new TreeMap<>());
+        map = _collider_nodes.getOrDefault(a, TreeMultimap.create());
         map.put(aEdgeParam, new GraphNode(b, bEdgeParam));
         _collider_nodes.put(a, map);
 
         // from b to a
-        map = _collider_nodes.getOrDefault(a, new TreeMap<>());
+        map = _collider_nodes.getOrDefault(a,  TreeMultimap.create());
         map.put(bEdgeParam, new GraphNode(a, aEdgeParam));
         _collider_nodes.put(b, map);
     }
@@ -39,38 +49,63 @@ public class CollisionGraph {
      *
      * @param cc
      * @param param
-     * @param previousPoint the point we're coming from, so we know which direction to proceed around the circle
+     * @param increasing the direction to go around the circle
      * @return
      */
-    public GraphNode getNext(CircularCollider cc, float param, Vector2 previousPoint)
+    public OutwardNodes getNext(CircularCollider cc, float param, boolean increasing)
     {
-        float straightParam = cc.getPerimeterParam(previousPoint);
-        TreeMap<Float, GraphNode> tree = _collider_nodes.get(cc);
+        TreeMultimap<Float, GraphNode> tree = _collider_nodes.get(cc);
+        NavigableSet<Float> keySet = tree.keySet();
+
+        // be lenient with your input...
+        /*
+        if (param < 0f) {
+            param = 360f + (-param % 360f);
+        } else {
+            param = param % 360f;
+        }
+        */
 
         // keep direction of travel consistent
-        boolean increasing = (param > straightParam);
-        Map.Entry<Float, GraphNode> nextNodeEntry = (increasing)
-             ? tree.higherEntry(param)
-             : tree.lowerEntry(param);
+        Float nextKey = (increasing)
+             ? keySet.higher(param)
+             : keySet.lower(param);
 
-        if (nextNodeEntry != null) {
-            return nextNodeEntry.getValue();
-        } else {
+        if (nextKey == null) {
             // wrap around--it is a circle after all
-            return (increasing)
-                ? tree.firstEntry().getValue()
-                : tree.lastEntry().getValue();
+            nextKey = (increasing ? keySet.first() : keySet.last());
         }
+        return new OutwardNodes(nextKey, tree.get(nextKey));
     }
 
     // TODO: bounding volume hierarchy or some broadphase collision structure for visibility checks
     private CircularCollider[] _colliders;
+    public boolean isOccluded(Vector2 a, Vector2 b, CircularCollider butNotByThis)
+    {
+        for (CircularCollider cc: _colliders) {
+            if (cc == butNotByThis) continue;
+            Circle c = cc.getCircle();
+            if (Intersector.intersectSegmentCircle(a, b, new Vector2(c.x, c.y), c.radius * c.radius))
+                return true;
+        }
+        return false;
+    }
+
     public boolean isOccluded(Vector2 a, Vector2 b)
     {
         for (CircularCollider cc: _colliders) {
             Circle c = cc.getCircle();
             if (Intersector.intersectSegmentCircle(a, b, new Vector2(c.x, c.y), c.radius * c.radius))
                 return true;
+        }
+        return false;
+    }
+    public boolean isInsideCollider(Vector2 p)
+    {
+        for (CircularCollider cc: _colliders) {
+            if (p.dst(cc.getCircle().x, cc.getCircle().y) < cc.getCircle().radius - MathUtils.FLOAT_ROUNDING_ERROR) {
+                return true;
+            }
         }
         return false;
     }
@@ -107,32 +142,28 @@ public class CollisionGraph {
         }
     }
 
-    private static Vector2[] circlePointTangents(Circle c, Vector2 point)
-    {
-        Vector2[] points = new Vector2[2];
-
-        Vector2 toCircle = new Vector2(c.x, c.y).sub(point);
-        Vector2 perpendicular = new Vector2(toCircle.y, -toCircle.x);
-        perpendicular.nor().scl(c.radius);
-
-        points[0] = new Vector2(c.x, c.y).add(perpendicular);
-        points[1] = new Vector2(c.x, c.y).add(perpendicular);
-        return points;
-    }
-
     public Collection<GraphNode> getTangentsFrom(Vector2 p)
     {
         ArrayList<GraphNode> edges = new ArrayList<>();
 
-        for (CircularCollider collider: _collider_nodes.keySet()) {
+        for (CircularCollider collider: _colliders) {
             Circle c_c = collider.getCircle();
-            Vector2[] tangentPoints = circlePointTangents(c_c, p);
+            Vector2[] tangentPoints = CircleTangents.circlePointTangents(c_c, p);
             for (Vector2 tp: tangentPoints)
             {
-                edges.add(new GraphNode(collider, collider.getPerimeterParam(tp)));
+                if (!isOccluded(p, tp, collider)) {
+                    edges.add(new GraphNode(collider, collider.getPerimeterParam(tp)));
+                }
             }
         }
 
         return edges;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder b = new StringBuilder();
+        b.append(_collider_nodes.toString());
+        return b.toString();
     }
 }

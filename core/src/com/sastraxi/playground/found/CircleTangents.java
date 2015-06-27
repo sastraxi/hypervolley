@@ -1,8 +1,25 @@
 package com.sastraxi.playground.found;
 
+import com.badlogic.gdx.math.Circle;
+import com.badlogic.gdx.math.Vector2;
+
 import java.util.Arrays;
  
 public class CircleTangents {
+
+    public static Vector2[] circlePointTangents(Circle c, Vector2 point)
+    {
+        Vector2[] points = new Vector2[2];
+
+        Vector2 toCircle = new Vector2(c.x, c.y).sub(point);
+        Vector2 perpendicular = new Vector2(toCircle.y, -toCircle.x);
+        perpendicular.nor().scl(c.radius);
+
+        points[0] = new Vector2(c.x, c.y).add(perpendicular);
+        points[1] = new Vector2(c.x, c.y).add(perpendicular);
+        return points;
+    }
+
     /**
      *  Finds tangent segments between two given circles.
      *

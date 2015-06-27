@@ -40,4 +40,20 @@ public class LinePathSegment implements PathSegment {
     public Model allocate(int tesselation) {
         return null;
     }
+
+    @Override
+    public PathSegment reversed() {
+        return new LinePathSegment(to, from);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder b = new StringBuilder();
+        b.append("Line from ");
+        b.append(getStart());
+        b.append(" to ");
+        b.append(getEnd());
+        return b.toString();
+    }
+
 }

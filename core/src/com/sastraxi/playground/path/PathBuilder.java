@@ -1,6 +1,8 @@
 package com.sastraxi.playground.path;
 
+import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Vector2;
+import com.sastraxi.playground.collision.CircularCollider;
 
 import java.util.ArrayList;
 
@@ -14,8 +16,8 @@ public class PathBuilder {
 
     public PathBuilder(Vector2 start) {
         currentPosition = start;
+        segments = new ArrayList<>();
     }
-
 
     public PathBuilder lineTo(Vector2 destination) {
         segments.add(new LinePathSegment(currentPosition, destination));
@@ -23,7 +25,29 @@ public class PathBuilder {
         return this;
     }
 
+    public PathBuilder arcTo(Circle circle, float degrees)
+    {
+        float fromDegrees = CircularCollider.getPerimeterParam(circle, currentPosition);
+        segments.add(new ArcPathSegment(circle, fromDegrees, degrees));
+        return this;
+    }
+
+    /**
+     * Reverses the current path.
+     * Sets the current position to the new end of the path.
+     */
+    public PathBuilder reverse() {
+        ArrayList<PathSegment> reversed = new ArrayList<>(segments.size());
+        for (PathSegment segment: segments) {
+            reversed.add(0, segment.reversed());
+        }
+        currentPosition = reversed.get(reversed.size()-1).getEnd();
+        segments = reversed;
+        return this;
+    }
+
     public Path finish() {
         return new Path(segments);
     }
+
 }

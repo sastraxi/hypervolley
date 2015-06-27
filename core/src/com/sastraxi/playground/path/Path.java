@@ -9,9 +9,9 @@ import java.util.ArrayList;
  */
 public class Path {
 
-    private ArrayList<PathSegment> segments;
+    private final ArrayList<PathSegment> segments;
 
-    public Path(ArrayList<PathSegment> segments) {
+    public Path(final ArrayList<PathSegment> segments) {
         this.segments = segments;
     }
 
@@ -37,5 +37,21 @@ public class Path {
         return len;
     }
 
-
+    @Override
+    public String toString() {
+        StringBuilder b = new StringBuilder();
+        if (isValid()) {
+            b.append("Path[");
+        } else {
+            b.append("INVALID Path[");
+        }
+        b.append(segments.size());
+        b.append("]:\n");
+        for (PathSegment segment: segments) {
+            b.append("  ");
+            b.append(segment.toString());
+            b.append("\n");
+        }
+        return b.toString();
+    }
 }
