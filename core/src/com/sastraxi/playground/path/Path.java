@@ -11,8 +11,8 @@ public class Path {
 
     private ArrayList<PathSegment> segments;
 
-    public Path() {
-        segments = new ArrayList<>();
+    public Path(ArrayList<PathSegment> segments) {
+        this.segments = segments;
     }
 
     public boolean isValid() {

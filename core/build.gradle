@@ -11,6 +11,7 @@ repositories {
 
 dependencies {
     compile group: 'org.lwjgl.lwjgl', name: 'lwjgl', version: '2.8.4'
+    compile group: 'com.google.guava', name: 'guava', version: '12.0'
 }
 
 eclipse.project {
