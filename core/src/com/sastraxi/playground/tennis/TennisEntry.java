@@ -20,8 +20,7 @@ import com.badlogic.gdx.graphics.g3d.model.Node;
 import com.badlogic.gdx.graphics.g3d.utils.DefaultShaderProvider;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.math.Vector2;
-import com.sastraxi.playground.tennis.components.ControllerInputComponent;
+import com.sastraxi.playground.tennis.components.PlayerInputComponent;
 import com.sastraxi.playground.tennis.components.MovementComponent;
 import com.sastraxi.playground.tennis.game.Constants;
 import com.sastraxi.playground.tennis.systems.MovementSystem;
@@ -68,7 +67,7 @@ public class TennisEntry extends ApplicationAdapter {
         engine = new Engine();
         player = new Entity();
         player.add(new MovementComponent());
-        player.add(new ControllerInputComponent(playerOne));
+        player.add(new PlayerInputComponent(playerOne));
         engine.addEntity(player);
         movementSystem = new MovementSystem();
         engine.addSystem(movementSystem);

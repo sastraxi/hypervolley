@@ -20,6 +20,13 @@ public class Constants {
     public static final float PLAYER_HEIGHT = 30f;
     public static final float PLAYER_SIZE = 10f;
 
-    public static final float PLAYER_SPEED = 50f;
     public static final float CONTROLLER_DEAD_ZONE = 0.2f;
+
+    public static final float PLAYER_SPEED = 80f;
+    public static final float DASH_SPEED = 400f;
+    public static final float DASH_TIMER = 0.13f;
+    public static final float DASH_MAX_METER = 5f; // how many seconds it takes to recharge
+    public static final float DASH_METER_DEPLETION_RATE = 7f; // how many times faster it depletes
+    public static final float DASH_MIN_METER = 2f; // this much of the meter must be full to dash
+
 }
