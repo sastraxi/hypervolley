@@ -75,6 +75,7 @@ public class TennisEntry extends ApplicationAdapter {
 
             MovementComponent mc = new MovementComponent();
             bounds.getCenter(mc.position);
+            if (i == 1) mc.orientation = MathUtils.PI;
             players[i].add(mc);
             players[i].add(new PlayerInputComponent(controllers.get(i), bounds));
 
