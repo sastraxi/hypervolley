@@ -20,9 +20,13 @@ import com.badlogic.gdx.graphics.g3d.model.Node;
 import com.badlogic.gdx.graphics.g3d.utils.DefaultShaderProvider;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.MathUtils;
-import com.sastraxi.playground.tennis.components.PlayerInputComponent;
+import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.utils.Array;
 import com.sastraxi.playground.tennis.components.MovementComponent;
+import com.sastraxi.playground.tennis.components.PlayerInputComponent;
 import com.sastraxi.playground.tennis.game.Constants;
+import com.sastraxi.playground.tennis.models.PlayerModel;
 import com.sastraxi.playground.tennis.systems.MovementSystem;
 import org.lwjgl.opengl.GL30;
 
@@ -37,7 +41,7 @@ public class TennisEntry extends ApplicationAdapter {
     // entities and components
     Engine engine;
     MovementSystem movementSystem;
-    Entity player;
+    Entity[] players;
 
     // graphics
     PerspectiveCamera camera;
@@ -47,28 +51,36 @@ public class TennisEntry extends ApplicationAdapter {
 
     // things to draw
     ModelInstance tennisCourt;
-    ModelInstance playerModelInstance;
-
-    // whatever else
-    Controller playerOne;
+    ModelInstance[] playerModelInstances;
 
     @Override
 	public void create()
 	{
         frames = 0;
 
-        // attach a controller
-        for (Controller controller: Controllers.getControllers()) {
-            playerOne = controller;
-            break;
+        // attach a player
+        Array<Controller> controllers = Controllers.getControllers();
+        if (controllers.size == 0) {
+            System.err.println("You must attach a controller to run this game.");
+            System.exit(1);
         }
+        players = new Entity[controllers.size >= 2 ? 2 : 1];
 
         // entities and components
         engine = new Engine();
-        player = new Entity();
-        player.add(new MovementComponent());
-        player.add(new PlayerInputComponent(playerOne));
-        engine.addEntity(player);
+        for (int i = 0; i < players.length; ++i)
+        {
+            Rectangle bounds = (i == 0 ? Constants.PLAYER_ONE_BOUNDS : Constants.PLAYER_TWO_BOUNDS);
+            players[i] = new Entity();
+
+            MovementComponent mc = new MovementComponent();
+            bounds.getCenter(mc.position);
+            players[i].add(mc);
+            players[i].add(new PlayerInputComponent(controllers.get(i), bounds));
+
+            engine.addEntity(players[i]);
+        }
+
         movementSystem = new MovementSystem();
         engine.addSystem(movementSystem);
 
@@ -78,18 +90,13 @@ public class TennisEntry extends ApplicationAdapter {
         ModelBuilder builder = new ModelBuilder();
         Node node;
 
-        // player model
-        material = new Material(ColorAttribute.createDiffuse(new Color(0.8f, 0.3f, 0.2f, 1.0f)));
-        builder.begin();
-        node = builder.node();
-        node.translation.set(0f, 0f, Constants.PLAYER_HEIGHT);
-        builder.part("body", GL20.GL_TRIANGLES, vertexAttributes, material)
-                .box(Constants.PLAYER_SIZE, Constants.PLAYER_SIZE, Constants.PLAYER_HEIGHT);
-        node = builder.node();
-        node.translation.set(Constants.PLAYER_SIZE, 0f, Constants.PLAYER_HEIGHT);
-        builder.part("orientation", GL20.GL_TRIANGLES, vertexAttributes, material)
-                .box(Constants.PLAYER_SIZE * 0.3f, Constants.PLAYER_SIZE * 0.3f, Constants.PLAYER_SIZE * 0.3f);
-        playerModelInstance = new ModelInstance(builder.end());
+        // player model instances
+        playerModelInstances = new ModelInstance[players.length];
+        for (int i = 0; i < players.length; ++i) {
+            playerModelInstances[i] = new ModelInstance(PlayerModel.create(
+                    i == 0 ? Constants.PLAYER_ONE_COLOUR : Constants.PLAYER_TWO_COLOUR
+            ));
+        }
 
         // tennis court
         material = new Material(ColorAttribute.createDiffuse(new Color(0.8f, 0.8f, 0.8f, 1.0f)));
@@ -97,28 +104,28 @@ public class TennisEntry extends ApplicationAdapter {
         node = builder.node();
         node.translation.set(0f, 0f, 0.5f * Constants.PLAYER_HEIGHT);
         builder.part("far", GL20.GL_TRIANGLES, vertexAttributes, material)
-               .rect(-Constants.ARENA_WIDTH,  Constants.ARENA_DEPTH, 0f,
-                      Constants.ARENA_WIDTH,  Constants.ARENA_DEPTH, 0f,
-                      Constants.ARENA_WIDTH,  Constants.ARENA_DEPTH, Constants.WALL_HEIGHT,
-                     -Constants.ARENA_WIDTH,  Constants.ARENA_DEPTH, Constants.WALL_HEIGHT,
+               .rect(-Constants.ARENA_HALF_WIDTH,  Constants.ARENA_HALF_DEPTH, 0f,
+                      Constants.ARENA_HALF_WIDTH,  Constants.ARENA_HALF_DEPTH, 0f,
+                      Constants.ARENA_HALF_WIDTH,  Constants.ARENA_HALF_DEPTH, Constants.WALL_HEIGHT,
+                     -Constants.ARENA_HALF_WIDTH,  Constants.ARENA_HALF_DEPTH, Constants.WALL_HEIGHT,
                       0f, -1f, 0f);
         builder.part("left", GL20.GL_TRIANGLES, vertexAttributes, material)
-               .rect(-Constants.ARENA_WIDTH, -Constants.ARENA_DEPTH, 0f,
-                     -Constants.ARENA_WIDTH,  Constants.ARENA_DEPTH, 0f,
-                     -Constants.ARENA_WIDTH,  Constants.ARENA_DEPTH, Constants.WALL_HEIGHT,
-                     -Constants.ARENA_WIDTH, -Constants.ARENA_DEPTH, Constants.WALL_HEIGHT,
+               .rect(-Constants.ARENA_HALF_WIDTH, -Constants.ARENA_HALF_DEPTH, 0f,
+                     -Constants.ARENA_HALF_WIDTH,  Constants.ARENA_HALF_DEPTH, 0f,
+                     -Constants.ARENA_HALF_WIDTH,  Constants.ARENA_HALF_DEPTH, Constants.WALL_HEIGHT,
+                     -Constants.ARENA_HALF_WIDTH, -Constants.ARENA_HALF_DEPTH, Constants.WALL_HEIGHT,
                       1f, 0f, 0f);
         builder.part("right", GL20.GL_TRIANGLES, vertexAttributes, material)
-               .rect( Constants.ARENA_WIDTH,  Constants.ARENA_DEPTH, 0f,
-                      Constants.ARENA_WIDTH, -Constants.ARENA_DEPTH, 0f,
-                      Constants.ARENA_WIDTH, -Constants.ARENA_DEPTH, Constants.WALL_HEIGHT,
-                      Constants.ARENA_WIDTH,  Constants.ARENA_DEPTH, Constants.WALL_HEIGHT,
+               .rect( Constants.ARENA_HALF_WIDTH,  Constants.ARENA_HALF_DEPTH, 0f,
+                      Constants.ARENA_HALF_WIDTH, -Constants.ARENA_HALF_DEPTH, 0f,
+                      Constants.ARENA_HALF_WIDTH, -Constants.ARENA_HALF_DEPTH, Constants.WALL_HEIGHT,
+                      Constants.ARENA_HALF_WIDTH,  Constants.ARENA_HALF_DEPTH, Constants.WALL_HEIGHT,
                       -1f, 0f, 0f);
         builder.part("floor", GL20.GL_TRIANGLES, vertexAttributes, material)
-               .rect(-Constants.ARENA_WIDTH, -Constants.ARENA_DEPTH, 0f,
-                      Constants.ARENA_WIDTH, -Constants.ARENA_DEPTH, 0f,
-                      Constants.ARENA_WIDTH,  Constants.ARENA_DEPTH, 0f,
-                     -Constants.ARENA_WIDTH,  Constants.ARENA_DEPTH, 0f,
+               .rect(-Constants.ARENA_HALF_WIDTH, -Constants.ARENA_HALF_DEPTH, 0f,
+                      Constants.ARENA_HALF_WIDTH, -Constants.ARENA_HALF_DEPTH, 0f,
+                      Constants.ARENA_HALF_WIDTH,  Constants.ARENA_HALF_DEPTH, 0f,
+                     -Constants.ARENA_HALF_WIDTH,  Constants.ARENA_HALF_DEPTH, 0f,
                       0f, 0f, 1f);
         tennisCourt = new ModelInstance(builder.end());
 
@@ -192,11 +199,19 @@ public class TennisEntry extends ApplicationAdapter {
         batch.begin(camera);
         batch.render(tennisCourt, environment);
 
-        MovementComponent mc = player.getComponent(MovementComponent.class);
-        playerModelInstance.transform
-                .setToTranslation(mc.position.x, mc.position.y, 0f)
-                .rotate(Constants.UP_VECTOR, MathUtils.radiansToDegrees * mc.orientation);
-        batch.render(playerModelInstance, environment);
+        // FIXME should all this stuff be here?
+        for (int i = 0; i < players.length; ++i) {
+            MovementComponent mc = players[i].getComponent(MovementComponent.class);
+            PlayerInputComponent pic = players[i].getComponent(PlayerInputComponent.class);
+            Vector2 playerToBall = new Vector2(0f, 0f).sub(mc.position);
+            float lookAtBallOrientation = MathUtils.atan2(playerToBall.y, playerToBall.x);
+            float orientation = MathUtils.lerp(mc.orientation, lookAtBallOrientation, pic.lookAtBall);
+
+            playerModelInstances[i].transform
+                    .setToTranslation(mc.position.x, mc.position.y, 0f)
+                    .rotate(Constants.UP_VECTOR, MathUtils.radiansToDegrees * orientation);
+            batch.render(playerModelInstances[i], environment);
+        }
 
         batch.end();
 
