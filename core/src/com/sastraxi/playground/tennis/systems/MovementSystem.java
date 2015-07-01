@@ -4,9 +4,10 @@ import com.badlogic.ashley.core.*;
 import com.badlogic.ashley.utils.ImmutableArray;
 import com.badlogic.gdx.controllers.Controller;
 import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.math.Vector2;
-import com.sastraxi.playground.tennis.components.PlayerInputComponent;
+import com.badlogic.gdx.math.Quaternion;
+import com.badlogic.gdx.math.Vector3;
 import com.sastraxi.playground.tennis.components.MovementComponent;
+import com.sastraxi.playground.tennis.components.PlayerInputComponent;
 import com.sastraxi.playground.tennis.contrib.Xbox360Pad;
 import com.sastraxi.playground.tennis.game.Constants;
 
@@ -25,7 +26,7 @@ public class MovementSystem extends EntitySystem {
     }
 
     public void update(float deltaTime) {
-        Vector2 _tmp = new Vector2(), _new_position = new Vector2();
+        Vector3 _tmp = new Vector3();
         for (Entity entity: entities)
         {
             MovementComponent movement = vm.get(entity);
@@ -72,9 +73,11 @@ public class MovementSystem extends EntitySystem {
                     pic.state = PlayerInputComponent.DashState.NONE;
                 }
                 float speed = MathUtils.lerp(Constants.DASH_SPEED, Constants.PLAYER_SPEED, pct);
-                movement.velocity.set(MathUtils.cos(movement.orientation) * speed,
-                        MathUtils.sin(movement.orientation) * speed);
-
+                float zAngle = movement.orientation.getRollRad();
+                movement.velocity.set(
+                        MathUtils.cos(zAngle) * speed,
+                        MathUtils.sin(zAngle) * speed,
+                        0f);
             }
             else if (pic.state == PlayerInputComponent.DashState.DASHING)
             {
@@ -85,23 +88,27 @@ public class MovementSystem extends EntitySystem {
                     pct = 1.0f;
                 }
                 float speed = MathUtils.lerp(Constants.PLAYER_SPEED, Constants.DASH_SPEED, pct);
-                movement.velocity.set(MathUtils.cos(movement.orientation) * speed,
-                        MathUtils.sin(movement.orientation) * speed);
+                float zAngle = movement.orientation.getRollRad();
+                movement.velocity.set(
+                        MathUtils.cos(zAngle) * speed,
+                        MathUtils.sin(zAngle) * speed,
+                        0f);
             }
             else
             {
                 // regular movement logic
                 _tmp.set(controller.getAxis(Xbox360Pad.AXIS_LEFT_X),
-                        -controller.getAxis(Xbox360Pad.AXIS_LEFT_Y));
+                        -controller.getAxis(Xbox360Pad.AXIS_LEFT_Y),
+                        0f);
 
                 // treat all input below a certain threshold as 0
                 if (_tmp.len() >= Constants.CONTROLLER_DEAD_ZONE) {
                     movement.velocity.set(_tmp);
                     // TODO player speed changes based on whether or not they're looking at the ball?
                     movement.velocity.scl(Constants.PLAYER_SPEED);
-                    movement.orientation = MathUtils.atan2(_tmp.y, _tmp.x);
+                    movement.orientation = new Quaternion(Constants.UP_VECTOR, MathUtils.radiansToDegrees * MathUtils.atan2(_tmp.y, _tmp.x));
                 } else {
-                    movement.velocity.set(0f, 0f);
+                    movement.velocity.set(0f, 0f, 0f);
                 }
             }
 
@@ -110,11 +117,11 @@ public class MovementSystem extends EntitySystem {
 
             // integrate velocity -> position
             // _tmp = movement vector
-            _tmp = new Vector2(movement.velocity).scl(deltaTime);
+            _tmp = new Vector3(movement.velocity).scl(deltaTime);
             movement.position.add(_tmp);
 
             // slide along walls if we hit the boundary
-            if (!pic.bounds.contains(movement.position)) {
+            if (!pic.bounds.contains(movement.position.x, movement.position.y)) {
                 if (pic.state == PlayerInputComponent.DashState.DASHING) {
                     // cancel dash
                     pic.state = PlayerInputComponent.DashState.ENDING;

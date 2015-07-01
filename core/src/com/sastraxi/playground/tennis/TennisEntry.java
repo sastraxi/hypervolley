@@ -20,6 +20,7 @@ import com.badlogic.gdx.graphics.g3d.model.Node;
 import com.badlogic.gdx.graphics.g3d.utils.DefaultShaderProvider;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Array;
@@ -74,8 +75,9 @@ public class TennisEntry extends ApplicationAdapter {
             players[i] = new Entity();
 
             MovementComponent mc = new MovementComponent();
-            bounds.getCenter(mc.position);
-            if (i == 1) mc.orientation = MathUtils.PI;
+            Vector2 center = bounds.getCenter(new Vector2());
+            mc.position.set(center, 0f);
+            if (i == 1) mc.orientation = new Quaternion(Constants.UP_VECTOR, 180f);
             players[i].add(mc);
             players[i].add(new PlayerInputComponent(controllers.get(i), bounds));
 
@@ -201,16 +203,19 @@ public class TennisEntry extends ApplicationAdapter {
         batch.render(tennisCourt, environment);
 
         // FIXME should all this stuff be here?
-        for (int i = 0; i < players.length; ++i) {
+        for (int i = 0; i < players.length; ++i)
+        {
             MovementComponent mc = players[i].getComponent(MovementComponent.class);
             PlayerInputComponent pic = players[i].getComponent(PlayerInputComponent.class);
-            Vector2 playerToBall = new Vector2(0f, 0f).sub(mc.position);
-            float lookAtBallOrientation = MathUtils.atan2(playerToBall.y, playerToBall.x);
-            float orientation = MathUtils.lerp(mc.orientation, lookAtBallOrientation, pic.lookAtBall);
+
+            Vector2 playerToBall = new Vector2(0f, 0f).sub(mc.position.x, mc.position.y);
+            Quaternion lookAtBallOrientation = new Quaternion(Constants.UP_VECTOR, MathUtils.radiansToDegrees * MathUtils.atan2(playerToBall.y, playerToBall.x));
+            Quaternion orientation = new Quaternion(mc.orientation).slerp(lookAtBallOrientation, pic.lookAtBall);
 
             playerModelInstances[i].transform
                     .setToTranslation(mc.position.x, mc.position.y, 0f)
-                    .rotate(Constants.UP_VECTOR, MathUtils.radiansToDegrees * orientation);
+                    .rotate(orientation);
+
             batch.render(playerModelInstances[i], environment);
         }
 

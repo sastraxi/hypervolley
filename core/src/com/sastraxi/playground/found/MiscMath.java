@@ -1,6 +1,7 @@
 package com.sastraxi.playground.found;
 
 import com.badlogic.gdx.math.Circle;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 
@@ -48,4 +49,21 @@ public class MiscMath {
         }
         return (to - from) % 360f;
     }
+
+    /**
+     * Circular linear interpolation! Takes the shortest path.
+     * Supports -2pi..2pi
+     * @param fromValue radians
+     * @param toValue radians
+     * @param amount percentage 0..1
+     * @return
+     */
+    public static float clerp(float fromValue, float toValue, float amount)
+    {
+        // TODO fix this shit, 1...359 will still be chosen over 1-0
+        if (fromValue < 0f) fromValue += MathUtils.PI2;
+        if (toValue < 0f) toValue += MathUtils.PI2;
+        return MathUtils.lerp(fromValue, toValue, amount);
+    }
+
 }
