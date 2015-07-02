@@ -3,6 +3,7 @@ package com.sastraxi.playground.tennis.systems;
 import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.EntitySystem;
+import com.badlogic.ashley.core.Family;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.VertexAttributes;
@@ -29,6 +30,7 @@ public class BallSpawningSystem extends EntitySystem {
     private float accum = 0f;
 
     private static final long vertexAttributes = VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal;
+    private static final Family ballFamily = Family.one(BallComponent.class).get();
 
     public BallSpawningSystem()
     {
@@ -61,7 +63,7 @@ public class BallSpawningSystem extends EntitySystem {
     public void update(float deltaTime)
     {
         accum += deltaTime;
-        if (accum >= Constants.BALL_SPAWNING_RATE)
+        if (engine.getEntitiesFor(ballFamily).size() == 0)
         {
             // reset timer
             accum = 0f;
@@ -84,14 +86,14 @@ public class BallSpawningSystem extends EntitySystem {
             mc.velocity.x = target.x - mc.position.x;
             mc.velocity.y = target.y - mc.velocity.y;
             mc.velocity.nor().scl(ballSpeed);
-            mc.velocity.z = 10f + random.nextFloat() * 60f;
+            mc.velocity.z = 20f + random.nextFloat() * 60f;
 
             if (random.nextBoolean())
                 mc.velocity.x = -mc.velocity.x;
 
             ballEntity.add(mc);
 
-            BallComponent ball = new BallComponent(Vector3.Zero, 10);
+            BallComponent ball = new BallComponent(Vector3.Zero, 4);
             ballEntity.add(ball);
 
             RenderableComponent rc = new RenderableComponent(new ModelInstance(ballModel));

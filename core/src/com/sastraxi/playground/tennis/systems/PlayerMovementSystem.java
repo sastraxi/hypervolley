@@ -105,12 +105,19 @@ public class PlayerMovementSystem extends IteratingSystem {
                     -controller.getAxis(Xbox360Pad.AXIS_LEFT_Y),
                     0f);
 
-            // treat all input below a certain threshold as 0
-            if (_tmp.len() >= Constants.CONTROLLER_DEAD_ZONE) {
-                movement.velocity.set(_tmp);
-                // TODO player speed changes based on whether or not they're looking at the ball?
+            // treat all input below a certain threshold as 0,
+            if (_tmp.len() >= Constants.CONTROLLER_WALK_MAGNITUDE) {
+
+                movement.velocity.set(_tmp).nor();
                 movement.velocity.scl(Constants.PLAYER_SPEED);
+
+                // all input below a second threshold as 0.5, all input above as 1.0
+                if (_tmp.len() < Constants.CONTROLLER_RUN_MAGNITUDE) {
+                    movement.velocity.scl(0.5f);
+                }
+
                 movement.orientation = new Quaternion(Constants.UP_VECTOR, MathUtils.radiansToDegrees * MathUtils.atan2(_tmp.y, _tmp.x));
+
             } else {
                 movement.velocity.set(0f, 0f, 0f);
             }

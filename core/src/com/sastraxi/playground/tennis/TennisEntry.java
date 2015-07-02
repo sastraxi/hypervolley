@@ -145,6 +145,11 @@ public class TennisEntry extends ApplicationAdapter {
                       Constants.ARENA_HALF_WIDTH,  Constants.ARENA_HALF_DEPTH, 0f,
                      -Constants.ARENA_HALF_WIDTH,  Constants.ARENA_HALF_DEPTH, 0f,
                       0f, 0f, 1f);
+        material = new Material(ColorAttribute.createDiffuse(new Color(0.3f, 0.3f, 0.3f, 1.0f)));
+        node = builder.node();
+        node.translation.set(0f, 0f, 0.5f * Constants.NET_HEIGHT);
+        builder.part("net", GL20.GL_TRIANGLES, vertexAttributes, material)
+               .box(2f*Constants.NET_RADIUS, 2f*Constants.ARENA_HALF_DEPTH, Constants.NET_HEIGHT);
         tennisCourt = new ModelInstance(builder.end());
 
         // opengl
@@ -217,6 +222,8 @@ public class TennisEntry extends ApplicationAdapter {
         batch.render(tennisCourt, environment);
 
         // render balls
+        Entity ball = null;
+        MovementComponent ballMovement = null;
         ImmutableArray<Entity> ballEntities = engine.getEntitiesFor(BALL_ENTITIES);
         for (Entity entity: ballEntities)
         {
@@ -232,6 +239,9 @@ public class TennisEntry extends ApplicationAdapter {
             sc.modelInstance.transform
                     .setToTranslation(mc.position.x, mc.position.y, 0.2f); // TODO disable depth test via Shader then set z=0f
             batch.render(sc.modelInstance, environment);
+
+            ball = entity;
+            ballMovement = mc;
         }
 
         // FIXME should all this stuff be here?
@@ -241,6 +251,7 @@ public class TennisEntry extends ApplicationAdapter {
             PlayerInputComponent pic = picm.get(players[i]);
 
             // find the closest ball
+            /*
             float closestBallDistance = Float.MAX_VALUE;
             Vector2 closestBall = new Vector2();
             Vector2 _tmp = new Vector2();
@@ -253,7 +264,9 @@ public class TennisEntry extends ApplicationAdapter {
                     closestBallDistance = ballDistance;
                 }
             }
+            */
 
+            Vector2 closestBall = new Vector2(ballMovement.position.x, ballMovement.position.y);
             Vector2 playerToBall = closestBall.sub(mc.position.x, mc.position.y);
             Quaternion lookAtBallOrientation = new Quaternion(Constants.UP_VECTOR, MathUtils.radiansToDegrees * MathUtils.atan2(playerToBall.y, playerToBall.x));
             Quaternion orientation = new Quaternion(mc.orientation).slerp(lookAtBallOrientation, pic.lookAtBall);
