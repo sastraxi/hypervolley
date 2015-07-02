@@ -1,7 +1,10 @@
 package com.sastraxi.playground.tennis;
 
+import com.badlogic.ashley.core.ComponentMapper;
 import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
+import com.badlogic.ashley.core.Family;
+import com.badlogic.ashley.utils.ImmutableArray;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.controllers.Controller;
@@ -10,28 +13,30 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.graphics.VertexAttributes;
-import com.badlogic.gdx.graphics.g3d.Environment;
-import com.badlogic.gdx.graphics.g3d.Material;
-import com.badlogic.gdx.graphics.g3d.ModelBatch;
-import com.badlogic.gdx.graphics.g3d.ModelInstance;
+import com.badlogic.gdx.graphics.g3d.*;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.model.Node;
 import com.badlogic.gdx.graphics.g3d.utils.DefaultShaderProvider;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
-import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.math.Quaternion;
-import com.badlogic.gdx.math.Rectangle;
-import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.*;
 import com.badlogic.gdx.utils.Array;
-import com.sastraxi.playground.tennis.components.MovementComponent;
-import com.sastraxi.playground.tennis.components.PlayerInputComponent;
+import com.sastraxi.playground.tennis.components.*;
 import com.sastraxi.playground.tennis.game.Constants;
 import com.sastraxi.playground.tennis.models.PlayerModel;
-import com.sastraxi.playground.tennis.systems.MovementSystem;
+import com.sastraxi.playground.tennis.systems.BallMovementSystem;
+import com.sastraxi.playground.tennis.systems.BallSpawningSystem;
+import com.sastraxi.playground.tennis.systems.PlayerMovementSystem;
 import org.lwjgl.opengl.GL30;
 
 public class TennisEntry extends ApplicationAdapter {
+
+    static final Family BALL_ENTITIES = Family.all(BallComponent.class).get();
+
+    final ComponentMapper<RenderableComponent> rcm = ComponentMapper.getFor(RenderableComponent.class);
+    final ComponentMapper<PlayerInputComponent> picm = ComponentMapper.getFor(PlayerInputComponent.class);
+    final ComponentMapper<MovementComponent> mcm = ComponentMapper.getFor(MovementComponent.class);
+    final ComponentMapper<ShadowComponent> scm = ComponentMapper.getFor(ShadowComponent.class);
 
     static final long FRAME_RATE = 60;
     static final float FRAME_TIME_SEC = 1f / (float) FRAME_RATE;
@@ -41,14 +46,17 @@ public class TennisEntry extends ApplicationAdapter {
 
     // entities and components
     Engine engine;
-    MovementSystem movementSystem;
     Entity[] players;
+
+    // systems
+    BallMovementSystem bms;
+    BallSpawningSystem bss;
 
     // graphics
     PerspectiveCamera camera;
     Environment environment;
-    private DefaultShaderProvider shaderProvider;
-    private ModelBatch batch;
+    DefaultShaderProvider shaderProvider;
+    ModelBatch batch;
 
     // things to draw
     ModelInstance tennisCourt;
@@ -84,8 +92,16 @@ public class TennisEntry extends ApplicationAdapter {
             engine.addEntity(players[i]);
         }
 
-        movementSystem = new MovementSystem();
-        engine.addSystem(movementSystem);
+        // allow players to move
+        engine.addSystem(new PlayerMovementSystem());
+
+        // if there's only one player, add a ball launcher on the other side of the court
+        if (players.length == 1) {
+            bms = new BallMovementSystem();
+            bss = new BallSpawningSystem();
+            engine.addSystem(bms);
+            engine.addSystem(bss);
+        }
 
         // ....
         long vertexAttributes = VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal;
@@ -105,7 +121,6 @@ public class TennisEntry extends ApplicationAdapter {
         material = new Material(ColorAttribute.createDiffuse(new Color(0.8f, 0.8f, 0.8f, 1.0f)));
         builder.begin();
         node = builder.node();
-        node.translation.set(0f, 0f, 0.5f * Constants.PLAYER_HEIGHT);
         builder.part("far", GL20.GL_TRIANGLES, vertexAttributes, material)
                .rect(-Constants.ARENA_HALF_WIDTH,  Constants.ARENA_HALF_DEPTH, 0f,
                       Constants.ARENA_HALF_WIDTH,  Constants.ARENA_HALF_DEPTH, 0f,
@@ -135,10 +150,9 @@ public class TennisEntry extends ApplicationAdapter {
         // opengl
         Gdx.gl.glClearColor(0f, 0.2f, 0.3f, 1f);
         // Gdx.gl.glDisable(GL20.GL_CULL_FACE);
-        Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
-        Gdx.gl.glLineWidth(1.0f);
         Gdx.gl.glEnable(GL30.GL_FRAMEBUFFER_SRGB);
+        Gdx.gl.glEnable(GL20.GL_BLEND);
 
         // libgdx
         shaderProvider = new DefaultShaderProvider();
@@ -202,18 +216,50 @@ public class TennisEntry extends ApplicationAdapter {
         batch.begin(camera);
         batch.render(tennisCourt, environment);
 
+        // render balls
+        ImmutableArray<Entity> ballEntities = engine.getEntitiesFor(BALL_ENTITIES);
+        for (Entity entity: ballEntities)
+        {
+            MovementComponent mc = mcm.get(entity);
+
+            RenderableComponent rc = rcm.get(entity);
+            rc.modelInstance.transform
+                    .setToTranslation(mc.position);
+                    // .rotate(mc.orientation);
+            batch.render(rc.modelInstance, environment);
+
+            ShadowComponent sc = scm.get(entity);
+            sc.modelInstance.transform
+                    .setToTranslation(mc.position.x, mc.position.y, 0.2f); // TODO disable depth test via Shader then set z=0f
+            batch.render(sc.modelInstance, environment);
+        }
+
         // FIXME should all this stuff be here?
         for (int i = 0; i < players.length; ++i)
         {
-            MovementComponent mc = players[i].getComponent(MovementComponent.class);
-            PlayerInputComponent pic = players[i].getComponent(PlayerInputComponent.class);
+            MovementComponent mc = mcm.get(players[i]);
+            PlayerInputComponent pic = picm.get(players[i]);
 
-            Vector2 playerToBall = new Vector2(0f, 0f).sub(mc.position.x, mc.position.y);
+            // find the closest ball
+            float closestBallDistance = Float.MAX_VALUE;
+            Vector2 closestBall = new Vector2();
+            Vector2 _tmp = new Vector2();
+            for (Entity entity: ballEntities) {
+                MovementComponent ball = mcm.get(entity);
+                float ballDistance = _tmp.set(ball.position.x, ball.position.y).dst(mc.position.x, mc.position.y);
+                if (closestBall == null || ballDistance < closestBallDistance)
+                {
+                    closestBall.set(ball.position.x, ball.position.y);
+                    closestBallDistance = ballDistance;
+                }
+            }
+
+            Vector2 playerToBall = closestBall.sub(mc.position.x, mc.position.y);
             Quaternion lookAtBallOrientation = new Quaternion(Constants.UP_VECTOR, MathUtils.radiansToDegrees * MathUtils.atan2(playerToBall.y, playerToBall.x));
             Quaternion orientation = new Quaternion(mc.orientation).slerp(lookAtBallOrientation, pic.lookAtBall);
 
             playerModelInstances[i].transform
-                    .setToTranslation(mc.position.x, mc.position.y, 0f)
+                    .setToTranslation(mc.position)
                     .rotate(orientation);
 
             batch.render(playerModelInstances[i], environment);

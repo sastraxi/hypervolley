@@ -25,11 +25,11 @@ public class PlayerModel {
         Material material = new Material(ColorAttribute.createDiffuse(colour));
         builder.begin();
         node = builder.node();
-        node.translation.set(0f, 0f, Constants.PLAYER_HEIGHT);
+        node.translation.set(0f, 0f, 0.5f * Constants.PLAYER_HEIGHT);
         builder.part("body", GL20.GL_TRIANGLES, vertexAttributes, material)
                 .box(Constants.PLAYER_SIZE, Constants.PLAYER_SIZE, Constants.PLAYER_HEIGHT);
         node = builder.node();
-        node.translation.set(Constants.PLAYER_SIZE, 0f, Constants.PLAYER_HEIGHT);
+        node.translation.set(Constants.PLAYER_SIZE, 0f, 0.5f * Constants.PLAYER_HEIGHT);
         builder.part("orientation", GL20.GL_TRIANGLES, vertexAttributes, material)
                 .box(Constants.PLAYER_SIZE * 0.3f, Constants.PLAYER_SIZE * 0.3f, Constants.PLAYER_SIZE * 0.3f);
         return builder.end();
