@@ -89,4 +89,5 @@ public class Constants {
     public static final float PLAYER_BALL_DIST_DIFF = PLAYER_BALL_GLANCE_DISTANCE - PLAYER_BALL_STARE_DISTANCE;
 
     public static final float PERFECT_HIT_VELOCITY_SCALE = 1.3f;
+    public static final float VOLLEY_VELOCITY_SCALE = 1.1f;
 }

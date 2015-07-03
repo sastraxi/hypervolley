@@ -131,10 +131,11 @@ public class PlayerMovementSystem extends IteratingSystem {
                 if (_tmp.len() < Constants.CONTROLLER_RUN_MAGNITUDE) {
                     movement.velocity.scl(0.5f);
                     _tmp_player_focal.set(pic.focalPoint).sub(movement.position);
-                    movement.orientation.set(Constants.UP_VECTOR, MathUtils.radiansToDegrees * MathUtils.atan2(_tmp_player_focal.y, _tmp_player_focal.x));
+                    _rot = MathUtils.atan2(_tmp_player_focal.y, _tmp_player_focal.x);
                 } else {
-                    movement.orientation.set(Constants.UP_VECTOR, MathUtils.radiansToDegrees * MathUtils.atan2(_tmp.y, _tmp.x));
+                    _rot = MathUtils.atan2(_tmp.y, _tmp.x);
                 }
+                movement.orientation.set(Constants.UP_VECTOR, MathUtils.radiansToDegrees * _rot);
 
             } else {
                 movement.velocity.set(0f, 0f, 0f);
@@ -215,6 +216,7 @@ public class PlayerMovementSystem extends IteratingSystem {
                             System.out.println("Hit!");
                         }
 
+                        ballMovement.velocity.x *= Constants.VOLLEY_VELOCITY_SCALE;
                         ballMovement.velocity.x = -ballMovement.velocity.x;
                     }
 
