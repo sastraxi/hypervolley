@@ -1,6 +1,7 @@
 package com.sastraxi.playground.tennis.components;
 
 import com.badlogic.ashley.core.Component;
+import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.controllers.Controller;
 import com.badlogic.gdx.math.Rectangle;
 import com.sastraxi.playground.tennis.game.Constants;
@@ -24,11 +25,14 @@ public class PlayerInputComponent extends Component {
     public Controller controller;
     public Rectangle bounds;
 
+    // set by BallSpawningSystem
+    public Entity ball = null;
+
     // state
     public DashState state = DashState.NONE;
     public float timeSinceStateChange = 0f;
     public float timeToHit = 0f;
     public float dashMeter = Constants.DASH_MAX_METER;
-    public float lookAtBall = 0f; // really just the amount of the trigger that's pressed
+
 
 }

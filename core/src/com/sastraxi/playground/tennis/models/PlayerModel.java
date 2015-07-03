@@ -35,4 +35,23 @@ public class PlayerModel {
         return builder.end();
     }
 
+    public static Model buildAlert(Color colour, float scale)
+    {
+        Node node;
+        ModelBuilder builder = new ModelBuilder();
+        Material material = new Material(ColorAttribute.createDiffuse(colour));
+
+        builder.begin();
+        node = builder.node();
+        node.translation.set(0f, 0f, Constants.PLAYER_HEIGHT + scale);
+        builder.part("dot", GL20.GL_TRIANGLES, vertexAttributes, material)
+                .box(scale, scale, scale);
+
+        node = builder.node();
+        node.translation.set(0f, 0f, Constants.PLAYER_HEIGHT + 4f * scale);
+        builder.part("pole", GL20.GL_TRIANGLES, vertexAttributes, material)
+               .box(scale, scale, 3f * scale);
+        return builder.end();
+    }
+
 }

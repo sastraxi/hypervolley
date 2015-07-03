@@ -1,9 +1,10 @@
 package com.sastraxi.playground.tennis.systems;
 
+import com.badlogic.ashley.core.ComponentMapper;
 import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
-import com.badlogic.ashley.core.EntitySystem;
 import com.badlogic.ashley.core.Family;
+import com.badlogic.ashley.systems.IteratingSystem;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.VertexAttributes;
@@ -16,27 +17,29 @@ import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.RandomXS128;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
-import com.sastraxi.playground.tennis.components.BallComponent;
-import com.sastraxi.playground.tennis.components.MovementComponent;
-import com.sastraxi.playground.tennis.components.RenderableComponent;
-import com.sastraxi.playground.tennis.components.ShadowComponent;
+import com.sastraxi.playground.tennis.components.*;
 import com.sastraxi.playground.tennis.game.Constants;
 
-public class BallSpawningSystem extends EntitySystem {
+public class BallSpawningSystem extends IteratingSystem {
 
     public static final int PRIORITY = 1;
 
-    private Engine engine = null;
     private RandomXS128 random;
-    private Model ballModel, shadowModel;
     private float accum = 0f;
 
-    private static final long vertexAttributes = VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal;
+    private Engine engine = null;
+    private Entity lastSpawnedBall = null;
+
+    private ComponentMapper<PlayerInputComponent> picm = ComponentMapper.getFor(PlayerInputComponent.class);
     private static final Family ballFamily = Family.one(BallComponent.class).get();
+
+    private static final long vertexAttributes = VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal;
+    private Model ballModel, shadowModel;
 
     public BallSpawningSystem()
     {
-        super(PRIORITY);
+        // we're keeping track of player input components so we can point players at newly-spawned balls
+        super(Family.one(PlayerInputComponent.class).get(), PRIORITY);
 
         // TODO refactor into models.Ball
         ModelBuilder builder = new ModelBuilder();
@@ -60,6 +63,7 @@ public class BallSpawningSystem extends EntitySystem {
 
     public void addedToEngine(Engine engine)
     {
+        super.addedToEngine(engine);
         this.engine = engine;
         this.random = new RandomXS128();
     }
@@ -75,7 +79,7 @@ public class BallSpawningSystem extends EntitySystem {
             // create a ball and add it to the engine
             // the ball is coming from the right-hand side of the court
             // and is coming it a random direction, velocity, and spin
-            Entity ballEntity = new Entity();
+            lastSpawnedBall = new Entity();
             MovementComponent mc = new MovementComponent();
 
             mc.position.x = 0.8f * Constants.ARENA_HALF_WIDTH;
@@ -95,19 +99,25 @@ public class BallSpawningSystem extends EntitySystem {
             if (random.nextBoolean())
                 mc.velocity.x = -mc.velocity.x;
 
-            ballEntity.add(mc);
+            lastSpawnedBall.add(mc);
 
             BallComponent ball = new BallComponent(Vector3.Zero, 4);
-            ballEntity.add(ball);
+            lastSpawnedBall.add(ball);
 
             RenderableComponent rc = new RenderableComponent(new ModelInstance(ballModel));
-            ballEntity.add(rc);
+            lastSpawnedBall.add(rc);
 
             ShadowComponent sc = new ShadowComponent(new ModelInstance(shadowModel));
-            ballEntity.add(sc);
+            lastSpawnedBall.add(sc);
 
-            engine.addEntity(ballEntity);
+            engine.addEntity(lastSpawnedBall);
         }
+        super.update(deltaTime);
+    }
+
+    @Override
+    protected void processEntity(Entity entity, float deltaTime) {
+        picm.get(entity).ball = this.lastSpawnedBall;
     }
 
 }

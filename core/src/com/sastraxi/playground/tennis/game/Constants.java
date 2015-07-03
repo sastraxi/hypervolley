@@ -26,7 +26,7 @@ public class Constants {
     public static final float PLAYER_SIZE = 2f * PLAYER_RADIUS;
 
     public static final float CONTROLLER_WALK_MAGNITUDE = 0.2f;
-    public static final float CONTROLLER_RUN_MAGNITUDE = 0.6f;
+    public static final float CONTROLLER_RUN_MAGNITUDE = 0.75f;
 
     public static final float PLAYER_SPEED = 90f;
     public static final float PLAYER_ACCEL = 0.4f; // seconds to get up to speed
@@ -88,4 +88,5 @@ public class Constants {
     // then we'll print out a message saying "Nice!"
     public static final float PLAYER_BALL_SMASH_TOLERANCE = 1f;
 
+    public static final int SYSTEM_PRIORITY_RENDERING = 999;
 }

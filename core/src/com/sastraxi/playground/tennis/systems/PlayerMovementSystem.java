@@ -5,10 +5,9 @@ import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
-import com.badlogic.ashley.utils.ImmutableArray;
 import com.badlogic.gdx.controllers.Controller;
-import com.badlogic.gdx.math.*;
-import com.badlogic.gdx.math.collision.Ray;
+import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Vector3;
 import com.sastraxi.playground.tennis.components.BallComponent;
 import com.sastraxi.playground.tennis.components.MovementComponent;
 import com.sastraxi.playground.tennis.components.PlayerInputComponent;
@@ -130,9 +129,6 @@ public class PlayerMovementSystem extends IteratingSystem {
                 movement.velocity.set(0f, 0f, 0f);
             }
         }
-
-        // look at the ball more-or-less depending on either trigger
-        pic.lookAtBall = Math.abs(controller.getAxis(Xbox360Pad.AXIS_RIGHT_TRIGGER));
 
         // integrate velocity -> position
         // _tmp = movement vector
