@@ -190,6 +190,7 @@ public class PlayerMovementSystem extends IteratingSystem {
             */
 
             // strike zone
+            // FIXME we also need to account for when the ball is going so fast that it never actually lays inside the strike zone (rather; moves directly through it)
             pic.inStrikeZone =
                     ballDistance > Constants.PLAYER_BALL_MIN_REACH &&
                     ballDistance < Constants.PLAYER_BALL_MAX_REACH &&
