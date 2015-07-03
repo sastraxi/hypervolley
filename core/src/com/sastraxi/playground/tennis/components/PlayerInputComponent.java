@@ -27,6 +27,7 @@ public class PlayerInputComponent extends Component {
     // state
     public DashState state = DashState.NONE;
     public float timeSinceStateChange = 0f;
+    public float timeToHit = 0f;
     public float dashMeter = Constants.DASH_MAX_METER;
     public float lookAtBall = 0f; // really just the amount of the trigger that's pressed
 

@@ -112,7 +112,7 @@ public class TennisEntry extends ApplicationAdapter {
         // player model instances
         playerModelInstances = new ModelInstance[players.length];
         for (int i = 0; i < players.length; ++i) {
-            playerModelInstances[i] = new ModelInstance(PlayerModel.create(
+            playerModelInstances[i] = new ModelInstance(PlayerModel.build(
                     i == 0 ? Constants.PLAYER_ONE_COLOUR : Constants.PLAYER_TWO_COLOUR
             ));
         }
@@ -249,22 +249,6 @@ public class TennisEntry extends ApplicationAdapter {
         {
             MovementComponent mc = mcm.get(players[i]);
             PlayerInputComponent pic = picm.get(players[i]);
-
-            // find the closest ball
-            /*
-            float closestBallDistance = Float.MAX_VALUE;
-            Vector2 closestBall = new Vector2();
-            Vector2 _tmp = new Vector2();
-            for (Entity entity: ballEntities) {
-                MovementComponent ball = mcm.get(entity);
-                float ballDistance = _tmp.set(ball.position.x, ball.position.y).dst(mc.position.x, mc.position.y);
-                if (closestBall == null || ballDistance < closestBallDistance)
-                {
-                    closestBall.set(ball.position.x, ball.position.y);
-                    closestBallDistance = ballDistance;
-                }
-            }
-            */
 
             Vector2 closestBall = new Vector2(ballMovement.position.x, ballMovement.position.y);
             Vector2 playerToBall = closestBall.sub(mc.position.x, mc.position.y);

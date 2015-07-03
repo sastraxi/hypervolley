@@ -17,7 +17,7 @@ public class PlayerModel {
 
     private static final long vertexAttributes = VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal;
 
-    public static Model create(Color colour)
+    public static Model build(Color colour)
     {
         Node node;
         ModelBuilder builder = new ModelBuilder();

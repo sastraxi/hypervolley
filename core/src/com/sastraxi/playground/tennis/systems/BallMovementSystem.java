@@ -13,6 +13,8 @@ import com.sastraxi.playground.tennis.game.Constants;
 
 public class BallMovementSystem extends IteratingSystem {
 
+    private static final int PRIORITY = 3; // after player movement system
+
     private ComponentMapper<MovementComponent> mcm = ComponentMapper.getFor(MovementComponent.class);
     private ComponentMapper<BallComponent> bcm = ComponentMapper.getFor(BallComponent.class);
     private Engine engine = null;
@@ -20,7 +22,7 @@ public class BallMovementSystem extends IteratingSystem {
     Vector3 _tmp = new Vector3(), _magnus = new Vector3(), _pos = new Vector3();
 
     public BallMovementSystem() {
-        super(Family.all(MovementComponent.class, BallComponent.class).get());
+        super(Family.all(MovementComponent.class, BallComponent.class).get(), PRIORITY);
     }
 
     public void addedToEngine(Engine engine)
@@ -79,7 +81,7 @@ public class BallMovementSystem extends IteratingSystem {
      * @param plane
      * @return
      */
-    private int _bounce(MovementComponent movement, Vector3 pos, Vector3 delta, Plane plane)
+    public static int _bounce(MovementComponent movement, Vector3 pos, Vector3 delta, Plane plane)
     {
         Vector3 finish = new Vector3(pos).add(delta);
 

@@ -24,6 +24,8 @@ import com.sastraxi.playground.tennis.game.Constants;
 
 public class BallSpawningSystem extends EntitySystem {
 
+    public static final int PRIORITY = 1;
+
     private Engine engine = null;
     private RandomXS128 random;
     private Model ballModel, shadowModel;
@@ -34,6 +36,8 @@ public class BallSpawningSystem extends EntitySystem {
 
     public BallSpawningSystem()
     {
+        super(PRIORITY);
+
         // TODO refactor into models.Ball
         ModelBuilder builder = new ModelBuilder();
 
