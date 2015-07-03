@@ -27,8 +27,9 @@ public class PlayerInputComponent extends Component {
     public Controller controller;
     public Rectangle bounds;
 
-    // set by BallSpawningSystem
+    // ball set by BallSpawningSystem
     public Entity ball = null;
+    public boolean inStrikeZone = false;
 
     // a place to look at on the other side of the court
     public Vector3 focalPoint;

@@ -59,8 +59,13 @@ public class BallMovementSystem extends IteratingSystem {
         ball.bounces += _bounce(movement, _pos, _tmp, Constants.COURT_GROUND_PLANE);
         ball.bounces += _bounce(movement, _pos, _tmp, Constants.COURT_NEAR_PLANE);
         ball.bounces += _bounce(movement, _pos, _tmp, Constants.COURT_FAR_PLANE);
-        ball.bounces += _bounce(movement, _pos, _tmp, Constants.COURT_LEFT_PLANE);
         ball.bounces += _bounce(movement, _pos, _tmp, Constants.COURT_RIGHT_PLANE);
+
+        // kill the ball if it hits the left wall
+        if (_bounce(movement, _pos, _tmp, Constants.COURT_LEFT_PLANE) > 0) {
+            engine.removeEntity(entity);
+            return;
+        }
 
         // set the ball's new position, using up the remaining delta (_tmp) in the process
         movement.position.set(_pos).add(_tmp);
@@ -68,6 +73,7 @@ public class BallMovementSystem extends IteratingSystem {
         // die once we hit a certain # of bounces
         if (ball.bounces >= ball.maxBounces) {
             engine.removeEntity(entity);
+            return;
         }
     }
 

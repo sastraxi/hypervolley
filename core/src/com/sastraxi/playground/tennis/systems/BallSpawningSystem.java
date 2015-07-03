@@ -101,7 +101,7 @@ public class BallSpawningSystem extends IteratingSystem {
 
             lastSpawnedBall.add(mc);
 
-            BallComponent ball = new BallComponent(Vector3.Zero, 4);
+            BallComponent ball = new BallComponent(Vector3.Zero, 999);
             lastSpawnedBall.add(ball);
 
             RenderableComponent rc = new RenderableComponent(new ModelInstance(ballModel));

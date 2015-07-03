@@ -60,13 +60,9 @@ public class MiscMath {
      */
     public static float clerp(float fromValue, float toValue, float amount)
     {
-        // TODO fix this shit, 1...359 will still be chosen over 1-0
-        if (fromValue < 0f) fromValue += MathUtils.PI2;
-        if (toValue < 0f) toValue += MathUtils.PI2;
-        if (toValue - fromValue > MathUtils.PI || toValue - fromValue < -MathUtils.PI) {
-            // take the other path instead
-            fromValue += MathUtils.PI2;
-        }
+        // FIXME seems broken
+        while (toValue - fromValue > MathUtils.PI) fromValue += MathUtils.PI2;
+        while (toValue - fromValue < -MathUtils.PI) fromValue -= MathUtils.PI2;
         return MathUtils.lerp(fromValue, toValue, amount);
     }
 

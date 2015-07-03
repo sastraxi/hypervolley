@@ -1,6 +1,7 @@
 package com.sastraxi.playground.tennis.game;
 
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Plane;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
@@ -73,24 +74,19 @@ public class Constants {
     public static final Color PLAYER_TWO_COLOUR = new Color(0.2f, 0.5f, 0.8f, 1.0f);
 
     public static final float BALL_SPIN_INFLUENCE = 0.2f;
-    public static final float BALL_SPAWNING_RATE = 4f; // spawn a new ball every x seconds
     public static final float BALL_RADIUS = 2.5f;
 
     // the player should attempt to hit the ball when it is directly in front of their orientation
     // but we want the ideal hit to be slightly before the ball would actually get there.
     // PLAYER_BALL_SWING_DURATION says how many seconds we should extrapolate a ball's position into the future
     // in order to compare it with a ray shooting forward from the player of length PLAYER_BALL_REACH
-    public static final float PLAYER_BALL_MIN_REACH = PLAYER_RADIUS + 3f;
-    public static final float PLAYER_BALL_MAX_REACH = PLAYER_RADIUS + 7f;
-    public static final float PLAYER_BALL_SWING_DURATION = 0.2f;
-    public static final float PLAYER_BALL_GLANCE_DISTANCE = 70f;
-    public static final float PLAYER_BALL_STARE_DISTANCE = 40f;
+    public static final float PLAYER_BALL_MIN_REACH = 2f*PLAYER_RADIUS + 5f;
+    public static final float PLAYER_BALL_MAX_REACH = 2f*PLAYER_RADIUS + 40f;
+    public static final float PLAYER_BALL_SWING_DURATION = 0.1f;
+    public static final float PLAYER_BALL_GLANCE_DISTANCE = 90f;
+    public static final float PLAYER_BALL_STARE_DISTANCE = 20f;
+    public static final float PLAYER_BALL_STRIKE_FOV_RADIANS = 120f * MathUtils.degreesToRadians;
     public static final float PLAYER_BALL_DIST_DIFF = PLAYER_BALL_GLANCE_DISTANCE - PLAYER_BALL_STARE_DISTANCE;
 
-    // if the ball position's distance to the ray <= this value (game units)
-    // then we'll print out a message saying "Nice!"
-    public static final float PLAYER_BALL_SMASH_TOLERANCE = 1f;
-
-    public static final int SYSTEM_PRIORITY_RENDERING = 999;
-            ;
+    public static final float PERFECT_HIT_VELOCITY_SCALE = 1.3f;
 }

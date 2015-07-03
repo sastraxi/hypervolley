@@ -8,6 +8,7 @@ import com.badlogic.ashley.systems.IteratingSystem;
 import com.badlogic.gdx.controllers.Controller;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Quaternion;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.sastraxi.playground.found.MiscMath;
 import com.sastraxi.playground.tennis.components.BallComponent;
@@ -15,6 +16,7 @@ import com.sastraxi.playground.tennis.components.MovementComponent;
 import com.sastraxi.playground.tennis.components.PlayerInputComponent;
 import com.sastraxi.playground.tennis.contrib.Xbox360Pad;
 import com.sastraxi.playground.tennis.game.Constants;
+import com.sun.corba.se.impl.orbutil.closure.Constant;
 
 public class PlayerMovementSystem extends IteratingSystem {
 
@@ -27,7 +29,11 @@ public class PlayerMovementSystem extends IteratingSystem {
 
     private Engine engine;
 
-    Vector3 _tmp = new Vector3(), _tmp_player_ball = new Vector3(), _tmp_player_focal = new Vector3();
+    Vector3 _tmp = new Vector3(),
+            _tmp_player_ball = new Vector3(),
+            _tmp_player_focal = new Vector3(),
+            _tmp_player_ball_prev = new Vector3(),
+            _tmp_player_offset = new Vector3();
 
     public PlayerMovementSystem() {
         super(Family.all(MovementComponent.class, PlayerInputComponent.class).get(), PRIORITY);
@@ -159,84 +165,67 @@ public class PlayerMovementSystem extends IteratingSystem {
         // while the ball is between the two, lerp
         if (pic.ball != null) {
             MovementComponent ballMovement = mc.get(pic.ball);
-            _tmp_player_ball.set(ballMovement.position).sub(movement.position);
+
+            // this "offset" position is behind the player
+            _tmp_player_offset.set(MathUtils.cos(_rot), MathUtils.sin(_rot), 0f).scl(-Constants.PLAYER_RADIUS).add(movement.position);
+            _tmp_player_ball.set(ballMovement.position).sub(_tmp_player_offset);
             float ballDistance = _tmp_player_ball.len();
+            float ballRadians = MathUtils.atan2(_tmp_player_ball.y, _tmp_player_ball.x);
+
+            // glance or stare at the ball
             // System.out.println(ballDistance);
+            /*
             if (ballDistance <= Constants.PLAYER_BALL_GLANCE_DISTANCE)
             {
-                float pct = (ballDistance - Constants.PLAYER_BALL_GLANCE_DISTANCE) / Constants.PLAYER_BALL_DIST_DIFF;
-                float destRadians = MathUtils.atan2(_tmp_player_ball.y, _tmp_player_ball.x);
+                float pct = (ballDistance - Constants.PLAYER_BALL_STARE_DISTANCE) / Constants.PLAYER_BALL_DIST_DIFF;
                 if (pct < 0f) {
                     // complete stare
-                    movement.orientation.set(Constants.UP_VECTOR, MathUtils.radiansToDegrees * destRadians);
+                    movement.orientation.set(Constants.UP_VECTOR, MathUtils.radiansToDegrees * ballRadians);
                 } else {
                     // orientation lerp
-                    movement.orientation.set(Constants.UP_VECTOR, MathUtils.radiansToDegrees * MiscMath.clerp(_rot, destRadians, pct));
+                    movement.orientation.set(Constants.UP_VECTOR, MathUtils.radiansToDegrees * MiscMath.clerp(_rot, ballRadians, 1f-pct));
                 }
             }
-        }
+            */
 
-        // ball-hitting
-        // FIXME all this garbage to collect (/s/new/pool.get/g)
-        /*
-        if (pic.timeToHit > 0f)
-        {
-            pic.timeToHit -= deltaTime;
-            if (pic.timeToHit <= 0f) {
-                ImmutableArray<Entity> ballEntities = engine.getEntitiesFor(ballFamily);
-                if (ballEntities.size() > 0)
-                {
-                    MovementComponent ballMovement = mc.get(ballEntities.first());
+            // strike zone
+            pic.inStrikeZone =
+                    ballDistance > Constants.PLAYER_BALL_MIN_REACH &&
+                    ballDistance < Constants.PLAYER_BALL_MAX_REACH &&
+                    Math.abs(_rot - ballRadians) < Constants.PLAYER_BALL_STRIKE_FOV_RADIANS;
+
+            // ball-hitting
+            if (pic.timeToHit > 0f)
+            {
+                pic.timeToHit -= deltaTime;
+                if (pic.timeToHit <= 0f) {
 
                     // we're "apex" of the swing;
                     // determine where the ball is this frame, last frame, and next frame
-                    // FIXME projecting down to 2D for this -- I think it's ok?
-                    Vector2 ball_pos_now = new Vector2(ballMovement.position.x, ballMovement.position.y);
-                    Vector2 player_to_ball = new Vector2(ball_pos_now).sub(movement.position.x, movement.position.y);
-                    float dist = player_to_ball.len();
-                    player_to_ball.nor();
-                    Vector2 left_
+                    _tmp_player_ball_prev.set(ballMovement.velocity).scl(-deltaTime).add(ballMovement.position).sub(_tmp_player_offset);
+                    float prevBallRadians = MathUtils.atan2(_tmp_player_ball_prev.y, _tmp_player_ball_prev.x);
 
-                    if () {
-                        // in hit tolerance zone
-
-                        Vector2 ball_delta = new Vector2(ballMovement.velocity.x, ballMovement.velocity.y).scl(deltaTime);
-                        Vector2 ball_pos_prev = new Vector2(ball_pos_now).sub(ball_delta);
-
-                        // we want to find out if we've hit the ball at the best possible time;
-                        // define this as the distance to the hit-ray
-                        Vector3 hitRay = new Vector3(Constants.PLAYER_BALL_MAX_REACH, 0f, 0f);
-                        movement.orientation.transform(hitRay);
-
-                        // TODO fix these, not signed distances
-                        float dist_now = Intersector.distanceLinePoint(
-                                movement.position.x, movement.position.y,
-                                movement.position.x + hitRay.x, movement.position.y + hitRay.y,
-                                ball_pos_now.x, ball_pos_now.y);
-
-                        float dist_prev = Intersector.distanceLinePoint(
-                                movement.position.x, movement.position.y,
-                                movement.position.x + hitRay.x, movement.position.y + hitRay.y,
-                                ball_pos_prev.x, ball_pos_prev.y);
-
-
-                        if (Math.signum(dist_prev) != Math.signum(dist_now)) {
-                            // perfect frame; do a smash hit
-
+                    if (pic.inStrikeZone)
+                    {
+                        if (Math.signum(_rot - ballRadians) != Math.signum(_rot - prevBallRadians)) {
+                            // perfect hit
+                            System.out.println("Perfect hit!");
+                            ballMovement.velocity.x *= Constants.PERFECT_HIT_VELOCITY_SCALE;
                         } else {
-                            // at least we're in the tolerance zone;
-                            // do a regular hit
+                            System.out.println("Hit!");
                         }
+
+                        ballMovement.velocity.x = -ballMovement.velocity.x;
                     }
+
                 }
             }
+            else if (controller.getButton(Xbox360Pad.BUTTON_X))
+            {
+                // wind up to hit the ball
+                pic.timeToHit = Constants.PLAYER_BALL_SWING_DURATION;
+            }
         }
-        else if (controller.getButton(Xbox360Pad.BUTTON_X))
-        {
-            // wind up to hit the ball
-            pic.timeToHit = Constants.PLAYER_BALL_SWING_DURATION;
-        }
-        */
     }
 
 }

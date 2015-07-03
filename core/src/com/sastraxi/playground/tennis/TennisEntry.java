@@ -43,6 +43,7 @@ public class TennisEntry extends ApplicationAdapter {
     final ComponentMapper<MovementComponent> mcm = ComponentMapper.getFor(MovementComponent.class);
     final ComponentMapper<RenderableComponent> rcm = ComponentMapper.getFor(RenderableComponent.class);
     final ComponentMapper<ShadowComponent> scm = ComponentMapper.getFor(ShadowComponent.class);
+    final ComponentMapper<AlertedComponent> acm = ComponentMapper.getFor(AlertedComponent.class);
 
     static final long FRAME_RATE = 60;
     static final float FRAME_TIME_SEC = 1f / (float) FRAME_RATE;
@@ -103,6 +104,12 @@ public class TennisEntry extends ApplicationAdapter {
             if (i == 0) Constants.PLAYER_TWO_BOUNDS.getCenter(focalPoint);
             else        Constants.PLAYER_ONE_BOUNDS.getCenter(focalPoint);
 
+            // an exclamation mark above the player's head
+            // used to signify when ball is in strike zone
+            AlertedComponent ac = new AlertedComponent(new ModelInstance(PlayerModel.buildAlert(new Color(1f, 0f, 0f, 0f), 3f)));
+            players[i].add(ac);
+
+            // movement + orientation
             MovementComponent mc = new MovementComponent();
             Vector2 center = bounds.getCenter(new Vector2());
             mc.position.set(center, 0f);
@@ -256,12 +263,21 @@ public class TennisEntry extends ApplicationAdapter {
         for (int i = 0; i < players.length; ++i)
         {
             MovementComponent mc = mcm.get(players[i]);
+            PlayerInputComponent pic = picm.get(players[i]);
 
             playerModelInstances[i].transform
                     .setToTranslation(mc.position)
                     .rotate(mc.orientation);
 
             batch.render(playerModelInstances[i], environment);
+
+            if (pic.inStrikeZone) {
+                AlertedComponent ac = acm.get(players[i]);
+                ac.modelInstance.transform
+                        .setToTranslation(mc.position)
+                        .rotate(mc.orientation);
+                batch.render(ac.modelInstance, environment);
+            }
         }
 
         batch.end();
