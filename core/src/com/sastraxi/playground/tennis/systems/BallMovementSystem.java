@@ -122,7 +122,8 @@ public class BallMovementSystem extends IteratingSystem {
         // delta must always be collinear with movement.velocity!
         float mag_velocity = movement.velocity.len();
         movement.velocity.nor();
-        _reflect.set(movement.velocity).sub(new Vector3(plane.normal).scl(2f).scl(movement.velocity.dot(plane.normal)));
+        _reflect.set(plane.normal).scl(-2f).scl(movement.velocity.dot(plane.normal)).add(movement.velocity);
+        // _reflect.set(movement.velocity).sub(new Vector3(plane.normal).scl(2f).scl(movement.velocity.dot(plane.normal)));
 
         // update start to be our intersection point
         pos.set(_isect);

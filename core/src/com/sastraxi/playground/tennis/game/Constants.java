@@ -85,7 +85,7 @@ public class Constants {
     public static final float PLAYER_BALL_SWING_DURATION = 0.1f;
     public static final float PLAYER_BALL_GLANCE_DISTANCE = 90f;
     public static final float PLAYER_BALL_STARE_DISTANCE = 20f;
-    public static final float PLAYER_BALL_STRIKE_FOV_RADIANS = 120f * MathUtils.degreesToRadians;
+    public static final float PLAYER_BALL_STRIKE_FOV_RADIANS = 100f * MathUtils.degreesToRadians;
     public static final float PLAYER_BALL_DIST_DIFF = PLAYER_BALL_GLANCE_DISTANCE - PLAYER_BALL_STARE_DISTANCE;
 
     public static final float PERFECT_HIT_VELOCITY_SCALE = 1.3f;
