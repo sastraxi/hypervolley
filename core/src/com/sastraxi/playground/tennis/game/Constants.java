@@ -28,7 +28,7 @@ public class Constants {
     public static final float CONTROLLER_WALK_MAGNITUDE = 0.2f;
     public static final float CONTROLLER_RUN_MAGNITUDE = 0.75f;
 
-    public static final float PLAYER_SPEED = 90f;
+    public static final float PLAYER_SPEED = 100f;
     public static final float PLAYER_ACCEL = 0.4f; // seconds to get up to speed
     public static final float PLAYER_DECEL = 0.4f; // seconds to slow down to 0
 
@@ -83,10 +83,14 @@ public class Constants {
     public static final float PLAYER_BALL_MIN_REACH = PLAYER_RADIUS + 3f;
     public static final float PLAYER_BALL_MAX_REACH = PLAYER_RADIUS + 7f;
     public static final float PLAYER_BALL_SWING_DURATION = 0.2f;
+    public static final float PLAYER_BALL_GLANCE_DISTANCE = 70f;
+    public static final float PLAYER_BALL_STARE_DISTANCE = 40f;
+    public static final float PLAYER_BALL_DIST_DIFF = PLAYER_BALL_GLANCE_DISTANCE - PLAYER_BALL_STARE_DISTANCE;
 
     // if the ball position's distance to the ray <= this value (game units)
     // then we'll print out a message saying "Nice!"
     public static final float PLAYER_BALL_SMASH_TOLERANCE = 1f;
 
     public static final int SYSTEM_PRIORITY_RENDERING = 999;
+            ;
 }

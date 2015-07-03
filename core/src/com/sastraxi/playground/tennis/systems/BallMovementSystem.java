@@ -71,6 +71,9 @@ public class BallMovementSystem extends IteratingSystem {
         }
     }
 
+    private static Vector3 _finish = new Vector3(), _isect = new Vector3(), _reflect = new Vector3();
+    private static Plane _workingPlane = new Plane();
+
     /**
      * Returns 0 if the ball hit off of this plane while moving from start to start + delta.
      * Updates movement.velocity with the new velocity and start with the new (working) position.
@@ -83,17 +86,18 @@ public class BallMovementSystem extends IteratingSystem {
      */
     public static int _bounce(MovementComponent movement, Vector3 pos, Vector3 delta, Plane plane)
     {
-        Vector3 finish = new Vector3(pos).add(delta);
+        _finish.set(pos).add(delta);
 
         // figure out what side of the plane we're coming from and create a plane that
         // we can test against the centre point of the ball
         float d_start = plane.distance(pos);
-        Plane workingPlane = new Plane(plane.normal, Math.signum(d_start) == 1f ? plane.d - Constants.BALL_RADIUS
-                                                                                : plane.d + Constants.BALL_RADIUS);
+        _workingPlane.set(plane.normal.x, plane.normal.y, plane.normal.z,
+                Math.signum(d_start) == 1f ? plane.d - Constants.BALL_RADIUS
+                                           : plane.d + Constants.BALL_RADIUS);
 
         // (re-)calculate distances around this new plane
-        d_start = workingPlane.distance(pos);
-        float d_end = workingPlane.distance(finish);
+        d_start = _workingPlane.distance(pos);
+        float d_end = _workingPlane.distance(_finish);
 
         // doesn't cross the plane
         //System.out.println(" --- " + d_start + " -> " + d_end);
@@ -102,7 +106,7 @@ public class BallMovementSystem extends IteratingSystem {
         // close enough and moving towards the plane;
         // find out where it
         float pct = d_start / (d_start - d_end);
-        Vector3 intersection = new Vector3(delta).scl(pct).add(pos);
+        _isect.set(delta).scl(pct).add(pos);
 
         // debug
         //System.out.println("Bounce on " + plane.toString() + ": " + (pct * 100) + "%");
@@ -112,15 +116,15 @@ public class BallMovementSystem extends IteratingSystem {
         // delta must always be collinear with movement.velocity!
         float mag_velocity = movement.velocity.len();
         movement.velocity.nor();
-        Vector3 reflect = new Vector3(movement.velocity).sub(new Vector3(plane.normal).scl(2f).scl(movement.velocity.dot(plane.normal)));
+        _reflect.set(movement.velocity).sub(new Vector3(plane.normal).scl(2f).scl(movement.velocity.dot(plane.normal)));
 
         // update start to be our intersection point
-        pos.set(intersection);
+        pos.set(_isect);
 
         // compute delta (movement after bounce) and movement velocity (overall reflected velocity)
         float mag_delta = delta.len() * (1 - pct);
-        delta.set(reflect).scl(mag_delta);
-        movement.velocity.set(reflect).scl(mag_velocity);
+        delta.set(_reflect).scl(mag_delta);
+        movement.velocity.set(_reflect).scl(mag_velocity);
 
         // debug
         //System.out.println("    -> escape velocity: " + movement.velocity + ";\tpos: " + pos + ",\tdelta: " + delta);

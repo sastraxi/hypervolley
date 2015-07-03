@@ -7,7 +7,9 @@ import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
 import com.badlogic.gdx.controllers.Controller;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
+import com.sastraxi.playground.found.MiscMath;
 import com.sastraxi.playground.tennis.components.BallComponent;
 import com.sastraxi.playground.tennis.components.MovementComponent;
 import com.sastraxi.playground.tennis.components.PlayerInputComponent;
@@ -16,16 +18,16 @@ import com.sastraxi.playground.tennis.game.Constants;
 
 public class PlayerMovementSystem extends IteratingSystem {
 
+    private static final Family BALL_FAMILY = Family.one(BallComponent.class).get();
     private static final int PRIORITY = 2; // before ball movement system
 
     private ComponentMapper<BallComponent> bcm = ComponentMapper.getFor(BallComponent.class);
     private ComponentMapper<MovementComponent> mc = ComponentMapper.getFor(MovementComponent.class);
     private ComponentMapper<PlayerInputComponent> cicm = ComponentMapper.getFor(PlayerInputComponent.class);
 
-    private static final Family ballFamily = Family.one(BallComponent.class).get();
-
-    Vector3 _tmp = new Vector3();
     private Engine engine;
+
+    Vector3 _tmp = new Vector3(), _tmp_player_ball = new Vector3(), _tmp_player_focal = new Vector3();
 
     public PlayerMovementSystem() {
         super(Family.all(MovementComponent.class, PlayerInputComponent.class).get(), PRIORITY);
@@ -45,6 +47,9 @@ public class PlayerMovementSystem extends IteratingSystem {
         Controller controller = pic.controller;
 
         pic.timeSinceStateChange += deltaTime;
+
+        // get original orientation (only Z component) in radians
+        float _rot = movement.orientation.getRollRad();
 
         // dash state changes; only allow when resting or we've done our animations
         if (controller.getButton(Xbox360Pad.BUTTON_A)
@@ -84,10 +89,9 @@ public class PlayerMovementSystem extends IteratingSystem {
                 pic.state = PlayerInputComponent.DashState.NONE;
             }
             float speed = MathUtils.lerp(Constants.DASH_SPEED, Constants.PLAYER_SPEED, pct);
-            float zAngle = movement.orientation.getRollRad();
             movement.velocity.set(
-                    MathUtils.cos(zAngle) * speed,
-                    MathUtils.sin(zAngle) * speed,
+                    MathUtils.cos(_rot) * speed,
+                    MathUtils.sin(_rot) * speed,
                     0f);
         }
         else if (pic.state == PlayerInputComponent.DashState.DASHING)
@@ -99,10 +103,9 @@ public class PlayerMovementSystem extends IteratingSystem {
                 pct = 1.0f;
             }
             float speed = MathUtils.lerp(Constants.PLAYER_SPEED, Constants.DASH_SPEED, pct);
-            float zAngle = movement.orientation.getRollRad();
             movement.velocity.set(
-                    MathUtils.cos(zAngle) * speed,
-                    MathUtils.sin(zAngle) * speed,
+                    MathUtils.cos(_rot) * speed,
+                    MathUtils.sin(_rot) * speed,
                     0f);
         }
         else
@@ -121,9 +124,11 @@ public class PlayerMovementSystem extends IteratingSystem {
                 // all input below a second threshold as 0.5, all input above as 1.0
                 if (_tmp.len() < Constants.CONTROLLER_RUN_MAGNITUDE) {
                     movement.velocity.scl(0.5f);
+                    _tmp_player_focal.set(pic.focalPoint).sub(movement.position);
+                    movement.orientation.set(Constants.UP_VECTOR, MathUtils.radiansToDegrees * MathUtils.atan2(_tmp_player_focal.y, _tmp_player_focal.x));
+                } else {
+                    movement.orientation.set(Constants.UP_VECTOR, MathUtils.radiansToDegrees * MathUtils.atan2(_tmp.y, _tmp.x));
                 }
-
-                movement.orientation.set(Constants.UP_VECTOR, MathUtils.radiansToDegrees * MathUtils.atan2(_tmp.y, _tmp.x));
 
             } else {
                 movement.velocity.set(0f, 0f, 0f);
@@ -146,6 +151,29 @@ public class PlayerMovementSystem extends IteratingSystem {
             movement.position.x = Math.min(movement.position.x, pic.bounds.x + pic.bounds.width);
             movement.position.y = Math.max(movement.position.y, pic.bounds.y);
             movement.position.y = Math.min(movement.position.y, pic.bounds.y + pic.bounds.height);
+        }
+
+        // look the right way
+        // while the ball is > PLAYER_BALL_GLANCE_DISTANCE from the player, it doesn't affect orientation
+        // while the ball is < PLAYER_BALL_STARE_DISTANCE, the player is starting at the ball
+        // while the ball is between the two, lerp
+        if (pic.ball != null) {
+            MovementComponent ballMovement = mc.get(pic.ball);
+            _tmp_player_ball.set(ballMovement.position).sub(movement.position);
+            float ballDistance = _tmp_player_ball.len();
+            // System.out.println(ballDistance);
+            if (ballDistance <= Constants.PLAYER_BALL_GLANCE_DISTANCE)
+            {
+                float pct = (ballDistance - Constants.PLAYER_BALL_GLANCE_DISTANCE) / Constants.PLAYER_BALL_DIST_DIFF;
+                float destRadians = MathUtils.atan2(_tmp_player_ball.y, _tmp_player_ball.x);
+                if (pct < 0f) {
+                    // complete stare
+                    movement.orientation.set(Constants.UP_VECTOR, MathUtils.radiansToDegrees * destRadians);
+                } else {
+                    // orientation lerp
+                    movement.orientation.set(Constants.UP_VECTOR, MathUtils.radiansToDegrees * MiscMath.clerp(_rot, destRadians, pct));
+                }
+            }
         }
 
         // ball-hitting

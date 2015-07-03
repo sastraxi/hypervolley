@@ -22,18 +22,15 @@ import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.model.Node;
 import com.badlogic.gdx.graphics.g3d.utils.DefaultShaderProvider;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
-import com.sastraxi.playground.tennis.components.BallComponent;
-import com.sastraxi.playground.tennis.components.MovementComponent;
-import com.sastraxi.playground.tennis.components.PlayerInputComponent;
+import com.sastraxi.playground.tennis.components.*;
 import com.sastraxi.playground.tennis.game.Constants;
 import com.sastraxi.playground.tennis.models.PlayerModel;
 import com.sastraxi.playground.tennis.systems.BallMovementSystem;
-import com.sastraxi.playground.tennis.systems.BallRenderingSystem;
 import com.sastraxi.playground.tennis.systems.BallSpawningSystem;
 import com.sastraxi.playground.tennis.systems.PlayerMovementSystem;
 import org.lwjgl.opengl.GL30;
@@ -44,6 +41,8 @@ public class TennisEntry extends ApplicationAdapter {
 
     final ComponentMapper<PlayerInputComponent> picm = ComponentMapper.getFor(PlayerInputComponent.class);
     final ComponentMapper<MovementComponent> mcm = ComponentMapper.getFor(MovementComponent.class);
+    final ComponentMapper<RenderableComponent> rcm = ComponentMapper.getFor(RenderableComponent.class);
+    final ComponentMapper<ShadowComponent> scm = ComponentMapper.getFor(ShadowComponent.class);
 
     static final long FRAME_RATE = 60;
     static final float FRAME_TIME_SEC = 1f / (float) FRAME_RATE;
@@ -54,11 +53,11 @@ public class TennisEntry extends ApplicationAdapter {
     // entities and components
     Engine engine;
     Entity[] players;
+    ImmutableArray<Entity> ballEntities;
 
     // systems
     BallMovementSystem bms;
     BallSpawningSystem bss;
-    BallRenderingSystem brs;
 
     // graphics
     PerspectiveCamera camera;
@@ -99,12 +98,17 @@ public class TennisEntry extends ApplicationAdapter {
             Rectangle bounds = (i == 0 ? Constants.PLAYER_ONE_BOUNDS : Constants.PLAYER_TWO_BOUNDS);
             players[i] = new Entity();
 
+            // determine focal point (on the other side of the court)
+            Vector2 focalPoint = new Vector2();
+            if (i == 0) Constants.PLAYER_TWO_BOUNDS.getCenter(focalPoint);
+            else        Constants.PLAYER_ONE_BOUNDS.getCenter(focalPoint);
+
             MovementComponent mc = new MovementComponent();
             Vector2 center = bounds.getCenter(new Vector2());
             mc.position.set(center, 0f);
             if (i == 1) mc.orientation = new Quaternion(Constants.UP_VECTOR, 180f);
             players[i].add(mc);
-            players[i].add(new PlayerInputComponent(controllers.get(i), bounds));
+            players[i].add(new PlayerInputComponent(controllers.get(i), bounds, new Vector3(focalPoint, 0f)));
 
             engine.addEntity(players[i]);
         }
@@ -121,8 +125,7 @@ public class TennisEntry extends ApplicationAdapter {
             bss = new BallSpawningSystem();
             engine.addSystem(bss);
 
-            brs = new BallRenderingSystem(batch, environment);
-            engine.addSystem(brs);
+            ballEntities = engine.getEntitiesFor(BALL_ENTITIES);
         }
 
         // ....
@@ -193,7 +196,6 @@ public class TennisEntry extends ApplicationAdapter {
         // InputMultiplexer multiplexer = new InputMultiplexer();
         // multiplexer.addProcessor(stage);
         // Gdx.input.setInputProcessor(multiplexer);
-
 	}
 
     @Override
@@ -233,30 +235,31 @@ public class TennisEntry extends ApplicationAdapter {
         batch.begin(camera);
         batch.render(tennisCourt, environment);
 
-        // render balls
-        ImmutableArray<Entity> ballEntities = engine.getEntitiesFor(BALL_ENTITIES);
+        // position + render balls
         for (Entity entity: ballEntities)
         {
+            MovementComponent mc = mcm.get(entity);
 
+            RenderableComponent rc = rcm.get(entity);
+            rc.modelInstance.transform
+                    .setToTranslation(mc.position);
+            // .rotate(mc.orientation);
+            batch.render(rc.modelInstance, environment);
+
+            ShadowComponent sc = scm.get(entity);
+            sc.modelInstance.transform
+                    .setToTranslation(mc.position.x, mc.position.y, 0.2f); // TODO disable depth test via Shader then set z=0f
+            batch.render(sc.modelInstance, environment);
         }
 
-        // FIXME should all this stuff be here?
+        // position + render players
         for (int i = 0; i < players.length; ++i)
         {
             MovementComponent mc = mcm.get(players[i]);
-            PlayerInputComponent pic = picm.get(players[i]);
-
-            Entity ballEntity = pic.ball;
-            MovementComponent ballMovement = mcm.get(ballEntity);
-
-            Vector2 closestBall = new Vector2(ballMovement.position.x, ballMovement.position.y);
-            Vector2 playerToBall = closestBall.sub(mc.position.x, mc.position.y);
-            Quaternion lookAtBallOrientation = new Quaternion(Constants.UP_VECTOR, MathUtils.radiansToDegrees * MathUtils.atan2(playerToBall.y, playerToBall.x));
-            Quaternion orientation = new Quaternion(mc.orientation);
 
             playerModelInstances[i].transform
                     .setToTranslation(mc.position)
-                    .rotate(orientation);
+                    .rotate(mc.orientation);
 
             batch.render(playerModelInstances[i], environment);
         }
