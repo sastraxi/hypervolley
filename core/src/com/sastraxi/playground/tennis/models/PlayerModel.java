@@ -16,6 +16,10 @@ import com.sastraxi.playground.tennis.game.Constants;
  */
 public class PlayerModel {
 
+    public static final String NODE_BASE = "base";
+    public static final String NODE_TORSO = "torso";
+    public static final String NODE_HEAD = "head";
+
     private static final long vertexAttributes = VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal;
 
     public static Model build(Color colour)
@@ -58,7 +62,7 @@ public class PlayerModel {
     /**
      *
      *      Base (rolling ball)
-     *      Torso (cylinder)
+     *      Torso (cone)
      *      Head
      *
      * Each node also has a little cube in front of it to show orientation
@@ -66,29 +70,53 @@ public class PlayerModel {
     public static Model buildServingRobot(Color colour)
     {
         Node base, torso, head;
+        Node node;
         ModelBuilder builder = new ModelBuilder();
         Material material = new Material(ColorAttribute.createDiffuse(colour));
 
-        float scale = Constants.PLAYER_HEIGHT * 0.4f;
+        float scale = Constants.PLAYER_SIZE * 0.8f;
 
         builder.begin();
+
+        // rollng ball & orientation
         base = builder.node();
+        base.id = NODE_BASE;
         base.translation.set(0f, 0f, 0.5f * scale);
         builder.part("base", GL20.GL_TRIANGLES, vertexAttributes, material)
                 .sphere(scale, scale, scale, Constants.DETAIL_LEVEL_SPHERE, Constants.DETAIL_LEVEL_SPHERE);
 
-        // TODO need to make another node for the base orientation
-        base.translation.set(Constants.PLAYER_SIZE, 0f, 0.5f * Constants.PLAYER_HEIGHT);
+        node = builder.node();
+        node.attachTo(base);
+        node.translation.set(scale, 0f, 0f);
         builder.part("orientation", GL20.GL_TRIANGLES, vertexAttributes, material)
                 .box(Constants.PLAYER_SIZE * 0.3f, Constants.PLAYER_SIZE * 0.3f, Constants.PLAYER_SIZE * 0.3f);
 
-
+        // upside-down cone & orientation
         torso = builder.node();
-        torso.translation.set(0f, 0f, Constants.PLAYER_HEIGHT + 2.5f * scale)
-                .rotate(Vector3.X, 90f);
+        torso.id = NODE_TORSO;
+        torso.translation.set(0f, 0f, 2f * scale);
+        torso.rotation.set(Vector3.X, 270f);
         builder.part("torso", GL20.GL_TRIANGLES, vertexAttributes, material)
-                .cylinder(3f * scale, 3f * scale, 3f * scale, Constants.DETAIL_LEVEL_SPHERE);
+                .cone(2f * scale, 2f * scale, 2f * scale, Constants.DETAIL_LEVEL_SPHERE);
 
+        node = builder.node();
+        node.attachTo(torso);
+        node.translation.set(scale, 0f, 0f);
+        builder.part("orientation", GL20.GL_TRIANGLES, vertexAttributes, material)
+                .box(Constants.PLAYER_SIZE * 0.3f, Constants.PLAYER_SIZE * 0.3f, Constants.PLAYER_SIZE * 0.3f);
+
+        // spherical head & orientation
+        head = builder.node();  
+        head.id = NODE_HEAD;
+        head.translation.set(0f, 0f, 3.9f * scale);
+        builder.part("head", GL20.GL_TRIANGLES, vertexAttributes, material)
+                .sphere(0.8f*scale, 0.8f*scale, 0.8f*scale, Constants.DETAIL_LEVEL_SPHERE, Constants.DETAIL_LEVEL_SPHERE);
+
+        node = builder.node();
+        node.attachTo(head);
+        node.translation.set(scale, 0f, 0f);
+        builder.part("orientation", GL20.GL_TRIANGLES, vertexAttributes, material)
+                .box(Constants.PLAYER_SIZE * 0.3f, Constants.PLAYER_SIZE * 0.3f, Constants.PLAYER_SIZE * 0.3f);
 
         return builder.end();
     }

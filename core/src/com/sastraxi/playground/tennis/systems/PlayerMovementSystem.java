@@ -49,6 +49,10 @@ public class PlayerMovementSystem extends IteratingSystem {
         MovementComponent movement = mc.get(entity);
         CharacterComponent pic = picm.get(entity);
         ControllerInputComponent cic = cicm.get(entity);
+
+        // FIXME need to split into active (controller) and passive (in strike zone, head orientation
+        if (cic == null) return;
+
         Controller controller = cic.controller;
 
         pic.timeSinceStateChange += deltaTime;

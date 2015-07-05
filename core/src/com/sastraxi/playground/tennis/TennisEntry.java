@@ -31,10 +31,11 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.sastraxi.playground.tennis.components.*;
 import com.sastraxi.playground.tennis.game.Constants;
+import com.sastraxi.playground.tennis.game.PlayerType;
 import com.sastraxi.playground.tennis.models.PlayerModel;
 import com.sastraxi.playground.tennis.systems.BallMovementSystem;
-import com.sastraxi.playground.tennis.systems.ServingRobotSystem;
 import com.sastraxi.playground.tennis.systems.PlayerMovementSystem;
+import com.sastraxi.playground.tennis.systems.ServingRobotSystem;
 import org.lwjgl.opengl.GL30;
 
 public class TennisEntry extends ApplicationAdapter {
@@ -53,12 +54,13 @@ public class TennisEntry extends ApplicationAdapter {
     static final long MICRO_TO_NANO = 1000000;
     long lastUpdateTime, frames;
 
-    // entities and components
-    Engine engine;
-    Entity[] players;
+    // entities and game logic
+    PlayerType[] playerTypes = new PlayerType[2];
+    Entity[] players = new Entity[2];
     ImmutableArray<Entity> ballEntities;
 
     // systems
+    Engine engine;
     BallMovementSystem bms;
     ServingRobotSystem bss;
 
@@ -73,7 +75,7 @@ public class TennisEntry extends ApplicationAdapter {
 
     // things to draw
     ModelInstance tennisCourt;
-    ModelInstance[] playerModelInstances;
+    ModelInstance[] playerModelInstances = new ModelInstance[2];
 
     @Override
 	public void create()
@@ -92,13 +94,21 @@ public class TennisEntry extends ApplicationAdapter {
         environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.4f, 0.4f, 0.4f, 1f));
         setupShadowLight(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
-        // attach a player
+        // determine game type based on # of controllers
         Array<Controller> controllers = Controllers.getControllers();
         if (controllers.size == 0) {
             System.err.println("You must attach a controller to run this game.");
             System.exit(1);
         }
-        players = new Entity[controllers.size >= 2 ? 2 : 1];
+        if (controllers.size >= 2) {
+            // player-vs-player
+            playerTypes[0] = PlayerType.HUMAN;
+            playerTypes[1] = PlayerType.HUMAN;
+        } else {
+            // player-vs-serving-robot
+            playerTypes[0] = PlayerType.HUMAN;
+            playerTypes[1] = PlayerType.SERVING_ROBOT;
+        }
 
         // entities and components
         engine = new Engine();
@@ -126,7 +136,15 @@ public class TennisEntry extends ApplicationAdapter {
             players[i].add(new CharacterComponent(bounds, new Vector3(focalPoint, 0f)));
 
             // the player's input is a controller
-            players[i].add(new ControllerInputComponent(controllers.get(i)));
+            if (playerTypes[i] == PlayerType.HUMAN) {
+                players[i].add(new ControllerInputComponent(controllers.get(i)));
+            }
+
+            // create the model
+            Color playerColour = (i == 0) ? Constants.PLAYER_ONE_COLOUR : Constants.PLAYER_TWO_COLOUR;
+            playerModelInstances[i] = (playerTypes[i] == PlayerType.HUMAN)
+                    ? new ModelInstance(PlayerModel.build(playerColour))
+                    : new ModelInstance(PlayerModel.buildServingRobot(playerColour));
 
             engine.addEntity(players[i]);
         }
@@ -134,8 +152,8 @@ public class TennisEntry extends ApplicationAdapter {
         // allow players to move
         engine.addSystem(new PlayerMovementSystem());
 
-        // if there's only one player, add a ball launcher on the other side of the court
-        if (players.length == 1)
+        // if player 2 is a serving robot, add a ball launcher on the other side of the court
+        if (playerTypes[1] == PlayerType.SERVING_ROBOT)
         {
             bms = new BallMovementSystem();
             engine.addSystem(bms);
@@ -144,9 +162,6 @@ public class TennisEntry extends ApplicationAdapter {
             engine.addSystem(bss);
 
             ballEntities = engine.getEntitiesFor(BALL_ENTITIES);
-
-            // TODO add our tutorial robot
-
         }
 
         // ....
@@ -154,14 +169,6 @@ public class TennisEntry extends ApplicationAdapter {
         Material material;
         ModelBuilder builder = new ModelBuilder();
         Node node;
-
-        // player model instances
-        playerModelInstances = new ModelInstance[players.length];
-        for (int i = 0; i < players.length; ++i) {
-            playerModelInstances[i] = new ModelInstance(PlayerModel.build(
-                    i == 0 ? Constants.PLAYER_ONE_COLOUR : Constants.PLAYER_TWO_COLOUR
-            ));
-        }
 
         // tennis court
         material = new Material(ColorAttribute.createDiffuse(new Color(0.8f, 0.8f, 0.8f, 1.0f)));
@@ -341,11 +348,7 @@ public class TennisEntry extends ApplicationAdapter {
 
     private void setupShadowLight(int width, int height)
     {
-        if (shadowLight != null) {
-            //environment.remove(shadowLight);
-        }
-        shadowLight = (DirectionalShadowLight) new DirectionalShadowLight(2048, 2048, width, height, 1f, 1000f).set(sunLight);
-        // environment.add(shadowLight);
+        shadowLight = (DirectionalShadowLight) new DirectionalShadowLight(2048, 2048, width, height, 1f, 300f).set(sunLight);
         environment.shadowMap = shadowLight;
     }
 
