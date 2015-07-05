@@ -24,7 +24,7 @@ public class CharacterComponent extends Component {
 
     public Rectangle bounds;
 
-    // ball set by BallSpawningSystem
+    // ball set by ServingRobotSystem
     public Entity ball = null;
     public boolean inStrikeZone = false;
 

@@ -19,8 +19,10 @@ import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
+import com.badlogic.gdx.graphics.g3d.environment.DirectionalShadowLight;
 import com.badlogic.gdx.graphics.g3d.model.Node;
 import com.badlogic.gdx.graphics.g3d.utils.DefaultShaderProvider;
+import com.badlogic.gdx.graphics.g3d.utils.DepthShaderProvider;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Rectangle;
@@ -31,7 +33,7 @@ import com.sastraxi.playground.tennis.components.*;
 import com.sastraxi.playground.tennis.game.Constants;
 import com.sastraxi.playground.tennis.models.PlayerModel;
 import com.sastraxi.playground.tennis.systems.BallMovementSystem;
-import com.sastraxi.playground.tennis.systems.BallSpawningSystem;
+import com.sastraxi.playground.tennis.systems.ServingRobotSystem;
 import com.sastraxi.playground.tennis.systems.PlayerMovementSystem;
 import org.lwjgl.opengl.GL30;
 
@@ -58,13 +60,16 @@ public class TennisEntry extends ApplicationAdapter {
 
     // systems
     BallMovementSystem bms;
-    BallSpawningSystem bss;
+    ServingRobotSystem bss;
 
     // graphics
     PerspectiveCamera camera;
     Environment environment;
     DefaultShaderProvider shaderProvider;
     ModelBatch batch;
+    DirectionalShadowLight shadowLight;
+    DirectionalLight sunLight;
+    ModelBatch shadowBatch;
 
     // things to draw
     ModelInstance tennisCourt;
@@ -77,12 +82,15 @@ public class TennisEntry extends ApplicationAdapter {
 
         // libgdx
         shaderProvider = new DefaultShaderProvider();
+        shadowBatch = new ModelBatch(new DepthShaderProvider());
         batch = new ModelBatch(shaderProvider);
 
         // environment
+        sunLight = new DirectionalLight().set(0.6f, 0.6f, 0.6f, 0.3f, 0.2f, -0.8f);
         environment = new Environment();
+        environment.add(sunLight);
         environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.4f, 0.4f, 0.4f, 1f));
-        environment.add(new DirectionalLight().set(0.6f, 0.6f, 0.6f, 0.3f, 0.2f, -0.8f));
+        setupShadowLight(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
         // attach a player
         Array<Controller> controllers = Controllers.getControllers();
@@ -132,7 +140,7 @@ public class TennisEntry extends ApplicationAdapter {
             bms = new BallMovementSystem();
             engine.addSystem(bms);
 
-            bss = new BallSpawningSystem();
+            bss = new ServingRobotSystem();
             engine.addSystem(bss);
 
             ballEntities = engine.getEntitiesFor(BALL_ENTITIES);
@@ -191,7 +199,6 @@ public class TennisEntry extends ApplicationAdapter {
         tennisCourt = new ModelInstance(builder.end());
 
         // opengl
-        Gdx.gl.glClearColor(0f, 0.2f, 0.3f, 1f);
         // Gdx.gl.glDisable(GL20.GL_CULL_FACE);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
         Gdx.gl.glEnable(GL30.GL_FRAMEBUFFER_SRGB);
@@ -234,6 +241,7 @@ public class TennisEntry extends ApplicationAdapter {
 
         // process all systems
         engine.update(FRAME_TIME_SEC);
+        // camController.update();
 
         // render
         renderImpl();
@@ -241,62 +249,104 @@ public class TennisEntry extends ApplicationAdapter {
 
     public void renderImpl()
     {
-        // camController.update();
         Gdx.gl.glViewport(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 
-        batch.begin(camera);
-        batch.render(tennisCourt, environment);
-
-        // position + render balls
+        // TODO update transformation matrices; move this somewhere?
         for (Entity entity: ballEntities)
         {
             MovementComponent mc = mcm.get(entity);
-
             RenderableComponent rc = rcm.get(entity);
             rc.modelInstance.transform
                     .setToTranslation(mc.position);
             // .rotate(mc.orientation);
-            batch.render(rc.modelInstance, environment);
-
-            ShadowComponent sc = scm.get(entity);
-            sc.modelInstance.transform
-                    .setToTranslation(mc.position.x, mc.position.y, 0.2f); // TODO disable depth test via Shader then set z=0f
-            batch.render(sc.modelInstance, environment);
         }
-
-        // position + render players
         for (int i = 0; i < players.length; ++i)
         {
             MovementComponent mc = mcm.get(players[i]);
-            CharacterComponent pic = picm.get(players[i]);
-
+            CharacterComponent character = picm.get(players[i]);
             playerModelInstances[i].transform
                     .setToTranslation(mc.position)
                     .rotate(mc.orientation);
 
-            batch.render(playerModelInstances[i], environment);
-
-            if (pic.inStrikeZone) {
+            if (character.inStrikeZone) {
                 AlertedComponent ac = acm.get(players[i]);
                 ac.modelInstance.transform
                         .setToTranslation(mc.position)
                         .rotate(mc.orientation);
-                batch.render(ac.modelInstance, environment);
             }
         }
 
+        // render the shadow map
+        Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
+        shadowLight.begin(Vector3.Zero, camera.direction);
+        shadowBatch.begin(shadowLight.getCamera());
+        shadowBatch.render(tennisCourt, environment);
+        for (Entity entity: ballEntities)
+        {
+            RenderableComponent rc = rcm.get(entity);
+            shadowBatch.render(rc.modelInstance, environment);
+        }
+
+        for (int i = 0; i < players.length; ++i)
+        {
+            MovementComponent mc = mcm.get(players[i]);
+            CharacterComponent character = picm.get(players[i]);
+            if (character.inStrikeZone) {
+                AlertedComponent ac = acm.get(players[i]);
+                shadowBatch.render(ac.modelInstance, environment);
+            }
+            shadowBatch.render(playerModelInstances[i], environment);
+        }
+        shadowBatch.end();
+        shadowLight.end();
+
+        // render our regular view
+        Gdx.gl.glClearColor(0f, 0.2f, 0.3f, 1f);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
+        batch.begin(camera);
+        batch.render(tennisCourt, environment);
+        for (Entity entity: ballEntities)
+        {
+            RenderableComponent rc = rcm.get(entity);
+            batch.render(rc.modelInstance, environment);
+        }
+
+        for (int i = 0; i < players.length; ++i)
+        {
+            MovementComponent mc = mcm.get(players[i]);
+            CharacterComponent character = picm.get(players[i]);
+            if (character.inStrikeZone) {
+                AlertedComponent ac = acm.get(players[i]);
+                batch.render(ac.modelInstance, environment);
+            }
+            batch.render(playerModelInstances[i], environment);
+        }
         batch.end();
 
         //stage.draw();
     }
 
     @Override
-    public void resize(int width, int height) {
+    public void resize(int width, int height)
+    {
         //stage.setViewport(width, height, true);
+
         camera.viewportWidth = (float) width;
         camera.viewportHeight = (float) height;
         camera.update();
+
+        setupShadowLight(width, height);
+    }
+
+    private void setupShadowLight(int width, int height)
+    {
+        if (shadowLight != null) {
+            //environment.remove(shadowLight);
+        }
+        shadowLight = (DirectionalShadowLight) new DirectionalShadowLight(2048, 2048, width, height, 1f, 1000f).set(sunLight);
+        // environment.add(shadowLight);
+        environment.shadowMap = shadowLight;
     }
 
     @Override

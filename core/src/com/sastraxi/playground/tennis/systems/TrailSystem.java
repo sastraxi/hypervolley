@@ -5,12 +5,8 @@ import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
-import com.badlogic.gdx.math.Plane;
-import com.badlogic.gdx.math.Vector3;
-import com.sastraxi.playground.tennis.components.BallComponent;
 import com.sastraxi.playground.tennis.components.MovementComponent;
 import com.sastraxi.playground.tennis.components.TrailComponent;
-import com.sastraxi.playground.tennis.game.Constants;
 
 public class TrailSystem extends IteratingSystem {
 

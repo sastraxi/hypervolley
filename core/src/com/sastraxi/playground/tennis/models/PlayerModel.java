@@ -55,25 +55,41 @@ public class PlayerModel {
         return builder.end();
     }
 
-    public static Model buildRobot(Color colour)
+    /**
+     *
+     *      Base (rolling ball)
+     *      Torso (cylinder)
+     *      Head
+     *
+     * Each node also has a little cube in front of it to show orientation
+     */
+    public static Model buildServingRobot(Color colour)
     {
-        Node node;
+        Node base, torso, head;
         ModelBuilder builder = new ModelBuilder();
         Material material = new Material(ColorAttribute.createDiffuse(colour));
 
         float scale = Constants.PLAYER_HEIGHT * 0.4f;
 
         builder.begin();
-        node = builder.node();
-        node.translation.set(0f, 0f, 0.5f * scale);
+        base = builder.node();
+        base.translation.set(0f, 0f, 0.5f * scale);
         builder.part("base", GL20.GL_TRIANGLES, vertexAttributes, material)
                 .sphere(scale, scale, scale, Constants.DETAIL_LEVEL_SPHERE, Constants.DETAIL_LEVEL_SPHERE);
 
-        node = builder.node();
-        node.translation.set(0f, 0f, Constants.PLAYER_HEIGHT + 2.5f * scale)
+        // TODO need to make another node for the base orientation
+        base.translation.set(Constants.PLAYER_SIZE, 0f, 0.5f * Constants.PLAYER_HEIGHT);
+        builder.part("orientation", GL20.GL_TRIANGLES, vertexAttributes, material)
+                .box(Constants.PLAYER_SIZE * 0.3f, Constants.PLAYER_SIZE * 0.3f, Constants.PLAYER_SIZE * 0.3f);
+
+
+        torso = builder.node();
+        torso.translation.set(0f, 0f, Constants.PLAYER_HEIGHT + 2.5f * scale)
                 .rotate(Vector3.X, 90f);
         builder.part("torso", GL20.GL_TRIANGLES, vertexAttributes, material)
                 .cylinder(3f * scale, 3f * scale, 3f * scale, Constants.DETAIL_LEVEL_SPHERE);
+
+
         return builder.end();
     }
 

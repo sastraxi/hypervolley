@@ -20,7 +20,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.sastraxi.playground.tennis.components.*;
 import com.sastraxi.playground.tennis.game.Constants;
 
-public class BallSpawningSystem extends IteratingSystem {
+public class ServingRobotSystem extends IteratingSystem {
 
     public static final int PRIORITY = 1;
 
@@ -36,7 +36,7 @@ public class BallSpawningSystem extends IteratingSystem {
     private static final long vertexAttributes = VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal;
     private Model ballModel, shadowModel;
 
-    public BallSpawningSystem()
+    public ServingRobotSystem()
     {
         // we're keeping track of player input components so we can point players at newly-spawned balls
         super(Family.one(CharacterComponent.class).get(), PRIORITY);
