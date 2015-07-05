@@ -30,7 +30,7 @@ public class BallSpawningSystem extends IteratingSystem {
     private Engine engine = null;
     private Entity lastSpawnedBall = null;
 
-    private ComponentMapper<PlayerInputComponent> picm = ComponentMapper.getFor(PlayerInputComponent.class);
+    private ComponentMapper<CharacterComponent> picm = ComponentMapper.getFor(CharacterComponent.class);
     private static final Family ballFamily = Family.one(BallComponent.class).get();
 
     private static final long vertexAttributes = VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal;
@@ -39,7 +39,7 @@ public class BallSpawningSystem extends IteratingSystem {
     public BallSpawningSystem()
     {
         // we're keeping track of player input components so we can point players at newly-spawned balls
-        super(Family.one(PlayerInputComponent.class).get(), PRIORITY);
+        super(Family.one(CharacterComponent.class).get(), PRIORITY);
 
         // TODO refactor into models.Ball
         ModelBuilder builder = new ModelBuilder();

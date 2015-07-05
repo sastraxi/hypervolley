@@ -39,7 +39,7 @@ public class TennisEntry extends ApplicationAdapter {
 
     static final Family BALL_ENTITIES = Family.all(BallComponent.class).get();
 
-    final ComponentMapper<PlayerInputComponent> picm = ComponentMapper.getFor(PlayerInputComponent.class);
+    final ComponentMapper<CharacterComponent> picm = ComponentMapper.getFor(CharacterComponent.class);
     final ComponentMapper<MovementComponent> mcm = ComponentMapper.getFor(MovementComponent.class);
     final ComponentMapper<RenderableComponent> rcm = ComponentMapper.getFor(RenderableComponent.class);
     final ComponentMapper<ShadowComponent> scm = ComponentMapper.getFor(ShadowComponent.class);
@@ -115,7 +115,10 @@ public class TennisEntry extends ApplicationAdapter {
             mc.position.set(center, 0f);
             if (i == 1) mc.orientation = new Quaternion(Constants.UP_VECTOR, 180f);
             players[i].add(mc);
-            players[i].add(new PlayerInputComponent(controllers.get(i), bounds, new Vector3(focalPoint, 0f)));
+            players[i].add(new CharacterComponent(bounds, new Vector3(focalPoint, 0f)));
+
+            // the player's input is a controller
+            players[i].add(new ControllerInputComponent(controllers.get(i)));
 
             engine.addEntity(players[i]);
         }
@@ -133,6 +136,9 @@ public class TennisEntry extends ApplicationAdapter {
             engine.addSystem(bss);
 
             ballEntities = engine.getEntitiesFor(BALL_ENTITIES);
+
+            // TODO add our tutorial robot
+
         }
 
         // ....
@@ -263,7 +269,7 @@ public class TennisEntry extends ApplicationAdapter {
         for (int i = 0; i < players.length; ++i)
         {
             MovementComponent mc = mcm.get(players[i]);
-            PlayerInputComponent pic = picm.get(players[i]);
+            CharacterComponent pic = picm.get(players[i]);
 
             playerModelInstances[i].transform
                     .setToTranslation(mc.position)

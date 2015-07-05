@@ -7,16 +7,13 @@ import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
 import com.badlogic.gdx.controllers.Controller;
 import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.math.Quaternion;
-import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
-import com.sastraxi.playground.found.MiscMath;
 import com.sastraxi.playground.tennis.components.BallComponent;
+import com.sastraxi.playground.tennis.components.ControllerInputComponent;
 import com.sastraxi.playground.tennis.components.MovementComponent;
-import com.sastraxi.playground.tennis.components.PlayerInputComponent;
+import com.sastraxi.playground.tennis.components.CharacterComponent;
 import com.sastraxi.playground.tennis.contrib.Xbox360Pad;
 import com.sastraxi.playground.tennis.game.Constants;
-import com.sun.corba.se.impl.orbutil.closure.Constant;
 
 public class PlayerMovementSystem extends IteratingSystem {
 
@@ -25,7 +22,8 @@ public class PlayerMovementSystem extends IteratingSystem {
 
     private ComponentMapper<BallComponent> bcm = ComponentMapper.getFor(BallComponent.class);
     private ComponentMapper<MovementComponent> mc = ComponentMapper.getFor(MovementComponent.class);
-    private ComponentMapper<PlayerInputComponent> cicm = ComponentMapper.getFor(PlayerInputComponent.class);
+    private ComponentMapper<CharacterComponent> picm = ComponentMapper.getFor(CharacterComponent.class);
+    private ComponentMapper<ControllerInputComponent> cicm = ComponentMapper.getFor(ControllerInputComponent.class);
 
     private Engine engine;
 
@@ -36,7 +34,7 @@ public class PlayerMovementSystem extends IteratingSystem {
             _tmp_player_offset = new Vector3();
 
     public PlayerMovementSystem() {
-        super(Family.all(MovementComponent.class, PlayerInputComponent.class).get(), PRIORITY);
+        super(Family.all(MovementComponent.class, CharacterComponent.class).get(), PRIORITY);
     }
 
     @Override
@@ -49,8 +47,9 @@ public class PlayerMovementSystem extends IteratingSystem {
     protected void processEntity(Entity entity, float deltaTime)
     {
         MovementComponent movement = mc.get(entity);
-        PlayerInputComponent pic = cicm.get(entity);
-        Controller controller = pic.controller;
+        CharacterComponent pic = picm.get(entity);
+        ControllerInputComponent cic = cicm.get(entity);
+        Controller controller = cic.controller;
 
         pic.timeSinceStateChange += deltaTime;
 
@@ -59,40 +58,40 @@ public class PlayerMovementSystem extends IteratingSystem {
 
         // dash state changes; only allow when resting or we've done our animations
         if (controller.getButton(Xbox360Pad.BUTTON_A)
-                && (pic.state == PlayerInputComponent.DashState.NONE
+                && (pic.state == CharacterComponent.DashState.NONE
                 || pic.timeSinceStateChange > Constants.DASH_ACCEL)) // FIXME when accel > decel there is dead time after ending dash when we cannot dash again
         {
-            if (pic.state == PlayerInputComponent.DashState.DASHING) {
+            if (pic.state == CharacterComponent.DashState.DASHING) {
                 // cancel dash
-                pic.state = PlayerInputComponent.DashState.ENDING;
+                pic.state = CharacterComponent.DashState.ENDING;
                 pic.timeSinceStateChange = 0f;
-            } else if (pic.state == PlayerInputComponent.DashState.NONE && pic.dashMeter >= Constants.DASH_MIN_METER) {
+            } else if (pic.state == CharacterComponent.DashState.NONE && pic.dashMeter >= Constants.DASH_MIN_METER) {
                 // begin dash
-                pic.state = PlayerInputComponent.DashState.DASHING;
+                pic.state = CharacterComponent.DashState.DASHING;
                 pic.timeSinceStateChange = 0f;
             }
         }
 
         // dash meter
-        if (pic.state == PlayerInputComponent.DashState.DASHING) {
+        if (pic.state == CharacterComponent.DashState.DASHING) {
             pic.dashMeter -= Constants.DASH_METER_DEPLETION_RATE * deltaTime;
             if (pic.dashMeter <= 0f) {
                 pic.dashMeter = 0f;
-                pic.state = PlayerInputComponent.DashState.ENDING;
+                pic.state = CharacterComponent.DashState.ENDING;
                 pic.timeSinceStateChange = 0f;
             }
-        } else if (pic.state == PlayerInputComponent.DashState.NONE) {
+        } else if (pic.state == CharacterComponent.DashState.NONE) {
             pic.dashMeter = Math.min(pic.dashMeter + deltaTime, Constants.DASH_MAX_METER);
         }
 
         // decide on our velocity
-        if (pic.state == PlayerInputComponent.DashState.ENDING)
+        if (pic.state == CharacterComponent.DashState.ENDING)
         {
             // decelerate dash
             float pct = (pic.timeSinceStateChange / Constants.DASH_DECEL);
             if (pct > 1.0) {
                 pct = 1.0f;
-                pic.state = PlayerInputComponent.DashState.NONE;
+                pic.state = CharacterComponent.DashState.NONE;
             }
             float speed = MathUtils.lerp(Constants.DASH_SPEED, Constants.PLAYER_SPEED, pct);
             movement.velocity.set(
@@ -100,7 +99,7 @@ public class PlayerMovementSystem extends IteratingSystem {
                     MathUtils.sin(_rot) * speed,
                     0f);
         }
-        else if (pic.state == PlayerInputComponent.DashState.DASHING)
+        else if (pic.state == CharacterComponent.DashState.DASHING)
         {
             // accelerate dash
             float pct = (pic.timeSinceStateChange / Constants.DASH_ACCEL);
@@ -149,9 +148,9 @@ public class PlayerMovementSystem extends IteratingSystem {
 
         // slide along walls if we hit the boundary
         if (!pic.bounds.contains(movement.position.x, movement.position.y)) {
-            if (pic.state == PlayerInputComponent.DashState.DASHING) {
+            if (pic.state == CharacterComponent.DashState.DASHING) {
                 // cancel dash
-                pic.state = PlayerInputComponent.DashState.ENDING;
+                pic.state = CharacterComponent.DashState.ENDING;
                 pic.timeSinceStateChange = 0f;
             }
             movement.position.x = Math.max(movement.position.x, pic.bounds.x);

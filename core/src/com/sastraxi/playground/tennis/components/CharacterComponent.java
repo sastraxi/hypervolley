@@ -2,7 +2,6 @@ package com.sastraxi.playground.tennis.components;
 
 import com.badlogic.ashley.core.Component;
 import com.badlogic.ashley.core.Entity;
-import com.badlogic.gdx.controllers.Controller;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 import com.sastraxi.playground.tennis.game.Constants;
@@ -10,7 +9,7 @@ import com.sastraxi.playground.tennis.game.Constants;
 /**
  * Created by sastr on 2015-06-30.
  */
-public class PlayerInputComponent extends Component {
+public class CharacterComponent extends Component {
 
     public enum DashState {
         NONE,
@@ -18,13 +17,11 @@ public class PlayerInputComponent extends Component {
         ENDING
     }
 
-    public PlayerInputComponent(Controller controller, Rectangle bounds, Vector3 focalPoint) {
-        this.controller = controller;
+    public CharacterComponent(Rectangle bounds, Vector3 focalPoint) {
         this.bounds = bounds;
         this.focalPoint = focalPoint;
     }
 
-    public Controller controller;
     public Rectangle bounds;
 
     // ball set by BallSpawningSystem

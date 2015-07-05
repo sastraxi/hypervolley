@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.model.Node;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
+import com.badlogic.gdx.math.Vector3;
 import com.sastraxi.playground.tennis.game.Constants;
 
 /**
@@ -51,6 +52,28 @@ public class PlayerModel {
         node.translation.set(0f, 0f, Constants.PLAYER_HEIGHT + 4f * scale);
         builder.part("pole", GL20.GL_TRIANGLES, vertexAttributes, material)
                .box(scale, scale, 3f * scale);
+        return builder.end();
+    }
+
+    public static Model buildRobot(Color colour)
+    {
+        Node node;
+        ModelBuilder builder = new ModelBuilder();
+        Material material = new Material(ColorAttribute.createDiffuse(colour));
+
+        float scale = Constants.PLAYER_HEIGHT * 0.4f;
+
+        builder.begin();
+        node = builder.node();
+        node.translation.set(0f, 0f, 0.5f * scale);
+        builder.part("base", GL20.GL_TRIANGLES, vertexAttributes, material)
+                .sphere(scale, scale, scale, Constants.DETAIL_LEVEL_SPHERE, Constants.DETAIL_LEVEL_SPHERE);
+
+        node = builder.node();
+        node.translation.set(0f, 0f, Constants.PLAYER_HEIGHT + 2.5f * scale)
+                .rotate(Vector3.X, 90f);
+        builder.part("torso", GL20.GL_TRIANGLES, vertexAttributes, material)
+                .cylinder(3f * scale, 3f * scale, 3f * scale, Constants.DETAIL_LEVEL_SPHERE);
         return builder.end();
     }
 
