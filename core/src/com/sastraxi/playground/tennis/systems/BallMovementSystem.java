@@ -110,7 +110,7 @@ public class BallMovementSystem extends IteratingSystem {
         if (Math.signum(d_start) == Math.signum(d_end)) return 0;
 
         // close enough and moving towards the plane;
-        // find out where it
+        // find out where it intersects
         float pct = d_start / (d_start - d_end);
         _isect.set(delta).scl(pct).add(pos);
 

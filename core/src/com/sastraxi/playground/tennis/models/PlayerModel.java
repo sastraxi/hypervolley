@@ -106,7 +106,7 @@ public class PlayerModel {
                 .box(Constants.PLAYER_SIZE * 0.3f, Constants.PLAYER_SIZE * 0.3f, Constants.PLAYER_SIZE * 0.3f);
 
         // spherical head & orientation
-        head = builder.node();  
+        head = builder.node();
         head.id = NODE_HEAD;
         head.translation.set(0f, 0f, 3.9f * scale);
         builder.part("head", GL20.GL_TRIANGLES, vertexAttributes, material)

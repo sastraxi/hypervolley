@@ -8,10 +8,7 @@ import com.badlogic.ashley.systems.IteratingSystem;
 import com.badlogic.gdx.controllers.Controller;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
-import com.sastraxi.playground.tennis.components.BallComponent;
-import com.sastraxi.playground.tennis.components.ControllerInputComponent;
-import com.sastraxi.playground.tennis.components.MovementComponent;
-import com.sastraxi.playground.tennis.components.CharacterComponent;
+import com.sastraxi.playground.tennis.components.*;
 import com.sastraxi.playground.tennis.contrib.Xbox360Pad;
 import com.sastraxi.playground.tennis.game.Constants;
 
@@ -20,6 +17,7 @@ public class PlayerMovementSystem extends IteratingSystem {
     private static final Family BALL_FAMILY = Family.one(BallComponent.class).get();
     private static final int PRIORITY = 2; // before ball movement system
 
+    private ComponentMapper<CameraComponent> vpmc = ComponentMapper.getFor(CameraComponent.class);
     private ComponentMapper<BallComponent> bcm = ComponentMapper.getFor(BallComponent.class);
     private ComponentMapper<MovementComponent> mc = ComponentMapper.getFor(MovementComponent.class);
     private ComponentMapper<CharacterComponent> picm = ComponentMapper.getFor(CharacterComponent.class);
@@ -50,12 +48,24 @@ public class PlayerMovementSystem extends IteratingSystem {
         CharacterComponent pic = picm.get(entity);
         ControllerInputComponent cic = cicm.get(entity);
 
-        // FIXME need to split into active (controller) and passive (in strike zone, head orientation
+        // FIXME need to split into active (controller) and passive (in strike zone, head orientation, etc.)
         if (cic == null) return;
-
         Controller controller = cic.controller;
-
         pic.timeSinceStateChange += deltaTime;
+
+        // FIXME should this be here? -- process camera angle changes
+        boolean isBackButtonPressed = controller.getButton(Xbox360Pad.BUTTON_BACK);
+        if (isBackButtonPressed && !cic.lastButtonState[Xbox360Pad.BUTTON_BACK])
+        {
+            CameraComponent viewpoint = vpmc.get(entity);
+            viewpoint.cycle();
+        }
+        cic.lastButtonState[Xbox360Pad.BUTTON_BACK] = isBackButtonPressed;
+
+        // set _tmp to the left control stick
+        _tmp.set(controller.getAxis(Xbox360Pad.AXIS_LEFT_X),
+                -controller.getAxis(Xbox360Pad.AXIS_LEFT_Y),
+                0f);
 
         // get original orientation (only Z component) in radians
         float _rot = movement.orientation.getRollRad();
@@ -117,13 +127,9 @@ public class PlayerMovementSystem extends IteratingSystem {
                     MathUtils.sin(_rot) * speed,
                     0f);
         }
-        else
+        else if (pic.timeToHit <= 0f) // don't allow change from left controller stick when we're winding up
         {
             // regular movement logic
-            _tmp.set(controller.getAxis(Xbox360Pad.AXIS_LEFT_X),
-                    -controller.getAxis(Xbox360Pad.AXIS_LEFT_Y),
-                    0f);
-
             // treat all input below a certain threshold as 0,
             if (_tmp.len() >= Constants.CONTROLLER_WALK_MAGNITUDE) {
 
@@ -142,6 +148,13 @@ public class PlayerMovementSystem extends IteratingSystem {
 
             } else {
                 movement.velocity.set(0f, 0f, 0f);
+            }
+        }
+        else
+        {
+            // use left stick input to decide on direction of the ball
+            if (pic.swingDetector.isRunning()) {
+                pic.swingDetector.sample(_tmp, deltaTime);
             }
         }
 
@@ -212,16 +225,31 @@ public class PlayerMovementSystem extends IteratingSystem {
 
                     if (pic.inStrikeZone)
                     {
+                        // increase the velocity based on the elegance of the hit
                         if (Math.signum(_rot - ballRadians) != Math.signum(_rot - prevBallRadians)) {
                             // perfect hit
                             System.out.println("Perfect hit!");
                             ballMovement.velocity.x *= Constants.PERFECT_HIT_VELOCITY_SCALE;
+                            ballMovement.velocity.y *= Constants.PERFECT_HIT_VELOCITY_SCALE;
                         } else {
-                            System.out.println("Hit!");
+                            // System.out.println("Hit!");
+                            ballMovement.velocity.x *= Constants.VOLLEY_VELOCITY_SCALE;
+                            ballMovement.velocity.y *= Constants.VOLLEY_VELOCITY_SCALE;
                         }
 
-                        ballMovement.velocity.x *= Constants.VOLLEY_VELOCITY_SCALE;
-                        ballMovement.velocity.x = -ballMovement.velocity.x;
+                        // decide on the return velocity.
+                        // look at the swing detector
+                        /*
+                        if (pic.swingDetector.getRotation() > Constants.PLAYER_BALL_SPECIAL_MIN_ROTATION)
+                        {
+                            float specialScale = pic.swingDetector.getAverageMagnitude();
+                            // add spin to the ball based on specialScale
+
+                        }
+                        else
+                        {*/
+                            ballMovement.velocity.x = -ballMovement.velocity.x;
+                        /*} */
                     }
 
                 }
@@ -230,6 +258,7 @@ public class PlayerMovementSystem extends IteratingSystem {
             {
                 // wind up to hit the ball
                 pic.timeToHit = Constants.PLAYER_BALL_SWING_DURATION;
+                pic.swingDetector.start();
             }
         }
     }

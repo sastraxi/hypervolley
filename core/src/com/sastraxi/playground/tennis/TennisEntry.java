@@ -9,10 +9,7 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.controllers.Controller;
 import com.badlogic.gdx.controllers.Controllers;
-import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.PerspectiveCamera;
-import com.badlogic.gdx.graphics.VertexAttributes;
+import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g3d.Environment;
 import com.badlogic.gdx.graphics.g3d.Material;
 import com.badlogic.gdx.graphics.g3d.ModelBatch;
@@ -55,9 +52,11 @@ public class TennisEntry extends ApplicationAdapter {
     long lastUpdateTime, frames;
 
     // entities and game logic
+    CameraComponent cameraComponent;
     PlayerType[] playerTypes = new PlayerType[2];
     Entity[] players = new Entity[2];
     ImmutableArray<Entity> ballEntities;
+    ImmutableArray<Entity> swingDetectorEntities;
 
     // systems
     Engine engine;
@@ -66,6 +65,7 @@ public class TennisEntry extends ApplicationAdapter {
 
     // graphics
     PerspectiveCamera camera;
+    OrthographicCamera hudCamera;
     Environment environment;
     DefaultShaderProvider shaderProvider;
     ModelBatch batch;
@@ -76,6 +76,7 @@ public class TennisEntry extends ApplicationAdapter {
     // things to draw
     ModelInstance tennisCourt;
     ModelInstance[] playerModelInstances = new ModelInstance[2];
+
 
     @Override
 	public void create()
@@ -146,11 +147,45 @@ public class TennisEntry extends ApplicationAdapter {
                     ? new ModelInstance(PlayerModel.build(playerColour))
                     : new ModelInstance(PlayerModel.buildServingRobot(playerColour));
 
+            // swing detector
+            players[i].add(new SwingDetectorComponent());
+
+            // actual player
             engine.addEntity(players[i]);
         }
 
         // allow players to move
         engine.addSystem(new PlayerMovementSystem());
+
+        // entity families
+        swingDetectorEntities = engine.getEntitiesFor(Family.one(SwingDetectorComponent.class).get());
+
+        // perspective camera
+        camera = new PerspectiveCamera(Constants.CAMERA_FOV, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        camera.position.set(Constants.GAME_CAMERA_POSITION);
+        camera.up.set(Constants.UP_VECTOR);
+        camera.lookAt(0f, 0f, 0f);
+        camera.near = 0.1f;
+        camera.far = 1000.0f;
+        camera.update();
+
+        // orthographic camera
+        OrthographicCamera orthographicCamera = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        orthographicCamera.position.set(Constants.GAME_CAMERA_POSITION);
+        orthographicCamera.zoom = Constants.GAME_ORTHOGRAPHIC_CAMERA_ZOOM;
+        orthographicCamera.up.set(Constants.UP_VECTOR);
+        orthographicCamera.lookAt(0f, 0f, 0f);
+        orthographicCamera.near = 0.1f;
+        orthographicCamera.far = 1000.0f;
+        orthographicCamera.update();
+
+        // add cameras to cycle through
+        cameraComponent = new CameraComponent();
+        cameraComponent.cameras = new Camera[] {
+            camera,
+            orthographicCamera
+        };
+        players[0].add(cameraComponent);
 
         // if player 2 is a serving robot, add a ball launcher on the other side of the court
         if (playerTypes[1] == PlayerType.SERVING_ROBOT)
@@ -211,14 +246,9 @@ public class TennisEntry extends ApplicationAdapter {
         Gdx.gl.glEnable(GL30.GL_FRAMEBUFFER_SRGB);
         Gdx.gl.glEnable(GL20.GL_BLEND);
 
-        // camera
-        camera = new PerspectiveCamera(Constants.CAMERA_FOV, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-        camera.position.set(Constants.GAME_MAIN_CAMERA_POSITION);
-        camera.up.set(Constants.UP_VECTOR);
-        camera.lookAt(0f, 0f, 0f);
-        camera.near = 0.1f;
-        camera.far = 1000.0f;
-        camera.update();
+        // hud camera
+        hudCamera = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        hudCamera.update();
 
         // InputMultiplexer multiplexer = new InputMultiplexer();
         // multiplexer.addProcessor(stage);
@@ -286,7 +316,7 @@ public class TennisEntry extends ApplicationAdapter {
         // render the shadow map
         Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
-        shadowLight.begin(Vector3.Zero, camera.direction);
+        shadowLight.begin(Vector3.Zero, cameraComponent.getCamera().direction);
         shadowBatch.begin(shadowLight.getCamera());
         shadowBatch.render(tennisCourt, environment);
         for (Entity entity: ballEntities)
@@ -311,7 +341,7 @@ public class TennisEntry extends ApplicationAdapter {
         // render our regular view
         Gdx.gl.glClearColor(0f, 0.2f, 0.3f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
-        batch.begin(camera);
+        batch.begin(cameraComponent.getCamera());
         batch.render(tennisCourt, environment);
         for (Entity entity: ballEntities)
         {
@@ -331,6 +361,13 @@ public class TennisEntry extends ApplicationAdapter {
         }
         batch.end();
 
+        // render the HUD
+
+        for (Entity entity: swingDetectorEntities)
+        {
+
+        }
+
         //stage.draw();
     }
 
@@ -338,10 +375,16 @@ public class TennisEntry extends ApplicationAdapter {
     public void resize(int width, int height)
     {
         //stage.setViewport(width, height, true);
+        for (Camera c: cameraComponent.cameras)
+        {
+            c.viewportWidth = (float) width;
+            c.viewportHeight = (float) height;
+            c.update();
+        }
 
-        camera.viewportWidth = (float) width;
-        camera.viewportHeight = (float) height;
-        camera.update();
+        hudCamera.viewportWidth = (float) width;
+        hudCamera.viewportHeight = (float) height;
+        hudCamera.update();
 
         setupShadowLight(width, height);
     }

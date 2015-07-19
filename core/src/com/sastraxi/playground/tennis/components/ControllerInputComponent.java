@@ -10,7 +10,10 @@ public class ControllerInputComponent extends Component {
 
     public Controller controller;
 
+    public boolean[] lastButtonState = new boolean[64];
+
     public ControllerInputComponent(Controller controller) {
         this.controller = controller;
     }
+
 }
