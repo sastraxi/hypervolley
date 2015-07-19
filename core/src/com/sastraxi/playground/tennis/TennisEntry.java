@@ -14,6 +14,7 @@ import com.badlogic.gdx.graphics.g3d.Environment;
 import com.badlogic.gdx.graphics.g3d.Material;
 import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
+import com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalShadowLight;
@@ -207,6 +208,7 @@ public class TennisEntry extends ApplicationAdapter {
 
         // tennis court
         material = new Material(ColorAttribute.createDiffuse(new Color(0.8f, 0.8f, 0.8f, 1.0f)));
+        Material translucentMaterial = new Material(ColorAttribute.createDiffuse(new Color(0.8f, 0.8f, 0.8f, 1.0f)), new BlendingAttribute(true, 0.5f));
         builder.begin();
         node = builder.node();
         builder.part("far", GL20.GL_TRIANGLES, vertexAttributes, material)
@@ -215,6 +217,13 @@ public class TennisEntry extends ApplicationAdapter {
                       Constants.ARENA_HALF_WIDTH,  Constants.ARENA_HALF_DEPTH, Constants.WALL_HEIGHT,
                      -Constants.ARENA_HALF_WIDTH,  Constants.ARENA_HALF_DEPTH, Constants.WALL_HEIGHT,
                       0f, -1f, 0f);
+        builder.part("near", GL20.GL_TRIANGLES, vertexAttributes, translucentMaterial)
+                .rect(-Constants.ARENA_HALF_WIDTH, -Constants.ARENA_HALF_DEPTH, 0f,
+                       Constants.ARENA_HALF_WIDTH, -Constants.ARENA_HALF_DEPTH, 0f,
+                       Constants.ARENA_HALF_WIDTH, -Constants.ARENA_HALF_DEPTH, Constants.WALL_HEIGHT,
+                      -Constants.ARENA_HALF_WIDTH, -Constants.ARENA_HALF_DEPTH, Constants.WALL_HEIGHT,
+                       0f, -1f, 0f);
+        /*
         builder.part("left", GL20.GL_TRIANGLES, vertexAttributes, material)
                .rect(-Constants.ARENA_HALF_WIDTH, -Constants.ARENA_HALF_DEPTH, 0f,
                      -Constants.ARENA_HALF_WIDTH,  Constants.ARENA_HALF_DEPTH, 0f,
@@ -227,6 +236,7 @@ public class TennisEntry extends ApplicationAdapter {
                       Constants.ARENA_HALF_WIDTH, -Constants.ARENA_HALF_DEPTH, Constants.WALL_HEIGHT,
                       Constants.ARENA_HALF_WIDTH,  Constants.ARENA_HALF_DEPTH, Constants.WALL_HEIGHT,
                       -1f, 0f, 0f);
+                      */
         builder.part("floor", GL20.GL_TRIANGLES, vertexAttributes, material)
                .rect(-Constants.ARENA_HALF_WIDTH, -Constants.ARENA_HALF_DEPTH, 0f,
                       Constants.ARENA_HALF_WIDTH, -Constants.ARENA_HALF_DEPTH, 0f,
