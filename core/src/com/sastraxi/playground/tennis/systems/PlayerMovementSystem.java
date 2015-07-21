@@ -67,11 +67,8 @@ public class PlayerMovementSystem extends IteratingSystem {
                 -controller.getAxis(Xbox360Pad.AXIS_LEFT_Y),
                 0f);
 
-        // get original orientation (only Z component) in radians
-        float _rot = movement.orientation.getRollRad();
-
         // dash state changes; only allow when resting or we've done our animations
-        if (controller.getButton(Xbox360Pad.BUTTON_A)
+        if (controller.getButton(Xbox360Pad.BUTTON_LB) || controller.getButton(Xbox360Pad.BUTTON_RB)
                 && (pic.state == CharacterComponent.DashState.NONE
                 || pic.timeSinceStateChange > Constants.DASH_ACCEL)) // FIXME when accel > decel there is dead time after ending dash when we cannot dash again
         {
@@ -97,6 +94,9 @@ public class PlayerMovementSystem extends IteratingSystem {
         } else if (pic.state == CharacterComponent.DashState.NONE) {
             pic.dashMeter = Math.min(pic.dashMeter + deltaTime, Constants.DASH_MAX_METER);
         }
+
+        // get original orientation (only Z component) in radians
+        float _rot = movement.orientation.getRollRad();
 
         // decide on our velocity
         if (pic.state == CharacterComponent.DashState.ENDING)
@@ -184,8 +184,9 @@ public class PlayerMovementSystem extends IteratingSystem {
             MovementComponent ballMovement = mc.get(pic.ball);
 
             // this "offset" position is behind the player
-            _tmp_player_offset.set(MathUtils.cos(_rot), MathUtils.sin(_rot), 0f).scl(-Constants.PLAYER_RADIUS).add(movement.position);
+            _tmp_player_offset.set(MathUtils.cos(_rot), MathUtils.sin(_rot), 0f).scl(-Constants.PLAYER_BALL_SUBTRACT_SCALE).add(movement.position);
             _tmp_player_ball.set(ballMovement.position).sub(_tmp_player_offset);
+            _tmp_player_offset.z = 0; _tmp_player_ball.z = 0; // project onto 2D plane
             float ballDistance = _tmp_player_ball.len();
             float ballRadians = MathUtils.atan2(_tmp_player_ball.y, _tmp_player_ball.x);
 
@@ -254,7 +255,7 @@ public class PlayerMovementSystem extends IteratingSystem {
 
                 }
             }
-            else if (controller.getButton(Xbox360Pad.BUTTON_X))
+            else if (controller.getButton(Xbox360Pad.BUTTON_A))
             {
                 // wind up to hit the ball
                 pic.timeToHit = Constants.PLAYER_BALL_SWING_DURATION;

@@ -46,9 +46,7 @@ public class TennisEntry extends ApplicationAdapter {
     final ComponentMapper<ShadowComponent> scm = ComponentMapper.getFor(ShadowComponent.class);
     final ComponentMapper<AlertedComponent> acm = ComponentMapper.getFor(AlertedComponent.class);
 
-    static final long FRAME_RATE = 60;
-    static final float FRAME_TIME_SEC = 1f / (float) FRAME_RATE;
-    static final long FRAME_TIME_NS = 1000000000 / FRAME_RATE;
+    static final long FRAME_TIME_NS = 1000000000 / Constants.FRAME_RATE;
     static final long MICRO_TO_NANO = 1000000;
     long lastUpdateTime, frames;
 
@@ -165,7 +163,7 @@ public class TennisEntry extends ApplicationAdapter {
         camera = new PerspectiveCamera(Constants.CAMERA_FOV, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         camera.position.set(Constants.GAME_CAMERA_POSITION);
         camera.up.set(Constants.UP_VECTOR);
-        camera.lookAt(0f, 0f, 0f);
+        camera.lookAt(Constants.GAME_CAMERA_POINT_AT);
         camera.near = 0.1f;
         camera.far = 1000.0f;
         camera.update();
@@ -175,7 +173,7 @@ public class TennisEntry extends ApplicationAdapter {
         orthographicCamera.position.set(Constants.GAME_CAMERA_POSITION);
         orthographicCamera.zoom = Constants.GAME_ORTHOGRAPHIC_CAMERA_ZOOM;
         orthographicCamera.up.set(Constants.UP_VECTOR);
-        orthographicCamera.lookAt(0f, 0f, 0f);
+        orthographicCamera.lookAt(Constants.GAME_CAMERA_POINT_AT);
         orthographicCamera.near = 0.1f;
         orthographicCamera.far = 1000.0f;
         orthographicCamera.update();
@@ -287,7 +285,7 @@ public class TennisEntry extends ApplicationAdapter {
         }
 
         // process all systems
-        engine.update(FRAME_TIME_SEC);
+        engine.update(Constants.FRAME_TIME_SEC);
         // camController.update();
 
         // render

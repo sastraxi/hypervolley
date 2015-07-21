@@ -83,18 +83,18 @@ public class ServingRobotSystem extends IteratingSystem {
             MovementComponent mc = new MovementComponent();
 
             mc.position.x = 0.8f * Constants.ARENA_HALF_WIDTH;
-            mc.position.y = (random.nextFloat() - 0.5f) * 2f * Constants.ARENA_HALF_DEPTH;
-            mc.position.z = 18f + 24f * random.nextFloat();
+            mc.position.y = (random.nextFloat() - 0.5f) * Constants.BALL_SPAWN_COURT_COVERAGE * 2f * Constants.ARENA_HALF_DEPTH;
+            mc.position.z = 40f;
 
             Vector2 target = new Vector2();
             target.x = -0.8f * Constants.ARENA_HALF_WIDTH;
-            target.y = (random.nextFloat() - 0.5f) * 2f * Constants.ARENA_HALF_DEPTH;
+            target.y = (random.nextFloat() - 0.5f) * Constants.BALL_SPAWN_COURT_COVERAGE * Constants.ARENA_HALF_DEPTH;
 
             float ballSpeed = 100f + random.nextFloat() * 120f;
             mc.velocity.x = target.x - mc.position.x;
             mc.velocity.y = target.y - mc.velocity.y;
             mc.velocity.nor().scl(ballSpeed);
-            mc.velocity.z = 20f + random.nextFloat() * 60f;
+            mc.velocity.z = 50f;
 
             if (random.nextBoolean())
                 mc.velocity.x = -mc.velocity.x;
