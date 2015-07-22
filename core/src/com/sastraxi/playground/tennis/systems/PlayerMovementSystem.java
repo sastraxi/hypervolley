@@ -255,11 +255,16 @@ public class PlayerMovementSystem extends IteratingSystem {
 
                 }
             }
-            else if (controller.getButton(Xbox360Pad.BUTTON_A))
+            else
             {
-                // wind up to hit the ball
-                pic.timeToHit = Constants.PLAYER_BALL_SWING_DURATION;
-                pic.swingDetector.start();
+                boolean isAButtonPressed = controller.getButton(Xbox360Pad.BUTTON_A);
+                if (isAButtonPressed && !cic.lastButtonState[Xbox360Pad.BUTTON_A])
+                {
+                    // wind up to hit the ball
+                    pic.timeToHit = Constants.PLAYER_BALL_SWING_DURATION;
+                    pic.swingDetector.start();
+                }
+                cic.lastButtonState[Xbox360Pad.BUTTON_A] = isAButtonPressed;
             }
         }
     }
