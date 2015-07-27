@@ -27,13 +27,15 @@ public class ServingRobotSystem extends IteratingSystem {
     public static final int PRIORITY = 1;
 
     private RandomXS128 random;
-    private float accum = 0f;
 
     private Engine engine = null;
     private Entity lastSpawnedBall = null;
 
     private ComponentMapper<CharacterComponent> picm = ComponentMapper.getFor(CharacterComponent.class);
     private static ComponentMapper<BallComponent> bcm = ComponentMapper.getFor(BallComponent.class);
+
+    private static final Family GAME_STATE_FAMILY = Family.one(GameStateComponent.class).get();
+    private ComponentMapper<GameStateComponent> gscm = ComponentMapper.getFor(GameStateComponent.class);
 
     private static final Family ballFamily = Family.one(BallComponent.class).get();
     private static final Family bounceMarkerFamily = Family.one(BounceMarkerComponent.class).get();
@@ -65,7 +67,7 @@ public class ServingRobotSystem extends IteratingSystem {
         shadowModel = builder.end();
 
         // bounce markers
-        material = new Material(ColorAttribute.createDiffuse(new Color(0.2f, 0.2f, 0.2f, 1.0f)), new BlendingAttribute(true, 0.7f));
+        material = new Material(ColorAttribute.createDiffuse(new Color(0.2f, 0.6f, 0.3f, 1.0f)), new BlendingAttribute(true, 0f));
         bounceMarkerModel = builder.createRect(
                 -2f * Constants.BALL_RADIUS, -2f * Constants.BALL_RADIUS, 0f,
                 2f * Constants.BALL_RADIUS, -2f * Constants.BALL_RADIUS, 0f,
@@ -85,12 +87,11 @@ public class ServingRobotSystem extends IteratingSystem {
 
     public void update(float deltaTime)
     {
-        accum += deltaTime;
+        GameStateComponent gameState = gscm.get(engine.getEntitiesFor(GAME_STATE_FAMILY).get(0));
+        float time = gameState.getPreciseTime();
+
         if (engine.getEntitiesFor(ballFamily).size() == 0)
         {
-            // reset timer
-            accum = 0f;
-
             // create a ball and add it to the engine
             // the ball is coming from the right-hand side of the court
             // and is coming it a random direction, velocity, and spin
@@ -103,7 +104,7 @@ public class ServingRobotSystem extends IteratingSystem {
 
             Vector2 target = new Vector2();
             target.x = -0.8f * Constants.ARENA_HALF_WIDTH;
-            target.y = (random.nextFloat() - 0.5f) * Constants.BALL_SPAWN_COURT_COVERAGE * Constants.ARENA_HALF_DEPTH;
+            target.y = (random.nextFloat() - 0.5f) * Constants.BALL_TARGET_COURT_COVERAGE * Constants.ARENA_HALF_DEPTH;
 
             float ballSpeed = 100f + random.nextFloat() * 120f;
             mc.velocity.x = target.x - mc.position.x;
@@ -113,7 +114,7 @@ public class ServingRobotSystem extends IteratingSystem {
 
             lastSpawnedBall.add(mc);
 
-            BallComponent ball = new BallComponent(new StraightBallPath(mc.position, mc.velocity, 0f));
+            BallComponent ball = new BallComponent(new StraightBallPath(mc.position, mc.velocity, time));
             lastSpawnedBall.add(ball);
             RenderableComponent rc = new RenderableComponent(new ModelInstance(ballModel));
             lastSpawnedBall.add(rc);

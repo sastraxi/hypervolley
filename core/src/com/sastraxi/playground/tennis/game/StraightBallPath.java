@@ -30,14 +30,16 @@ public class StraightBallPath implements BallPath {
         // http://hyperphysics.phy-astr.gsu.edu/hbase/traj.html
 
         // collide with either side wall or the floor, until we leave the court.
-        int numFloorBounces = 0;
+        int numFloorBounces = 0, numBounces = 1;
         BallFrame lastFrame = this.origin;
         while (bounces.isEmpty() || Math.abs(bounces.last().position.x) < Constants.ARENA_HALF_WIDTH)
         {
             // try colliding with the floor.
             BallFrame floorBounce = new BallFrame();
             _t = lastFrame.velocity.z / Constants.G;
-            dt = _t + (float) Math.sqrt(_t*_t + 2f * lastFrame.position.z / Constants.G);
+            // N.B. z - ball_radius below because we need to account for the ball's size
+            // we are testing the center point of the ball with a plane pushed up
+            dt = _t + (float) Math.sqrt(_t*_t + 2f * (lastFrame.position.z - Constants.BALL_RADIUS) / Constants.G);
             floorBounce.time = lastFrame.time + dt;
             floorBounce.position.set(lastFrame.position).add(dt * lastFrame.velocity.x, dt * lastFrame.velocity.y, 0f);
             floorBounce.velocity.set(lastFrame.velocity);
@@ -53,19 +55,23 @@ public class StraightBallPath implements BallPath {
 
             // the first wall we collide with is the true collision.
             if (floorBounce.time < wallBounce.time) {
+                floorBounce.bounceNumber = numBounces;
                 bounces.add(floorBounce);
                 lastFrame = floorBounce;
                 numFloorBounces += 1;
             } else {
+                wallBounce.bounceNumber = numBounces;
                 bounces.add(wallBounce);
                 lastFrame = wallBounce;
             }
+            numBounces += 1;
         }
 
-        // drop last bounce (post-death) and figure out death time
+        // drop last bounce (post-death) and figure out death time (x movement is constant)
         if (!bounces.isEmpty()) bounces.pollLast();
-
-        deathTime = 0f;
+        deathTime = timeBase + (velocity.x > 0
+                ? (Constants.ARENA_HALF_WIDTH - position.x) / velocity.x
+                : (position.x + Constants.ARENA_HALF_WIDTH) / -velocity.x);
     }
 
     private static Vector2 _dist = new Vector2(), _velo_2d = new Vector2();
@@ -127,6 +133,18 @@ public class StraightBallPath implements BallPath {
     }
 
     @Override
+    public int getNumBounces(float time)
+    {
+        int i = 0;
+        for (BallFrame f: bounces)
+        {
+            if (f.time > time) return i;
+            i += 1;
+        }
+        return i;
+    }
+
+    @Override
     public boolean isAlive(float t) {
         return t < deathTime;
     }
@@ -142,12 +160,14 @@ public class StraightBallPath implements BallPath {
 
         // extrapolate based on the "window" that we're in between frames
         float dt = t - chosen.time;
-
+        out.set(chosen.velocity).scl(dt).add(chosen.position);
+        out.z = chosen.position.z + chosen.velocity.z * dt - 0.5f * Constants.G * dt * dt;
     }
 
     @Override
-    public void getVelocity(float t, Vector3 out) {
-
+    public void getVelocity(float t, Vector3 out)
+    {
+        // TODO
     }
 
     @Override

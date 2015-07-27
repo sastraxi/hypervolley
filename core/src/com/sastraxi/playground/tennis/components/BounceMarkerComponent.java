@@ -82,10 +82,10 @@ public class BounceMarkerComponent extends Component {
         if (state == State.LIVING) {
             return Constants.BALL_RADIUS;
         } else if (state == State.SPAWNING) {
-            return easeIn.apply(0f, 1f, age / Constants.JUICY_ANIMATION_LENGTH);
+            return easeIn.apply(0f, Constants.JUICY_BOUNCE_MARKER_OPACITY, age / Constants.JUICY_ANIMATION_LENGTH);
         } else {
             assert(state == State.DYING);
-            return easeOut.apply(1f, 0f, age / Constants.JUICY_ANIMATION_LENGTH);
+            return easeOut.apply(Constants.JUICY_BOUNCE_MARKER_OPACITY, 0f, age / Constants.JUICY_ANIMATION_LENGTH);
         }
     }
 

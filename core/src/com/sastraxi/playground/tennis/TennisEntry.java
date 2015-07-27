@@ -50,6 +50,7 @@ public class TennisEntry extends ApplicationAdapter {
     long lastUpdateTime, frames;
 
     // entities and game logic
+    GameStateComponent gameState;
     CameraComponent cameraComponent;
     PlayerType[] playerTypes = new PlayerType[2];
     Entity[] players = new Entity[2];
@@ -151,6 +152,12 @@ public class TennisEntry extends ApplicationAdapter {
             // actual player
             engine.addEntity(players[i]);
         }
+
+        // game state
+        Entity gameStateEntity = new Entity();
+        gameState = new GameStateComponent();
+        gameStateEntity.add(gameState);
+        engine.addEntity(gameStateEntity);
 
         // allow players to move
         engine.addSystem(new PlayerMovementSystem());
@@ -287,6 +294,7 @@ public class TennisEntry extends ApplicationAdapter {
         }
 
         // process all systems
+        gameState.tick();
         engine.update(Constants.FRAME_TIME_SEC);
         // camController.update();
 

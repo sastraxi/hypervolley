@@ -27,6 +27,9 @@ public class PlayerMovementSystem extends IteratingSystem {
     private ComponentMapper<ControllerInputComponent> cicm = ComponentMapper.getFor(ControllerInputComponent.class);
     private ComponentMapper<SwingDetectorComponent> sdcm = ComponentMapper.getFor(SwingDetectorComponent.class);
 
+    private static final Family GAME_STATE_FAMILY = Family.one(GameStateComponent.class).get();
+    private ComponentMapper<GameStateComponent> gscm = ComponentMapper.getFor(GameStateComponent.class);
+
     private Engine engine;
 
     Vector3 _tmp = new Vector3(),
@@ -50,6 +53,9 @@ public class PlayerMovementSystem extends IteratingSystem {
     @Override
     protected void processEntity(Entity entity, float deltaTime)
     {
+        GameStateComponent gameState = gscm.get(engine.getEntitiesFor(GAME_STATE_FAMILY).get(0));
+        float time = gameState.getPreciseTime();
+
         MovementComponent movement = mc.get(entity);
         CharacterComponent pic = picm.get(entity);
         ControllerInputComponent cic = cicm.get(entity);
@@ -256,11 +262,13 @@ public class PlayerMovementSystem extends IteratingSystem {
                         // decide on the return velocity.
                         // look at the swing detector
                         ballMovement.velocity.x = -ballMovement.velocity.x;
+                        ballMovement.velocity.z = Math.abs(ballMovement.velocity.z);
 
                         // craft the new path.
                         BallComponent ballComponent = bcm.get(pic.ball);
-                        ballComponent.path = new StraightBallPath(ballMovement.position, ballMovement.velocity, 0f); // FIXME new usage in game loop
+                        ballComponent.path = new StraightBallPath(ballMovement.position, ballMovement.velocity, time); // FIXME new usage in game loop
                         ballComponent.currentBounce = 0;
+                        ballComponent.currentVolley += 1;
                         ServingRobotSystem.spawnBounceMarkers(engine, pic.ball);
 
                         /*
