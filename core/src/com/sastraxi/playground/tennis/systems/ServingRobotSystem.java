@@ -16,9 +16,11 @@ import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.RandomXS128;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.math.collision.Ray;
 import com.sastraxi.playground.tennis.components.*;
+import com.sastraxi.playground.tennis.game.BallFrame;
 import com.sastraxi.playground.tennis.game.Constants;
+import com.sastraxi.playground.tennis.game.StraightBallPath;
 
 public class ServingRobotSystem extends IteratingSystem {
 
@@ -31,13 +33,15 @@ public class ServingRobotSystem extends IteratingSystem {
     private Entity lastSpawnedBall = null;
 
     private ComponentMapper<CharacterComponent> picm = ComponentMapper.getFor(CharacterComponent.class);
+    private static ComponentMapper<BallComponent> bcm = ComponentMapper.getFor(BallComponent.class);
+
     private static final Family ballFamily = Family.one(BallComponent.class).get();
+    private static final Family bounceMarkerFamily = Family.one(BounceMarkerComponent.class).get();
 
     private static final long vertexAttributes = VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal;
-    private Model ballModel, shadowModel;
+    private static Model ballModel, shadowModel, bounceMarkerModel;
 
-    public ServingRobotSystem()
-    {
+    public ServingRobotSystem() {
         // we're keeping track of player input components so we can point players at newly-spawned balls
         super(Family.one(CharacterComponent.class).get(), PRIORITY);
 
@@ -59,7 +63,18 @@ public class ServingRobotSystem extends IteratingSystem {
         builder.part("ball-shadow", GL20.GL_TRIANGLES, vertexAttributes, material)
                .circle(Constants.BALL_RADIUS, 16, 0f, 0f, 0f, 0f, 0f, 1f);
         shadowModel = builder.end();
+
+        // bounce markers
+        material = new Material(ColorAttribute.createDiffuse(new Color(0.2f, 0.2f, 0.2f, 1.0f)), new BlendingAttribute(true, 0.7f));
+        bounceMarkerModel = builder.createRect(
+                -2f * Constants.BALL_RADIUS, -2f * Constants.BALL_RADIUS, 0f,
+                2f * Constants.BALL_RADIUS, -2f * Constants.BALL_RADIUS, 0f,
+                2f * Constants.BALL_RADIUS, 2f * Constants.BALL_RADIUS, 0f,
+                -2f * Constants.BALL_RADIUS, 2f * Constants.BALL_RADIUS, 0f,
+                0f, 0f, 1f,
+                material, vertexAttributes);
     }
+
 
     public void addedToEngine(Engine engine)
     {
@@ -94,25 +109,49 @@ public class ServingRobotSystem extends IteratingSystem {
             mc.velocity.x = target.x - mc.position.x;
             mc.velocity.y = target.y - mc.velocity.y;
             mc.velocity.nor().scl(ballSpeed);
-            mc.velocity.z = 50f;
-
-            if (random.nextBoolean())
-                mc.velocity.x = -mc.velocity.x;
+            mc.velocity.z = 0f;
 
             lastSpawnedBall.add(mc);
 
-            BallComponent ball = new BallComponent(Vector3.Zero, 999);
+            BallComponent ball = new BallComponent(new StraightBallPath(mc.position, mc.velocity, 0f));
             lastSpawnedBall.add(ball);
-
             RenderableComponent rc = new RenderableComponent(new ModelInstance(ballModel));
             lastSpawnedBall.add(rc);
-
             ShadowComponent sc = new ShadowComponent(new ModelInstance(shadowModel));
             lastSpawnedBall.add(sc);
 
             engine.addEntity(lastSpawnedBall);
+
+            spawnBounceMarkers(engine, lastSpawnedBall);
         }
         super.update(deltaTime);
+    }
+
+    public static void spawnBounceMarkers(Engine engine, Entity ball)
+    {
+        BallComponent bc = bcm.get(ball);
+
+        // show a bounce marker for all of the bounces on the path
+        int i = 1;
+        for (BallFrame f: bc.path.getFrames())
+        {
+            Entity bounceMarker = new Entity();
+
+            MovementComponent mc = new MovementComponent();
+            mc.position.set(f.position);
+            mc.velocity.set(0f, 0f, 0f);
+            mc.orientation.set(f.planeNormal, 0f);
+            bounceMarker.add(mc);
+
+            BounceMarkerComponent bmc = new BounceMarkerComponent(ball, bc.currentVolley, i, new Ray(f.position, f.planeNormal));
+            bounceMarker.add(bmc);
+
+            RenderableComponent rc = new RenderableComponent(new ModelInstance(bounceMarkerModel));
+            bounceMarker.add(rc);
+
+            engine.addEntity(bounceMarker);
+            i += 1;
+        }
     }
 
     @Override

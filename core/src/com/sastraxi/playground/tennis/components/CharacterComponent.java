@@ -34,7 +34,5 @@ public class CharacterComponent extends Component {
     public float timeToHit = 0f;
     public float dashMeter = Constants.DASH_MAX_METER;
     public boolean inStrikeZone = false;
-    public SwingDetector swingDetector = new SwingDetector();
-
 
 }

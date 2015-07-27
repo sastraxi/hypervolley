@@ -2,24 +2,20 @@ package com.sastraxi.playground.tennis.components;
 
 import com.badlogic.ashley.core.Component;
 import com.badlogic.gdx.math.Vector3;
+import com.sastraxi.playground.tennis.game.BallPath;
 
 /**
  * Created by sastr on 2015-07-01.
  */
 public class BallComponent extends Component {
 
-    public BallComponent(BallComponent o) {
-        this.spin = o.spin;
-        this.bounces = o.bounces;
-        this.maxBounces = o.maxBounces;
-    }
+    public int currentBounce, currentVolley;
+    public BallPath path;
 
-    public BallComponent(Vector3 spin, int maxBounces) {
-        this.spin = spin;
-        this.maxBounces = maxBounces;
+    public BallComponent(BallPath path) {
+        this.currentBounce = 0;
+        this.currentVolley = 0;
+        this.path = path;
     }
-
-    public Vector3 spin; // angular momentum
-    public int bounces = 0, maxBounces; // die after x bounces
 
 }

@@ -22,7 +22,8 @@ public class Constants {
 
     public static final float CAMERA_FOV = 30f;
     public static final Vector3 UP_VECTOR = Vector3.Z;
-    public static final Vector3 ACCEL_GRAVITY = new Vector3(UP_VECTOR).scl(-98.1f);
+    public static final float G = 98.1f;
+    public static final Vector3 ACCEL_GRAVITY = new Vector3(UP_VECTOR).scl(-G);
     public static final Vector3 GAME_CAMERA_POSITION = new Vector3(0f, -300f, 600f);
     public static final Vector3 GAME_CAMERA_POINT_AT = new Vector3(0f, 0.5f * ARENA_HALF_DEPTH, 0f);
     public static final float GAME_ORTHOGRAPHIC_CAMERA_ZOOM = 0.42f;
@@ -98,4 +99,10 @@ public class Constants {
 
     public static final float BALL_SPAWN_COURT_COVERAGE = 0.7f;
     public static final float PLAYER_BALL_SUBTRACT_SCALE = Constants.PLAYER_RADIUS * 2f;
+
+    // used for bounce marker
+    public static final float JUICY_ANIMATION_LENGTH = 0.4f;
+    public static final float JUICY_ROTATIONS_PER_SECOND = 0.3f;
+
+
 }

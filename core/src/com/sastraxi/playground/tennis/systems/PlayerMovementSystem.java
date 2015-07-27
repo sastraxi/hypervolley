@@ -7,10 +7,13 @@ import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
 import com.badlogic.gdx.controllers.Controller;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.sastraxi.playground.tennis.components.*;
 import com.sastraxi.playground.tennis.contrib.Xbox360Pad;
 import com.sastraxi.playground.tennis.game.Constants;
+import com.sastraxi.playground.tennis.game.StraightBallPath;
+import com.sastraxi.playground.tennis.game.SwingDetector;
 
 public class PlayerMovementSystem extends IteratingSystem {
 
@@ -22,6 +25,7 @@ public class PlayerMovementSystem extends IteratingSystem {
     private ComponentMapper<MovementComponent> mc = ComponentMapper.getFor(MovementComponent.class);
     private ComponentMapper<CharacterComponent> picm = ComponentMapper.getFor(CharacterComponent.class);
     private ComponentMapper<ControllerInputComponent> cicm = ComponentMapper.getFor(ControllerInputComponent.class);
+    private ComponentMapper<SwingDetectorComponent> sdcm = ComponentMapper.getFor(SwingDetectorComponent.class);
 
     private Engine engine;
 
@@ -30,6 +34,8 @@ public class PlayerMovementSystem extends IteratingSystem {
             _tmp_player_focal = new Vector3(),
             _tmp_player_ball_prev = new Vector3(),
             _tmp_player_offset = new Vector3();
+
+    Vector2 _left_stick = new Vector2();
 
     public PlayerMovementSystem() {
         super(Family.all(MovementComponent.class, CharacterComponent.class).get(), PRIORITY);
@@ -47,6 +53,7 @@ public class PlayerMovementSystem extends IteratingSystem {
         MovementComponent movement = mc.get(entity);
         CharacterComponent pic = picm.get(entity);
         ControllerInputComponent cic = cicm.get(entity);
+        SwingDetector swingDetector = sdcm.get(entity).swingDetector;
 
         // FIXME need to split into active (controller) and passive (in strike zone, head orientation, etc.)
         if (cic == null) return;
@@ -63,9 +70,9 @@ public class PlayerMovementSystem extends IteratingSystem {
         cic.lastButtonState[Xbox360Pad.BUTTON_BACK] = isBackButtonPressed;
 
         // set _tmp to the left control stick
-        _tmp.set(controller.getAxis(Xbox360Pad.AXIS_LEFT_X),
-                -controller.getAxis(Xbox360Pad.AXIS_LEFT_Y),
-                0f);
+        _left_stick.set(controller.getAxis(Xbox360Pad.AXIS_LEFT_X),
+                       -controller.getAxis(Xbox360Pad.AXIS_LEFT_Y));
+        _tmp.set(_left_stick, 0f);
 
         // dash state changes; only allow when resting or we've done our animations
         if (controller.getButton(Xbox360Pad.BUTTON_LB) || controller.getButton(Xbox360Pad.BUTTON_RB)
@@ -153,8 +160,8 @@ public class PlayerMovementSystem extends IteratingSystem {
         else
         {
             // use left stick input to decide on direction of the ball
-            if (pic.swingDetector.isRunning()) {
-                pic.swingDetector.sample(_tmp, deltaTime);
+            if (swingDetector.isRunning()) {
+                swingDetector.sample(_left_stick, deltaTime);
             }
         }
 
@@ -224,11 +231,19 @@ public class PlayerMovementSystem extends IteratingSystem {
                     _tmp_player_ball_prev.set(ballMovement.velocity).scl(-deltaTime).add(ballMovement.position).sub(_tmp_player_offset);
                     float prevBallRadians = MathUtils.atan2(_tmp_player_ball_prev.y, _tmp_player_ball_prev.x);
 
+                    // TODO determine heading of ball
+                    // swingDetector.averageRads
+
                     if (pic.inStrikeZone)
                     {
                         // increase the velocity based on the elegance of the hit
                         if (Math.signum(_rot - ballRadians) != Math.signum(_rot - prevBallRadians)) {
                             // perfect hit
+                            // TODO define a perfect hit by obtaining the local minimum of some f(ballRadian - _rot, ballDistance - perfectDistance)
+                            // TODO this also fixes the fact that some balls cannot currently be hit if going too fast
+                            // TODO (the ball is never in the strike zone), as long as we move if (pic.inStrikeZone) into the else statement
+                            // TODO for the non-perfect hits, we don't technically require the ball to be in the strike zone
+                            // TODO ever for perfect hits for this reason
                             System.out.println("Perfect hit!");
                             ballMovement.velocity.x *= Constants.PERFECT_HIT_VELOCITY_SCALE;
                             ballMovement.velocity.y *= Constants.PERFECT_HIT_VELOCITY_SCALE;
@@ -240,6 +255,14 @@ public class PlayerMovementSystem extends IteratingSystem {
 
                         // decide on the return velocity.
                         // look at the swing detector
+                        ballMovement.velocity.x = -ballMovement.velocity.x;
+
+                        // craft the new path.
+                        BallComponent ballComponent = bcm.get(pic.ball);
+                        ballComponent.path = new StraightBallPath(ballMovement.position, ballMovement.velocity, 0f); // FIXME new usage in game loop
+                        ballComponent.currentBounce = 0;
+                        ServingRobotSystem.spawnBounceMarkers(engine, pic.ball);
+
                         /*
                         if (pic.swingDetector.getRotation() > Constants.PLAYER_BALL_SPECIAL_MIN_ROTATION)
                         {
@@ -249,10 +272,9 @@ public class PlayerMovementSystem extends IteratingSystem {
                         }
                         else
                         {*/
-                            ballMovement.velocity.x = -ballMovement.velocity.x;
+                            // ballMovement.velocity.x = -ballMovement.velocity.x;
                         /*} */
                     }
-
                 }
             }
             else
@@ -262,7 +284,7 @@ public class PlayerMovementSystem extends IteratingSystem {
                 {
                     // wind up to hit the ball
                     pic.timeToHit = Constants.PLAYER_BALL_SWING_DURATION;
-                    pic.swingDetector.start();
+                    swingDetector.start();
                 }
                 cic.lastButtonState[Xbox360Pad.BUTTON_A] = isAButtonPressed;
             }

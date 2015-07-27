@@ -8,6 +8,7 @@ import com.sastraxi.playground.tennis.game.SwingDetector;
  */
 public class SwingDetectorComponent extends Component {
 
-    public SwingDetector swingDetector = new SwingDetector();
+    public SwingDetector swingDetector = new SwingDetector(24); // FIXME make this a reasonable size, way too big
+
 
 }

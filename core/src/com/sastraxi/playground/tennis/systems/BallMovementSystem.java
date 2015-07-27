@@ -9,6 +9,7 @@ import com.badlogic.gdx.math.Plane;
 import com.badlogic.gdx.math.Vector3;
 import com.sastraxi.playground.tennis.components.BallComponent;
 import com.sastraxi.playground.tennis.components.MovementComponent;
+import com.sastraxi.playground.tennis.components.RenderableComponent;
 import com.sastraxi.playground.tennis.game.Constants;
 
 public class BallMovementSystem extends IteratingSystem {
@@ -56,10 +57,10 @@ public class BallMovementSystem extends IteratingSystem {
         _pos.set(movement.position);
 
         // bounce off the floor and side walls, updating _pos, _tmp, and movement.velocity
-        ball.bounces += _bounce(movement, _pos, _tmp, Constants.COURT_GROUND_PLANE);
-        ball.bounces += _bounce(movement, _pos, _tmp, Constants.COURT_NEAR_PLANE);
-        ball.bounces += _bounce(movement, _pos, _tmp, Constants.COURT_FAR_PLANE);
-        ball.bounces += _bounce(movement, _pos, _tmp, Constants.COURT_RIGHT_PLANE);
+        ball.currentBounce += _bounce(movement, _pos, _tmp, Constants.COURT_GROUND_PLANE);
+        ball.currentBounce += _bounce(movement, _pos, _tmp, Constants.COURT_NEAR_PLANE);
+        ball.currentBounce += _bounce(movement, _pos, _tmp, Constants.COURT_FAR_PLANE);
+        ball.currentBounce += _bounce(movement, _pos, _tmp, Constants.COURT_RIGHT_PLANE);
 
         // kill the ball if it hits the left wall
         if (_bounce(movement, _pos, _tmp, Constants.COURT_LEFT_PLANE) > 0) {
@@ -69,12 +70,6 @@ public class BallMovementSystem extends IteratingSystem {
 
         // set the ball's new position, using up the remaining delta (_tmp) in the process
         movement.position.set(_pos).add(_tmp);
-
-        // die once we hit a certain # of bounces
-        if (ball.bounces >= ball.maxBounces) {
-            engine.removeEntity(entity);
-            return;
-        }
     }
 
     private static Vector3 _finish = new Vector3(), _isect = new Vector3(), _reflect = new Vector3();

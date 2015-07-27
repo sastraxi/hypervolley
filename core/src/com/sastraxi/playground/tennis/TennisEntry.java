@@ -10,10 +10,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.controllers.Controller;
 import com.badlogic.gdx.controllers.Controllers;
 import com.badlogic.gdx.graphics.*;
-import com.badlogic.gdx.graphics.g3d.Environment;
-import com.badlogic.gdx.graphics.g3d.Material;
-import com.badlogic.gdx.graphics.g3d.ModelBatch;
-import com.badlogic.gdx.graphics.g3d.ModelInstance;
+import com.badlogic.gdx.graphics.g3d.*;
 import com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
@@ -32,6 +29,7 @@ import com.sastraxi.playground.tennis.game.Constants;
 import com.sastraxi.playground.tennis.game.PlayerType;
 import com.sastraxi.playground.tennis.models.PlayerModel;
 import com.sastraxi.playground.tennis.systems.BallMovementSystem;
+import com.sastraxi.playground.tennis.systems.BounceMarkerUpdateSystem;
 import com.sastraxi.playground.tennis.systems.PlayerMovementSystem;
 import com.sastraxi.playground.tennis.systems.ServingRobotSystem;
 import org.lwjgl.opengl.GL30;
@@ -39,6 +37,7 @@ import org.lwjgl.opengl.GL30;
 public class TennisEntry extends ApplicationAdapter {
 
     static final Family BALL_ENTITIES = Family.all(BallComponent.class).get();
+    static final Family BOUNCE_MARKER_ENTITIES = Family.all(BounceMarkerComponent.class, MovementComponent.class).get();
 
     final ComponentMapper<CharacterComponent> picm = ComponentMapper.getFor(CharacterComponent.class);
     final ComponentMapper<MovementComponent> mcm = ComponentMapper.getFor(MovementComponent.class);
@@ -56,6 +55,7 @@ public class TennisEntry extends ApplicationAdapter {
     Entity[] players = new Entity[2];
     ImmutableArray<Entity> ballEntities;
     ImmutableArray<Entity> swingDetectorEntities;
+    ImmutableArray<Entity> bounceMarkers;
 
     // systems
     Engine engine;
@@ -75,7 +75,6 @@ public class TennisEntry extends ApplicationAdapter {
     // things to draw
     ModelInstance tennisCourt;
     ModelInstance[] playerModelInstances = new ModelInstance[2];
-
 
     @Override
 	public void create()
@@ -195,7 +194,10 @@ public class TennisEntry extends ApplicationAdapter {
             bss = new ServingRobotSystem();
             engine.addSystem(bss);
 
+            engine.addSystem(new BounceMarkerUpdateSystem());
+
             ballEntities = engine.getEntitiesFor(BALL_ENTITIES);
+            bounceMarkers = engine.getEntitiesFor(BOUNCE_MARKER_ENTITIES);
         }
 
         // ....
@@ -210,11 +212,11 @@ public class TennisEntry extends ApplicationAdapter {
         builder.begin();
         node = builder.node();
         builder.part("far", GL20.GL_TRIANGLES, vertexAttributes, material)
-               .rect(-Constants.ARENA_HALF_WIDTH,  Constants.ARENA_HALF_DEPTH, 0f,
-                      Constants.ARENA_HALF_WIDTH,  Constants.ARENA_HALF_DEPTH, 0f,
-                      Constants.ARENA_HALF_WIDTH,  Constants.ARENA_HALF_DEPTH, Constants.WALL_HEIGHT,
-                     -Constants.ARENA_HALF_WIDTH,  Constants.ARENA_HALF_DEPTH, Constants.WALL_HEIGHT,
-                      0f, -1f, 0f);
+               .rect(-Constants.ARENA_HALF_WIDTH, Constants.ARENA_HALF_DEPTH, 0f,
+                       Constants.ARENA_HALF_WIDTH, Constants.ARENA_HALF_DEPTH, 0f,
+                       Constants.ARENA_HALF_WIDTH, Constants.ARENA_HALF_DEPTH, Constants.WALL_HEIGHT,
+                       -Constants.ARENA_HALF_WIDTH, Constants.ARENA_HALF_DEPTH, Constants.WALL_HEIGHT,
+                       0f, -1f, 0f);
         builder.part("near", GL20.GL_TRIANGLES, vertexAttributes, translucentMaterial)
                 .rect(-Constants.ARENA_HALF_WIDTH, -Constants.ARENA_HALF_DEPTH, 0f,
                        Constants.ARENA_HALF_WIDTH, -Constants.ARENA_HALF_DEPTH, 0f,
@@ -320,6 +322,14 @@ public class TennisEntry extends ApplicationAdapter {
                         .rotate(mc.orientation);
             }
         }
+        for (Entity entity: bounceMarkers)
+        {
+            MovementComponent mc = mcm.get(entity);
+            RenderableComponent rc = rcm.get(entity);
+            rc.modelInstance.transform
+                    .setToTranslation(mc.position)
+                    .rotate(mc.orientation);
+        }
 
         // render the shadow map
         Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
@@ -367,10 +377,14 @@ public class TennisEntry extends ApplicationAdapter {
             }
             batch.render(playerModelInstances[i], environment);
         }
+        for (Entity entity: bounceMarkers)
+        {
+            RenderableComponent rc = rcm.get(entity);
+            batch.render(rc.modelInstance, environment);
+        }
         batch.end();
 
         // render the HUD
-
         for (Entity entity: swingDetectorEntities)
         {
 
