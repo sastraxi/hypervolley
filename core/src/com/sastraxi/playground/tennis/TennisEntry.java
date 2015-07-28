@@ -328,6 +328,8 @@ public class TennisEntry extends ApplicationAdapter {
             axisScale = 1f + MathUtils.lerp(0f, axisScale, lerpConstant);
 
             /*
+             from http://www.gamedev.net/topic/541643-scaling-along-arbitrary-axis/
+
              Let W be a unit-length direction along which the scaling s should be applied.
              Let U and V be unit-length vectors for which {U,V,W} are mutually perpendicular.
              The set should be right-handed in that W = Cross(U,V).

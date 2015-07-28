@@ -242,6 +242,9 @@ public class PlayerMovementSystem extends IteratingSystem {
 
                     if (pic.inStrikeZone)
                     {
+                        float ballSpeed = (float) Math.sqrt(ballMovement.velocity.x * ballMovement.velocity.x +
+                                                            ballMovement.velocity.y * ballMovement.velocity.y);
+
                         // increase the velocity based on the elegance of the hit
                         if (Math.signum(_rot - ballRadians) != Math.signum(_rot - prevBallRadians)) {
                             // perfect hit
@@ -251,17 +254,15 @@ public class PlayerMovementSystem extends IteratingSystem {
                             // TODO for the non-perfect hits, we don't technically require the ball to be in the strike zone
                             // TODO ever for perfect hits for this reason
                             System.out.println("Perfect hit!");
-                            ballMovement.velocity.x *= Constants.PERFECT_HIT_VELOCITY_SCALE;
-                            ballMovement.velocity.y *= Constants.PERFECT_HIT_VELOCITY_SCALE;
+                            ballSpeed *= Constants.PERFECT_HIT_VELOCITY_SCALE;
                         } else {
-                            // System.out.println("Hit!");
-                            ballMovement.velocity.x *= Constants.VOLLEY_VELOCITY_SCALE;
-                            ballMovement.velocity.y *= Constants.VOLLEY_VELOCITY_SCALE;
+                            ballSpeed *= Constants.VOLLEY_VELOCITY_SCALE;
                         }
 
-                        // decide on the return velocity.
-                        // look at the swing detector
-                        ballMovement.velocity.x = -ballMovement.velocity.x;
+                        // decide on the return velocity -- just the player's orientation right now
+                        // TODO look at the swing detector
+                        ballMovement.velocity.x = MathUtils.cos(_rot) * ballSpeed;
+                        ballMovement.velocity.y = MathUtils.sin(_rot) * ballSpeed;
                         ballMovement.velocity.z = Math.abs(ballMovement.velocity.z);
 
                         // craft the new path.
