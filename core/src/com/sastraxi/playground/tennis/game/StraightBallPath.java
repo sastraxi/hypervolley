@@ -16,6 +16,8 @@ import java.util.TreeSet;
 public class StraightBallPath implements BallPath {
 
     private static final int NUM_BOUNCES = 1;
+    public static final int MAX_BOUNCES = 50; // FIXME if there are more bounces, the ball (path) will ignore them!
+
 
     private final BallFrame origin;
     private final NavigableSet<BallFrame> bounces = new TreeSet<>();
@@ -32,7 +34,7 @@ public class StraightBallPath implements BallPath {
         // collide with either side wall or the floor, until we leave the court.
         int numFloorBounces = 0, numBounces = 1;
         BallFrame lastFrame = this.origin;
-        while (bounces.isEmpty() || Math.abs(bounces.last().position.x) < Constants.ARENA_HALF_WIDTH)
+        while (numBounces <= MAX_BOUNCES && bounces.isEmpty() || Math.abs(bounces.last().position.x) < Constants.ARENA_HALF_WIDTH)
         {
             // try colliding with the floor.
             BallFrame floorBounce = new BallFrame();

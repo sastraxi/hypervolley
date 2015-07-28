@@ -131,7 +131,7 @@ public class TennisEntry extends ApplicationAdapter {
             mc.position.set(center, 0f);
             if (i == 1) mc.orientation = new Quaternion(Constants.UP_VECTOR, 180f);
             players[i].add(mc);
-            players[i].add(new CharacterComponent(bounds, new Vector3(focalPoint, 0f)));
+            players[i].add(new CharacterComponent(playerTypes[i], bounds, new Vector3(focalPoint, 0f)));
 
             // the player's input is a controller
             if (playerTypes[i] == PlayerType.HUMAN) {
@@ -190,20 +190,18 @@ public class TennisEntry extends ApplicationAdapter {
         };
         players[0].add(cameraComponent);
 
-        // if player 2 is a serving robot, add a ball launcher on the other side of the court
-        if (playerTypes[1] == PlayerType.SERVING_ROBOT)
-        {
-            bms = new BallMovementSystem();
-            engine.addSystem(bms);
+        // add a ball launcher on the other side of the court
+        // and ball movement
+        bms = new BallMovementSystem();
+        engine.addSystem(bms);
 
-            bss = new ServingRobotSystem();
-            engine.addSystem(bss);
+        bss = new ServingRobotSystem();
+        engine.addSystem(bss);
 
-            engine.addSystem(new BounceMarkerUpdateSystem());
+        engine.addSystem(new BounceMarkerUpdateSystem());
 
-            ballEntities = engine.getEntitiesFor(BALL_ENTITIES);
-            bounceMarkers = engine.getEntitiesFor(BOUNCE_MARKER_ENTITIES);
-        }
+        ballEntities = engine.getEntitiesFor(BALL_ENTITIES);
+        bounceMarkers = engine.getEntitiesFor(BOUNCE_MARKER_ENTITIES);
 
         // ....
         long vertexAttributes = VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal;
@@ -370,8 +368,10 @@ public class TennisEntry extends ApplicationAdapter {
         }
         for (int i = 0; i < players.length; ++i)
         {
-            MovementComponent mc = mcm.get(players[i]);
             CharacterComponent character = picm.get(players[i]);
+            if (character.type != PlayerType.HUMAN) break; // only render non-computer characters right now
+
+            MovementComponent mc = mcm.get(players[i]);
             playerModelInstances[i].transform
                     .setToTranslation(mc.position)
                     .rotate(mc.orientation);
@@ -406,8 +406,10 @@ public class TennisEntry extends ApplicationAdapter {
 
         for (int i = 0; i < players.length; ++i)
         {
-            MovementComponent mc = mcm.get(players[i]);
             CharacterComponent character = picm.get(players[i]);
+            if (character.type != PlayerType.HUMAN) break; // only render non-computer characters right now
+
+            MovementComponent mc = mcm.get(players[i]);
             if (character.inStrikeZone) {
                 AlertedComponent ac = acm.get(players[i]);
                 shadowBatch.render(ac.modelInstance, environment);
@@ -430,8 +432,10 @@ public class TennisEntry extends ApplicationAdapter {
 
         for (int i = 0; i < players.length; ++i)
         {
-            MovementComponent mc = mcm.get(players[i]);
             CharacterComponent character = picm.get(players[i]);
+            if (character.type != PlayerType.HUMAN) break; // only render non-computer characters right now
+
+            MovementComponent mc = mcm.get(players[i]);
             if (character.inStrikeZone) {
                 AlertedComponent ac = acm.get(players[i]);
                 batch.render(ac.modelInstance, environment);

@@ -5,6 +5,7 @@ import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 import com.sastraxi.playground.tennis.game.Constants;
+import com.sastraxi.playground.tennis.game.PlayerType;
 import com.sastraxi.playground.tennis.game.SwingDetector;
 
 /**
@@ -12,13 +13,17 @@ import com.sastraxi.playground.tennis.game.SwingDetector;
  */
 public class CharacterComponent extends Component {
 
+    public final PlayerType type;
+
+
     public enum DashState {
         NONE,
         DASHING,
         ENDING
     }
 
-    public CharacterComponent(Rectangle bounds, Vector3 focalPoint) {
+    public CharacterComponent(PlayerType type, Rectangle bounds, Vector3 focalPoint) {
+        this.type = type;
         this.bounds = bounds;
         this.focalPoint = focalPoint;
     }
