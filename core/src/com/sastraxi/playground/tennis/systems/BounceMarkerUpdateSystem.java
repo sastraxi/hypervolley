@@ -27,6 +27,8 @@ public class BounceMarkerUpdateSystem extends IteratingSystem  {
     private Engine engine = null;
 
     Vector3 _tmp = new Vector3();
+    Quaternion _quat = new Quaternion();
+    Vector3 _crs = new Vector3();
 
     public BounceMarkerUpdateSystem() {
         super(Family.all(BounceMarkerComponent.class, MovementComponent.class).get(), PRIORITY);
@@ -49,9 +51,17 @@ public class BounceMarkerUpdateSystem extends IteratingSystem  {
         bounceMarker.age += deltaTime;
         bounceMarker.radians += deltaTime * Constants.JUICY_ROTATIONS_PER_SECOND * MathUtils.PI2;
 
-        // update orientation and position
-        movement.orientation.set(bounceMarker.plane.direction, bounceMarker.radians * MathUtils.radiansToDegrees);
-        movement.position.set(bounceMarker.plane.direction).nor().scl(bounceMarker.getHeight()).add(bounceMarker.plane.origin);
+        movement.position.set(bounceMarker.plane.direction)
+                         .nor()
+                         .scl(bounceMarker.getHeight())
+                         .add(bounceMarker.plane.origin);
+
+        _quat.set(Vector3.Z, bounceMarker.radians * MathUtils.radiansToDegrees); // rotation around
+        _crs.set(Vector3.Z)
+            .crs(bounceMarker.plane.direction)
+            .nor();
+        movement.orientation.set(_crs, 90f); // rotate it to the right plane
+        movement.orientation.mul(_quat);
 
         // update opacity
         BlendingAttribute blend = (BlendingAttribute) rc.modelInstance.materials.get(0).get(BlendingAttribute.Type);

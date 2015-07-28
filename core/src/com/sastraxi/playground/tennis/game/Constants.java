@@ -98,11 +98,16 @@ public class Constants {
     public static final int DETAIL_LEVEL_CIRCLE = 64;
 
     public static final float BALL_SPAWN_COURT_COVERAGE = 0.6f;
-    public static final float BALL_TARGET_COURT_COVERAGE = 2f;
+    public static final float BALL_TARGET_COURT_COVERAGE = 6f;
     public static final float PLAYER_BALL_SUBTRACT_SCALE = Constants.PLAYER_RADIUS * 2f;
 
-    // used for bounce marker
-    public static final float JUICY_ANIMATION_LENGTH = 0.2f;
-    public static final float JUICY_ROTATIONS_PER_SECOND = 0.3f;
-    public static final float JUICY_BOUNCE_MARKER_OPACITY = 0.8f;
+
+    public static final float JUICY_ANIMATION_LENGTH = 0.2f;            // used for bounce marker
+    public static final float JUICY_ROTATIONS_PER_SECOND = 0.2f;
+    public static final float JUICY_BOUNCE_MARKER_OPACITY = 0.6f;
+    public static final float JUICY_BALL_SHEAR = 0.002f;                 // exaggerate ball movement
+    public static final float JUICY_BALL_SHEAR_THINNING = 0.2f;         // % of shear magnitude
+
+    public static final float JUICY_BALL_SHEAR_LERP_TOP = 20f;
+    public static final float JUICY_BALL_SHEAR_LERP_BOTTOM = 0f;
 }

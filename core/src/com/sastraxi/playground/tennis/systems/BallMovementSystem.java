@@ -42,9 +42,11 @@ public class BallMovementSystem extends IteratingSystem {
 
         MovementComponent movement = mcm.get(entity);
         BallComponent ball = bcm.get(entity);
+
         ball.path.getPosition(time, movement.position);
-        ball.path.getVelocity(time, movement.position);
+        ball.path.getVelocity(time, movement.velocity);
         ball.currentBounce = ball.path.getNumBounces(time);
+        ball.shear.set(movement.velocity);
 
         if (!ball.path.isAlive(time)) {
             engine.removeEntity(entity);

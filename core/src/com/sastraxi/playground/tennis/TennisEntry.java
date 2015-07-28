@@ -19,10 +19,7 @@ import com.badlogic.gdx.graphics.g3d.model.Node;
 import com.badlogic.gdx.graphics.g3d.utils.DefaultShaderProvider;
 import com.badlogic.gdx.graphics.g3d.utils.DepthShaderProvider;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
-import com.badlogic.gdx.math.Quaternion;
-import com.badlogic.gdx.math.Rectangle;
-import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.math.*;
 import com.badlogic.gdx.utils.Array;
 import com.sastraxi.playground.tennis.components.*;
 import com.sastraxi.playground.tennis.game.Constants;
@@ -43,6 +40,7 @@ public class TennisEntry extends ApplicationAdapter {
     final ComponentMapper<MovementComponent> mcm = ComponentMapper.getFor(MovementComponent.class);
     final ComponentMapper<RenderableComponent> rcm = ComponentMapper.getFor(RenderableComponent.class);
     final ComponentMapper<ShadowComponent> scm = ComponentMapper.getFor(ShadowComponent.class);
+    final ComponentMapper<BallComponent> bcm = ComponentMapper.getFor(BallComponent.class);
     final ComponentMapper<AlertedComponent> acm = ComponentMapper.getFor(AlertedComponent.class);
 
     static final long FRAME_TIME_NS = 1000000000 / Constants.FRAME_RATE;
@@ -302,6 +300,14 @@ public class TennisEntry extends ApplicationAdapter {
         renderImpl();
 	}
 
+    private Vector3 _shear_nor  = new Vector3();
+    private Vector3 _U = new Vector3();
+    private Vector3 _V = new Vector3();
+    private Vector3 _neg_position = new Vector3();
+    private Matrix4 _R = new Matrix4();
+    private Matrix4 _R_T = new Matrix4();
+    private Matrix4 _D = new Matrix4();
+
     public void renderImpl()
     {
         Gdx.gl.glViewport(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
@@ -309,11 +315,56 @@ public class TennisEntry extends ApplicationAdapter {
         // TODO update transformation matrices; move this somewhere?
         for (Entity entity: ballEntities)
         {
+            BallComponent bc = bcm.get(entity);
             MovementComponent mc = mcm.get(entity);
             RenderableComponent rc = rcm.get(entity);
-            rc.modelInstance.transform
-                    .setToTranslation(mc.position);
-            // .rotate(mc.orientation);
+
+            float axisScale = mc.velocity.len() * Constants.JUICY_BALL_SHEAR;
+            float distanceFromFloor = mc.position.z;
+            float lerpConstant = MathUtils.clamp(
+                    (distanceFromFloor - Constants.JUICY_BALL_SHEAR_LERP_BOTTOM) /
+                            (Constants.JUICY_BALL_SHEAR_LERP_TOP - Constants.JUICY_BALL_SHEAR_LERP_BOTTOM),
+                    0f, 1f);
+            axisScale = 1f + MathUtils.lerp(0f, axisScale, lerpConstant);
+
+            /*
+             Let W be a unit-length direction along which the scaling s should be applied.
+             Let U and V be unit-length vectors for which {U,V,W} are mutually perpendicular.
+             The set should be right-handed in that W = Cross(U,V).
+             */
+            _shear_nor.set(mc.velocity).nor();
+            _U.set(_shear_nor);
+            _V.set(_shear_nor);
+            _U.crs(Constants.UP_VECTOR).nor(); // right of ball
+            _V.crs(_U).nor();
+
+            /*
+             The matrix R whose columns are U, V, and W is a rotation matrix.
+             Let P be the origin of a coordinate system with coordinate directions U, V, W.
+
+             Any point may be written as X = P + y0*U + y1*V + y2*W = P + R*Y,
+             where Y is a 3x1 vector with components y0, y1, and y2.
+
+             The point with the desired scaling is X' = P + y0*U + y1*V + s*y2*W = P + R*D*Y,
+             where D is the diagonal matrix Diag(1,1,s).
+             */
+            _neg_position.set(mc.position).scl(-1f);
+            _R.set(_U, _V, _shear_nor, Vector3.Zero);
+            _R_T.set(_R).tra();
+            _D.setToScaling(1f / axisScale, 1f / axisScale, axisScale);
+
+            /*
+             Then Y = R^T*(X-P), where R^T is the transpose of R and X'-P = R*D*R^T*(X-P).
+
+             If you were to choose P = 0, then X' = R*D*R^T*X.
+             But R^T = R^{-1} (the inverse of R), which is what you proposed.
+             */
+            rc.modelInstance.transform.idt()
+                    .translate(mc.position)
+                    .mul(_R_T)
+                    .mul(_D)
+                    .mul(_R);
+
         }
         for (int i = 0; i < players.length; ++i)
         {
@@ -399,6 +450,13 @@ public class TennisEntry extends ApplicationAdapter {
         }
 
         //stage.draw();
+    }
+
+    Vector3 __xformed = new Vector3();
+    private void __debug_transform(ModelInstance modelInstance, Vector3 position)
+    {
+        __xformed.set(position).mul(modelInstance.transform);
+        System.out.println("Xform: " + position + " to " + __xformed);
     }
 
     @Override

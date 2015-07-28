@@ -9,13 +9,17 @@ import com.sastraxi.playground.tennis.game.BallPath;
  */
 public class BallComponent extends Component {
 
+    public Vector3 shear;
     public int currentBounce, currentVolley;
     public BallPath path;
+
+    // getPosition(t) / getVelocity(t) through path
 
     public BallComponent(BallPath path) {
         this.currentBounce = 0;
         this.currentVolley = 0;
         this.path = path;
+        shear = new Vector3(0f, 0f, 0f);
     }
 
 }

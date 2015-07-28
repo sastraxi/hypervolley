@@ -157,9 +157,9 @@ public class StraightBallPath implements BallPath {
             if (f.time > t) break;
             chosen = f;
         }
+        float dt = t - chosen.time;
 
         // extrapolate based on the "window" that we're in between frames
-        float dt = t - chosen.time;
         out.set(chosen.velocity).scl(dt).add(chosen.position);
         out.z = chosen.position.z + chosen.velocity.z * dt - 0.5f * Constants.G * dt * dt;
     }
@@ -167,7 +167,15 @@ public class StraightBallPath implements BallPath {
     @Override
     public void getVelocity(float t, Vector3 out)
     {
-        // TODO
+        BallFrame chosen = origin;
+        for (BallFrame f: bounces) {
+            if (f.time > t) break;
+            chosen = f;
+        }
+        float dt = t - chosen.time;
+
+        // extrapolate based on the "window" that we're in between frames
+        out.set(chosen.velocity.x, chosen.velocity.y, chosen.velocity.z - dt * Constants.G);
     }
 
     @Override
