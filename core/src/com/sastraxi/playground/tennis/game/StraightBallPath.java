@@ -50,13 +50,16 @@ public class StraightBallPath implements BallPath {
             floorBounce.planeNormal.set(Vector3.Z);
 
             // try colliding with the wall we're headed towards.
-            BallFrame wallBounce = _bounce_no_z(
-                    lastFrame,
-                    (lastFrame.velocity.y < 0) ? Constants.COURT_FAR_PLANE : Constants.COURT_NEAR_PLANE,
-                    numFloorBounces);
+            BallFrame wallBounce = null;
+            if (Math.abs(lastFrame.velocity.y) > Constants.EPSILON) {
+                wallBounce = _bounce_no_z(
+                        lastFrame,
+                        (lastFrame.velocity.y < 0) ? Constants.COURT_FAR_PLANE : Constants.COURT_NEAR_PLANE,
+                        numFloorBounces);
+            }
 
             // the first wall we collide with is the true collision.
-            if (floorBounce.time < wallBounce.time) {
+            if (wallBounce == null || floorBounce.time < wallBounce.time) {
                 floorBounce.bounceNumber = numBounces;
                 bounces.add(floorBounce);
                 lastFrame = floorBounce;

@@ -110,4 +110,6 @@ public class Constants {
 
     public static final float JUICY_BALL_SHEAR_LERP_TOP = 20f;
     public static final float JUICY_BALL_SHEAR_LERP_BOTTOM = 0f;
+
+    public static final float EPSILON = 1e-9f;
 }
