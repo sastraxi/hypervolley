@@ -37,14 +37,15 @@ public class Constants {
     public static final float CONTROLLER_WALK_MAGNITUDE = 0.2f;
     public static final float CONTROLLER_RUN_MAGNITUDE = 0.75f;
 
-    public static final float PLAYER_SPEED = 120f;
+    public static final float PLAYER_WALK_MULTIPLIER = 0.4f;
+    public static final float PLAYER_SPEED = 140f;
 
     public static final float DASH_SPEED = 600f;
     public static final float DASH_ACCEL = 0.12f; // seconds to get up to speed
     public static final float DASH_DECEL = 0.12f; // seconds to slow down to regular speed
-    public static final float DASH_MAX_METER = 0.5f; // how many seconds it takes to recharge
-    public static final float DASH_METER_DEPLETION_RATE = 8f; // how many times faster it depletes
-    public static final float DASH_MIN_METER = 0.5f; // this much of the meter must be full to dash
+    public static final float DASH_MAX_METER = 10f; // how many seconds it takes to recharge
+    public static final float DASH_METER_DEPLETION_RATE = 16f; // how many times faster it depletes
+    public static final float DASH_MIN_METER = 10f; // this much of the meter must be full to dash
 
     public static final Plane COURT_GROUND_PLANE = new Plane(Constants.UP_VECTOR, 0f);
     public static final Plane COURT_FAR_PLANE = new Plane(new Vector3(0f, 1f, 0f), ARENA_HALF_DEPTH);

@@ -5,6 +5,7 @@ import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 import com.sastraxi.playground.tennis.game.Constants;
+import com.sastraxi.playground.tennis.game.InputFrame;
 import com.sastraxi.playground.tennis.game.PlayerType;
 import com.sastraxi.playground.tennis.game.SwingDetector;
 
@@ -39,5 +40,9 @@ public class CharacterComponent extends Component {
     public float timeToHit = 0f;
     public float dashMeter = Constants.DASH_MAX_METER;
     public boolean inStrikeZone = false;
+
+    // input
+    public InputFrame inputFrame = new InputFrame();
+    public InputFrame lastInputFrame = new InputFrame();
 
 }

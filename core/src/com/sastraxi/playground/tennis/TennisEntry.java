@@ -25,10 +25,7 @@ import com.sastraxi.playground.tennis.components.*;
 import com.sastraxi.playground.tennis.game.Constants;
 import com.sastraxi.playground.tennis.game.PlayerType;
 import com.sastraxi.playground.tennis.models.PlayerModel;
-import com.sastraxi.playground.tennis.systems.BallMovementSystem;
-import com.sastraxi.playground.tennis.systems.BounceMarkerUpdateSystem;
-import com.sastraxi.playground.tennis.systems.PlayerMovementSystem;
-import com.sastraxi.playground.tennis.systems.ServingRobotSystem;
+import com.sastraxi.playground.tennis.systems.*;
 import org.lwjgl.opengl.GL30;
 
 public class TennisEntry extends ApplicationAdapter {
@@ -151,12 +148,6 @@ public class TennisEntry extends ApplicationAdapter {
             engine.addEntity(players[i]);
         }
 
-        // game state
-        Entity gameStateEntity = new Entity();
-        gameState = new GameStateComponent();
-        gameStateEntity.add(gameState);
-        engine.addEntity(gameStateEntity);
-
         // allow players to move
         engine.addSystem(new PlayerMovementSystem());
 
@@ -188,7 +179,16 @@ public class TennisEntry extends ApplicationAdapter {
             camera,
             orthographicCamera
         };
-        players[0].add(cameraComponent);
+
+        // game state
+        Entity gameStateEntity = new Entity();
+        gameState = new GameStateComponent();
+        gameStateEntity.add(cameraComponent);
+        gameStateEntity.add(gameState);
+        engine.addEntity(gameStateEntity);
+
+        // add a system to respond to player input
+        engine.addSystem(new ControllerInputSystem());
 
         // add a ball launcher on the other side of the court
         // and ball movement

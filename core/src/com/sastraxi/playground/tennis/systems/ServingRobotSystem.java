@@ -106,7 +106,7 @@ public class ServingRobotSystem extends IteratingSystem {
             target.x = -0.8f * Constants.ARENA_HALF_WIDTH;
             target.y = (random.nextFloat() - 0.5f) * Constants.BALL_TARGET_COURT_COVERAGE * Constants.ARENA_HALF_DEPTH;
 
-            float ballSpeed = 100f + random.nextFloat() * 120f;
+            float ballSpeed = 300f;
             mc.velocity.x = target.x - mc.position.x;
             mc.velocity.y = target.y - mc.velocity.y;
             mc.velocity.nor().scl(ballSpeed);

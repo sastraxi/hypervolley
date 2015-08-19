@@ -12,6 +12,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.sastraxi.playground.tennis.components.*;
 import com.sastraxi.playground.tennis.contrib.Xbox360Pad;
 import com.sastraxi.playground.tennis.game.Constants;
+import com.sastraxi.playground.tennis.game.InputFrame;
 import com.sastraxi.playground.tennis.game.StraightBallPath;
 import com.sastraxi.playground.tennis.game.SwingDetector;
 
@@ -24,7 +25,6 @@ public class PlayerMovementSystem extends IteratingSystem {
     private ComponentMapper<BallComponent> bcm = ComponentMapper.getFor(BallComponent.class);
     private ComponentMapper<MovementComponent> mc = ComponentMapper.getFor(MovementComponent.class);
     private ComponentMapper<CharacterComponent> picm = ComponentMapper.getFor(CharacterComponent.class);
-    private ComponentMapper<ControllerInputComponent> cicm = ComponentMapper.getFor(ControllerInputComponent.class);
     private ComponentMapper<SwingDetectorComponent> sdcm = ComponentMapper.getFor(SwingDetectorComponent.class);
 
     private static final Family GAME_STATE_FAMILY = Family.one(GameStateComponent.class).get();
@@ -37,8 +37,6 @@ public class PlayerMovementSystem extends IteratingSystem {
             _tmp_player_focal = new Vector3(),
             _tmp_player_ball_prev = new Vector3(),
             _tmp_player_offset = new Vector3();
-
-    Vector2 _left_stick = new Vector2();
 
     public PlayerMovementSystem() {
         super(Family.all(MovementComponent.class, CharacterComponent.class).get(), PRIORITY);
@@ -58,30 +56,15 @@ public class PlayerMovementSystem extends IteratingSystem {
 
         MovementComponent movement = mc.get(entity);
         CharacterComponent pic = picm.get(entity);
-        ControllerInputComponent cic = cicm.get(entity);
         SwingDetector swingDetector = sdcm.get(entity).swingDetector;
 
-        // FIXME need to split into active (controller) and passive (in strike zone, head orientation, etc.)
-        if (cic == null) return;
-        Controller controller = cic.controller;
         pic.timeSinceStateChange += deltaTime;
 
-        // FIXME should this be here? -- process camera angle changes
-        boolean isBackButtonPressed = controller.getButton(Xbox360Pad.BUTTON_BACK);
-        if (isBackButtonPressed && !cic.lastButtonState[Xbox360Pad.BUTTON_BACK])
-        {
-            CameraComponent viewpoint = vpmc.get(entity);
-            viewpoint.cycle();
-        }
-        cic.lastButtonState[Xbox360Pad.BUTTON_BACK] = isBackButtonPressed;
-
         // set _tmp to the left control stick
-        _left_stick.set(controller.getAxis(Xbox360Pad.AXIS_LEFT_X),
-                       -controller.getAxis(Xbox360Pad.AXIS_LEFT_Y));
-        _tmp.set(_left_stick, 0f);
+        _tmp.set(pic.inputFrame.movement, 0f);
 
         // dash state changes; only allow when resting or we've done our animations
-        if (controller.getButton(Xbox360Pad.BUTTON_LB) || controller.getButton(Xbox360Pad.BUTTON_RB)
+        if (pic.inputFrame.dash && !pic.lastInputFrame.dash
                 && (pic.state == CharacterComponent.DashState.NONE
                 || pic.timeSinceStateChange > Constants.DASH_ACCEL)) // FIXME when accel > decel there is dead time after ending dash when we cannot dash again
         {
@@ -151,7 +134,7 @@ public class PlayerMovementSystem extends IteratingSystem {
 
                 // all input below a second threshold as 0.5, all input above as 1.0
                 if (_tmp.len() < Constants.CONTROLLER_RUN_MAGNITUDE) {
-                    movement.velocity.scl(0.5f);
+                    movement.velocity.scl(Constants.PLAYER_WALK_MULTIPLIER);
                     _tmp_player_focal.set(pic.focalPoint).sub(movement.position);
                     _rot = MathUtils.atan2(_tmp_player_focal.y, _tmp_player_focal.x);
                 } else {
@@ -167,7 +150,7 @@ public class PlayerMovementSystem extends IteratingSystem {
         {
             // use left stick input to decide on direction of the ball
             if (swingDetector.isRunning()) {
-                swingDetector.sample(_left_stick, deltaTime);
+                swingDetector.sample(pic.inputFrame.movement, deltaTime);
             }
         }
 
@@ -288,14 +271,12 @@ public class PlayerMovementSystem extends IteratingSystem {
             }
             else
             {
-                boolean isAButtonPressed = controller.getButton(Xbox360Pad.BUTTON_A);
-                if (isAButtonPressed && !cic.lastButtonState[Xbox360Pad.BUTTON_A])
+                if (pic.inputFrame.swing && !pic.lastInputFrame.swing)
                 {
                     // wind up to hit the ball
                     pic.timeToHit = Constants.PLAYER_BALL_SWING_DURATION;
                     swingDetector.start();
                 }
-                cic.lastButtonState[Xbox360Pad.BUTTON_A] = isAButtonPressed;
             }
         }
     }
