@@ -9,6 +9,10 @@ import com.badlogic.gdx.controllers.Controller;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
+import com.ivan.xinput.XInputAxes;
+import com.ivan.xinput.XInputButtons;
+import com.ivan.xinput.XInputDevice;
+import com.ivan.xinput.XInputDevice14;
 import com.sastraxi.playground.tennis.components.*;
 import com.sastraxi.playground.tennis.contrib.Xbox360Pad;
 import com.sastraxi.playground.tennis.game.Constants;
@@ -47,22 +51,27 @@ public class ControllerInputSystem extends IteratingSystem {
     {
         CharacterComponent pic = picm.get(entity);
         ControllerInputComponent cic = cicm.get(entity);
-        Controller controller = cic.controller;
+        XInputDevice controller = cic.controller;
+
+        controller.poll();
+
+        // get buttons/axes
+        XInputButtons buttons = controller.getComponents().getButtons();
+        XInputAxes axes = controller.getComponents().getAxes();
 
         // save last input state
         pic.lastInputFrame.set(pic.inputFrame);
 
         // figure out new input state
-        pic.inputFrame.movement.set(controller.getAxis(Xbox360Pad.AXIS_LEFT_X),
-                -controller.getAxis(Xbox360Pad.AXIS_LEFT_Y));
-        pic.inputFrame.swing = controller.getButton(Xbox360Pad.BUTTON_A);
+        pic.inputFrame.movement.set(axes.lx, axes.ly);
+        pic.inputFrame.swing = buttons.a;
 
-        boolean isLeftBumperPressed = controller.getButton(Xbox360Pad.BUTTON_LB);
-        boolean isRightBumperPressed = controller.getButton(Xbox360Pad.BUTTON_RB);
+        boolean isLeftBumperPressed = Math.abs(axes.lt) > 0.5f;
+        boolean isRightBumperPressed = Math.abs(axes.rt) > 0.5f;
         pic.inputFrame.dash = isLeftBumperPressed | isRightBumperPressed;
 
         // hacky public gamestate stuff
-        pic.inputFrame.changeCamera = controller.getButton(Xbox360Pad.BUTTON_BACK);
+        pic.inputFrame.changeCamera = buttons.back;
         if (pic.inputFrame.changeCamera && !pic.lastInputFrame.changeCamera)
         {
             CameraComponent viewpoint = ccm.get(gameStateEntity);

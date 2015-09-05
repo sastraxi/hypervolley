@@ -21,6 +21,9 @@ import com.badlogic.gdx.graphics.g3d.utils.DepthShaderProvider;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.*;
 import com.badlogic.gdx.utils.Array;
+import com.ivan.xinput.XInputDevice;
+import com.ivan.xinput.XInputDevice14;
+import com.ivan.xinput.exceptions.XInputNotLoadedException;
 import com.sastraxi.playground.tennis.components.*;
 import com.sastraxi.playground.tennis.game.Constants;
 import com.sastraxi.playground.tennis.game.PlayerType;
@@ -90,19 +93,35 @@ public class TennisEntry extends ApplicationAdapter {
         setupShadowLight(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
         // determine game type based on # of controllers
-        Array<Controller> controllers = Controllers.getControllers();
-        if (controllers.size == 0) {
-            System.err.println("You must attach a controller to run this game.");
-            System.exit(1);
+        XInputDevice[] controllers = null;
+        try
+        {
+            controllers = XInputDevice.getAllDevices();
+            if (controllers.length == 0) {
+                System.err.println("You must attach a controller to run this game.");
+                System.exit(1);
+            }
+
+            int jj = 0;
+            for (XInputDevice controller: controllers) {
+                System.out.println(jj + ": " + controller.getPlayerNum());
+                jj++;
+            }
+            if (controllers.length >= 2) {
+                // player-vs-player
+                playerTypes[0] = PlayerType.HUMAN;
+                playerTypes[1] = PlayerType.HUMAN;
+            } else {
+                // player-vs-serving-robot
+                playerTypes[0] = PlayerType.HUMAN;
+                playerTypes[1] = PlayerType.SERVING_ROBOT;
+            }
+
         }
-        if (controllers.size >= 2) {
-            // player-vs-player
-            playerTypes[0] = PlayerType.HUMAN;
-            playerTypes[1] = PlayerType.HUMAN;
-        } else {
-            // player-vs-serving-robot
-            playerTypes[0] = PlayerType.HUMAN;
-            playerTypes[1] = PlayerType.SERVING_ROBOT;
+        catch (XInputNotLoadedException e)
+        {
+            System.out.println("You're out of luck bud");
+            System.exit(5);
         }
 
         // entities and components
@@ -132,7 +151,7 @@ public class TennisEntry extends ApplicationAdapter {
 
             // the player's input is a controller
             if (playerTypes[i] == PlayerType.HUMAN) {
-                players[i].add(new ControllerInputComponent(controllers.get(i)));
+                players[i].add(new ControllerInputComponent(controllers[i]));
             }
 
             // create the model
