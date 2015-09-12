@@ -53,9 +53,8 @@ public class ControllerInputSystem extends IteratingSystem {
         ControllerInputComponent cic = cicm.get(entity);
         XInputDevice controller = cic.controller;
 
+        // poll the controller & get input buttons/axes
         controller.poll();
-
-        // get buttons/axes
         XInputButtons buttons = controller.getComponents().getButtons();
         XInputAxes axes = controller.getComponents().getAxes();
 

@@ -228,6 +228,10 @@ public class PlayerMovementSystem extends IteratingSystem {
                         float ballSpeed = (float) Math.sqrt(ballMovement.velocity.x * ballMovement.velocity.x +
                                                             ballMovement.velocity.y * ballMovement.velocity.y);
 
+                        if (pic.state == CharacterComponent.DashState.DASHING) {
+                            ballSpeed *= Constants.DASH_BALL_SPEED_MODIFIER;
+                        }
+
                         // increase the velocity based on the elegance of the hit
                         if (Math.signum(_rot - ballRadians) != Math.signum(_rot - prevBallRadians)) {
                             // perfect hit
