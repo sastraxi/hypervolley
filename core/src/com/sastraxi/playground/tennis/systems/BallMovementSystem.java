@@ -7,10 +7,7 @@ import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
 import com.badlogic.gdx.math.Plane;
 import com.badlogic.gdx.math.Vector3;
-import com.sastraxi.playground.tennis.components.BallComponent;
-import com.sastraxi.playground.tennis.components.GameStateComponent;
-import com.sastraxi.playground.tennis.components.MovementComponent;
-import com.sastraxi.playground.tennis.components.RenderableComponent;
+import com.sastraxi.playground.tennis.components.*;
 import com.sastraxi.playground.tennis.game.Constants;
 
 public class BallMovementSystem extends IteratingSystem {
@@ -19,6 +16,9 @@ public class BallMovementSystem extends IteratingSystem {
 
     private static final Family GAME_STATE_FAMILY = Family.one(GameStateComponent.class).get();
     private ComponentMapper<GameStateComponent> gscm = ComponentMapper.getFor(GameStateComponent.class);
+
+    private static final Family TRACKING_CAMERA_FAMILY = Family.one(CameraComponent.class).get();
+    private ComponentMapper<CameraComponent> ccm = ComponentMapper.getFor(CameraComponent.class);
 
     private ComponentMapper<MovementComponent> mcm = ComponentMapper.getFor(MovementComponent.class);
     private ComponentMapper<BallComponent> bcm = ComponentMapper.getFor(BallComponent.class);
@@ -49,6 +49,10 @@ public class BallMovementSystem extends IteratingSystem {
         ball.shear.set(movement.velocity);
 
         if (!ball.path.isAlive(time)) {
+            for (Entity trackingCameraEntity: engine.getEntitiesFor(TRACKING_CAMERA_FAMILY)) {
+                CameraComponent camera = ccm.get(trackingCameraEntity);
+                camera.entities.remove(entity.getId());
+            }
             engine.removeEntity(entity);
         }
     }

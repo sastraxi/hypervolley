@@ -7,8 +7,6 @@ import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.utils.ImmutableArray;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.controllers.Controller;
-import com.badlogic.gdx.controllers.Controllers;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g3d.*;
 import com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute;
@@ -20,9 +18,7 @@ import com.badlogic.gdx.graphics.g3d.utils.DefaultShaderProvider;
 import com.badlogic.gdx.graphics.g3d.utils.DepthShaderProvider;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.*;
-import com.badlogic.gdx.utils.Array;
 import com.ivan.xinput.XInputDevice;
-import com.ivan.xinput.XInputDevice14;
 import com.ivan.xinput.exceptions.XInputNotLoadedException;
 import com.sastraxi.playground.tennis.components.*;
 import com.sastraxi.playground.tennis.game.Constants;
@@ -49,7 +45,7 @@ public class TennisEntry extends ApplicationAdapter {
 
     // entities and game logic
     GameStateComponent gameState;
-    CameraComponent cameraComponent;
+    CameraManagementComponent cameraManagementComponent;
     PlayerType[] playerTypes = new PlayerType[2];
     Entity[] players = new Entity[2];
     ImmutableArray<Entity> ballEntities;
@@ -192,17 +188,29 @@ public class TennisEntry extends ApplicationAdapter {
         orthographicCamera.far = 1000.0f;
         orthographicCamera.update();
 
+        // a new camera that tries to keep all points in the frame of the shot
+        // while maintaining smooth movement.
+        Entity trackingCamera = new Entity();
+        Vector3 eyePlaneNormal = new Vector3(Constants.GAME_CAMERA_POINT_AT);
+        eyePlaneNormal.sub(Constants.GAME_CAMERA_POSITION);
+        Plane eyePlane = new Plane(eyePlaneNormal, Constants.GAME_CAMERA_POSITION);
+        CameraComponent cc = new CameraComponent(eyePlane, 1f, players[0].getId(), players[1].getId());
+        trackingCamera.add(cc);
+        engine.addEntity(trackingCamera);
+        engine.addSystem(new CameraMovementSystem());
+
         // add cameras to cycle through
-        cameraComponent = new CameraComponent();
-        cameraComponent.cameras = new Camera[] {
+        cameraManagementComponent = new CameraManagementComponent();
+        cameraManagementComponent.cameras = new Camera[] {
             camera,
-            orthographicCamera
+            orthographicCamera,
+            cc.camera
         };
 
         // game state
         Entity gameStateEntity = new Entity();
         gameState = new GameStateComponent();
-        gameStateEntity.add(cameraComponent);
+        gameStateEntity.add(cameraManagementComponent);
         gameStateEntity.add(gameState);
         engine.addEntity(gameStateEntity);
 
@@ -234,42 +242,40 @@ public class TennisEntry extends ApplicationAdapter {
         builder.begin();
         node = builder.node();
         builder.part("far", GL20.GL_TRIANGLES, vertexAttributes, material)
-               .rect(-Constants.ARENA_HALF_WIDTH, Constants.ARENA_HALF_DEPTH, 0f,
-                       Constants.ARENA_HALF_WIDTH, Constants.ARENA_HALF_DEPTH, 0f,
-                       Constants.ARENA_HALF_WIDTH, Constants.ARENA_HALF_DEPTH, Constants.WALL_HEIGHT,
-                       -Constants.ARENA_HALF_WIDTH, Constants.ARENA_HALF_DEPTH, Constants.WALL_HEIGHT,
+               .rect(-Constants.LEVEL_HALF_WIDTH, Constants.LEVEL_HALF_DEPTH, 0f,
+                       Constants.LEVEL_HALF_WIDTH, Constants.LEVEL_HALF_DEPTH, 0f,
+                       Constants.LEVEL_HALF_WIDTH, Constants.LEVEL_HALF_DEPTH, Constants.WALL_HEIGHT,
+                       -Constants.LEVEL_HALF_WIDTH, Constants.LEVEL_HALF_DEPTH, Constants.WALL_HEIGHT,
                        0f, -1f, 0f);
         builder.part("near", GL20.GL_TRIANGLES, vertexAttributes, translucentMaterial)
-                .rect(-Constants.ARENA_HALF_WIDTH, -Constants.ARENA_HALF_DEPTH, 0f,
-                       Constants.ARENA_HALF_WIDTH, -Constants.ARENA_HALF_DEPTH, 0f,
-                       Constants.ARENA_HALF_WIDTH, -Constants.ARENA_HALF_DEPTH, Constants.WALL_HEIGHT,
-                      -Constants.ARENA_HALF_WIDTH, -Constants.ARENA_HALF_DEPTH, Constants.WALL_HEIGHT,
+                .rect(-Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, 0f,
+                       Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, 0f,
+                       Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, Constants.WALL_HEIGHT,
+                      -Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, Constants.WALL_HEIGHT,
                        0f, -1f, 0f);
-        /*
         builder.part("left", GL20.GL_TRIANGLES, vertexAttributes, material)
-               .rect(-Constants.ARENA_HALF_WIDTH, -Constants.ARENA_HALF_DEPTH, 0f,
-                     -Constants.ARENA_HALF_WIDTH,  Constants.ARENA_HALF_DEPTH, 0f,
-                     -Constants.ARENA_HALF_WIDTH,  Constants.ARENA_HALF_DEPTH, Constants.WALL_HEIGHT,
-                     -Constants.ARENA_HALF_WIDTH, -Constants.ARENA_HALF_DEPTH, Constants.WALL_HEIGHT,
+               .rect(-Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, 0f,
+                     -Constants.LEVEL_HALF_WIDTH,  Constants.LEVEL_HALF_DEPTH, 0f,
+                     -Constants.LEVEL_HALF_WIDTH,  Constants.LEVEL_HALF_DEPTH, Constants.WALL_HEIGHT,
+                     -Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, Constants.WALL_HEIGHT,
                       1f, 0f, 0f);
         builder.part("right", GL20.GL_TRIANGLES, vertexAttributes, material)
-               .rect( Constants.ARENA_HALF_WIDTH,  Constants.ARENA_HALF_DEPTH, 0f,
-                      Constants.ARENA_HALF_WIDTH, -Constants.ARENA_HALF_DEPTH, 0f,
-                      Constants.ARENA_HALF_WIDTH, -Constants.ARENA_HALF_DEPTH, Constants.WALL_HEIGHT,
-                      Constants.ARENA_HALF_WIDTH,  Constants.ARENA_HALF_DEPTH, Constants.WALL_HEIGHT,
+               .rect( Constants.LEVEL_HALF_WIDTH,  Constants.LEVEL_HALF_DEPTH, 0f,
+                      Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, 0f,
+                      Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, Constants.WALL_HEIGHT,
+                      Constants.LEVEL_HALF_WIDTH,  Constants.LEVEL_HALF_DEPTH, Constants.WALL_HEIGHT,
                       -1f, 0f, 0f);
-                      */
         builder.part("floor", GL20.GL_TRIANGLES, vertexAttributes, material)
-               .rect(-Constants.ARENA_HALF_WIDTH, -Constants.ARENA_HALF_DEPTH, 0f,
-                      Constants.ARENA_HALF_WIDTH, -Constants.ARENA_HALF_DEPTH, 0f,
-                      Constants.ARENA_HALF_WIDTH,  Constants.ARENA_HALF_DEPTH, 0f,
-                     -Constants.ARENA_HALF_WIDTH,  Constants.ARENA_HALF_DEPTH, 0f,
+               .rect(-Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, 0f,
+                      Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, 0f,
+                      Constants.LEVEL_HALF_WIDTH,  Constants.LEVEL_HALF_DEPTH, 0f,
+                     -Constants.LEVEL_HALF_WIDTH,  Constants.LEVEL_HALF_DEPTH, 0f,
                       0f, 0f, 1f);
         material = new Material(ColorAttribute.createDiffuse(new Color(0.3f, 0.3f, 0.3f, 1.0f)));
         node = builder.node();
         node.translation.set(0f, 0f, 0.5f * Constants.NET_HEIGHT);
         builder.part("net", GL20.GL_TRIANGLES, vertexAttributes, material)
-               .box(2f*Constants.NET_RADIUS, 2f*Constants.ARENA_HALF_DEPTH, Constants.NET_HEIGHT);
+               .box(2f*Constants.NET_RADIUS, 2f*Constants.COURT_HALF_DEPTH, Constants.NET_HEIGHT);
         tennisCourt = new ModelInstance(builder.end());
 
         // opengl
@@ -414,7 +420,7 @@ public class TennisEntry extends ApplicationAdapter {
         // render the shadow map
         Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
-        shadowLight.begin(Vector3.Zero, cameraComponent.getCamera().direction);
+        shadowLight.begin(Vector3.Zero, cameraManagementComponent.getCamera().direction);
         shadowBatch.begin(shadowLight.getCamera());
         shadowBatch.render(tennisCourt, environment);
         for (Entity entity: ballEntities)
@@ -441,7 +447,7 @@ public class TennisEntry extends ApplicationAdapter {
         // render our regular view
         Gdx.gl.glClearColor(0f, 0.2f, 0.3f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
-        batch.begin(cameraComponent.getCamera());
+        batch.begin(cameraManagementComponent.getCamera());
         batch.render(tennisCourt, environment);
         for (Entity entity: ballEntities)
         {
@@ -488,7 +494,7 @@ public class TennisEntry extends ApplicationAdapter {
     public void resize(int width, int height)
     {
         //stage.setViewport(width, height, true);
-        for (Camera c: cameraComponent.cameras)
+        for (Camera c: cameraManagementComponent.cameras)
         {
             c.viewportWidth = (float) width;
             c.viewportHeight = (float) height;

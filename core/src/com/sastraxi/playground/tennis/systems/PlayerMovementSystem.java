@@ -5,14 +5,10 @@ import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
-import com.badlogic.gdx.controllers.Controller;
 import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.sastraxi.playground.tennis.components.*;
-import com.sastraxi.playground.tennis.contrib.Xbox360Pad;
 import com.sastraxi.playground.tennis.game.Constants;
-import com.sastraxi.playground.tennis.game.InputFrame;
 import com.sastraxi.playground.tennis.game.StraightBallPath;
 import com.sastraxi.playground.tennis.game.SwingDetector;
 
@@ -21,7 +17,7 @@ public class PlayerMovementSystem extends IteratingSystem {
     private static final Family BALL_FAMILY = Family.one(BallComponent.class).get();
     private static final int PRIORITY = 2; // before ball movement system
 
-    private ComponentMapper<CameraComponent> vpmc = ComponentMapper.getFor(CameraComponent.class);
+    private ComponentMapper<CameraManagementComponent> vpmc = ComponentMapper.getFor(CameraManagementComponent.class);
     private ComponentMapper<BallComponent> bcm = ComponentMapper.getFor(BallComponent.class);
     private ComponentMapper<MovementComponent> mc = ComponentMapper.getFor(MovementComponent.class);
     private ComponentMapper<CharacterComponent> picm = ComponentMapper.getFor(CharacterComponent.class);

@@ -16,16 +16,18 @@ public class Constants {
 
     // N.B. game scale: 1f ~ 0.1m
 
-    public static final float ARENA_HALF_WIDTH = 200f;
-    public static final float ARENA_HALF_DEPTH = 100f;
-    public static final float WALL_HEIGHT = 60f;
+    public static final float LEVEL_HALF_WIDTH = 300f;
+    public static final float LEVEL_HALF_DEPTH = 150f;
+    public static final float COURT_HALF_WIDTH = 200f;
+    public static final float COURT_HALF_DEPTH = 100f;
+    public static final float WALL_HEIGHT = 30f;
 
     public static final float CAMERA_FOV = 30f;
     public static final Vector3 UP_VECTOR = Vector3.Z;
     public static final float G = 98.1f;
     public static final Vector3 ACCEL_GRAVITY = new Vector3(UP_VECTOR).scl(-G);
     public static final Vector3 GAME_CAMERA_POSITION = new Vector3(0f, -300f, 600f);
-    public static final Vector3 GAME_CAMERA_POINT_AT = new Vector3(0f, 0.5f * ARENA_HALF_DEPTH, 0f);
+    public static final Vector3 GAME_CAMERA_POINT_AT = new Vector3(0f, 0.5f * COURT_HALF_DEPTH, 0f);
     public static final float GAME_ORTHOGRAPHIC_CAMERA_ZOOM = 0.42f;
 
     public static final float PLAYER_HEIGHT = 52f;
@@ -48,33 +50,33 @@ public class Constants {
     public static final float DASH_MIN_METER = 2f; // this much of the meter must be full to dash
     public static final float DASH_BALL_SPEED_MODIFIER = 2f;
 
-    public static final Plane COURT_GROUND_PLANE = new Plane(Constants.UP_VECTOR, 0f);
-    public static final Plane COURT_FAR_PLANE = new Plane(new Vector3(0f, 1f, 0f), ARENA_HALF_DEPTH);
-    public static final Plane COURT_NEAR_PLANE = new Plane(new Vector3(0f, -1f, 0f), ARENA_HALF_DEPTH);
-    public static final Plane COURT_LEFT_PLANE = new Plane(new Vector3(1f, 0f, 0f), ARENA_HALF_WIDTH);
-    public static final Plane COURT_RIGHT_PLANE = new Plane(new Vector3(-1f, 0f, 0f), ARENA_HALF_WIDTH);
+    public static final Plane LEVEL_GROUND_PLANE = new Plane(Constants.UP_VECTOR, 0f);
+    public static final Plane LEVEL_FAR_PLANE = new Plane(new Vector3(0f, 1f, 0f), LEVEL_HALF_DEPTH);
+    public static final Plane LEVEL_NEAR_PLANE = new Plane(new Vector3(0f, -1f, 0f), LEVEL_HALF_DEPTH);
+    public static final Plane LEVEL_LEFT_PLANE = new Plane(new Vector3(1f, 0f, 0f), LEVEL_HALF_WIDTH);
+    public static final Plane LEVEL_RIGHT_PLANE = new Plane(new Vector3(-1f, 0f, 0f), LEVEL_HALF_WIDTH);
 
     public static final float NET_RADIUS = 2f;
     public static final float NET_PADDING = 0f;
     public static final float NET_HEIGHT = 20f;
 
-    public static final Rectangle FULL_COURT_BOUNDS = new Rectangle(
-            -ARENA_HALF_WIDTH + PLAYER_RADIUS,
-            -ARENA_HALF_DEPTH + PLAYER_RADIUS,
-            2f*(ARENA_HALF_WIDTH - PLAYER_RADIUS),
-            2f*(ARENA_HALF_DEPTH - PLAYER_RADIUS));
+    public static final Rectangle FULL_LEVEL_BOUNDS = new Rectangle(
+            -LEVEL_HALF_WIDTH + PLAYER_RADIUS,
+            -LEVEL_HALF_DEPTH + PLAYER_RADIUS,
+            2f*(LEVEL_HALF_WIDTH - PLAYER_RADIUS),
+            2f*(LEVEL_HALF_DEPTH - PLAYER_RADIUS));
 
     public static final Rectangle PLAYER_ONE_BOUNDS = new Rectangle(
-            -ARENA_HALF_WIDTH + PLAYER_RADIUS,
-            -ARENA_HALF_DEPTH + PLAYER_RADIUS,
-            ARENA_HALF_WIDTH - 2f*PLAYER_RADIUS - NET_RADIUS - NET_PADDING,
-            2f*(ARENA_HALF_DEPTH - PLAYER_RADIUS));
+            -LEVEL_HALF_WIDTH + PLAYER_RADIUS,
+            -LEVEL_HALF_DEPTH + PLAYER_RADIUS,
+            LEVEL_HALF_WIDTH - 2f*PLAYER_RADIUS - NET_RADIUS - NET_PADDING,
+            2f*(LEVEL_HALF_DEPTH - PLAYER_RADIUS));
 
     public static final Rectangle PLAYER_TWO_BOUNDS = new Rectangle(
             PLAYER_RADIUS,
-            -ARENA_HALF_DEPTH + PLAYER_RADIUS + NET_RADIUS + NET_PADDING,
-            ARENA_HALF_WIDTH - 2f*PLAYER_RADIUS - NET_RADIUS - NET_PADDING,
-            2f*(ARENA_HALF_DEPTH - PLAYER_RADIUS));
+            -LEVEL_HALF_DEPTH + PLAYER_RADIUS + NET_RADIUS + NET_PADDING,
+            LEVEL_HALF_WIDTH - 2f*PLAYER_RADIUS - NET_RADIUS - NET_PADDING,
+            2f*(LEVEL_HALF_DEPTH - PLAYER_RADIUS));
 
     public static final Color PLAYER_ONE_COLOUR = new Color(0.8f, 0.3f, 0.2f, 1.0f);
     public static final Color PLAYER_TWO_COLOUR = new Color(0.2f, 0.5f, 0.8f, 1.0f);
@@ -114,4 +116,7 @@ public class Constants {
     public static final float JUICY_BALL_SHEAR_LERP_BOTTOM = 0f;
 
     public static final float EPSILON = 1e-9f;
+
+    public static final float CAMERA_INV_FRAME_FILL = 1.4f;
+
 }

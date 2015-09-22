@@ -5,31 +5,20 @@ import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
-import com.badlogic.gdx.controllers.Controller;
-import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.math.Vector3;
 import com.ivan.xinput.XInputAxes;
 import com.ivan.xinput.XInputButtons;
 import com.ivan.xinput.XInputDevice;
-import com.ivan.xinput.XInputDevice14;
 import com.sastraxi.playground.tennis.components.*;
-import com.sastraxi.playground.tennis.contrib.Xbox360Pad;
-import com.sastraxi.playground.tennis.game.Constants;
-import com.sastraxi.playground.tennis.game.StraightBallPath;
-import com.sastraxi.playground.tennis.game.SwingDetector;
-
-import java.util.HashMap;
 
 public class ControllerInputSystem extends IteratingSystem {
 
     private static final int PRIORITY = 0; // before everything
 
-    private static final Family GAME_STATE_FAMILY = Family.all(GameStateComponent.class, CameraComponent.class).get();
+    private static final Family GAME_STATE_FAMILY = Family.all(GameStateComponent.class, CameraManagementComponent.class).get();
 
     private ComponentMapper<CharacterComponent> picm = ComponentMapper.getFor(CharacterComponent.class);
     private ComponentMapper<ControllerInputComponent> cicm = ComponentMapper.getFor(ControllerInputComponent.class);
-    private ComponentMapper<CameraComponent> ccm = ComponentMapper.getFor(CameraComponent.class);
+    private ComponentMapper<CameraManagementComponent> ccm = ComponentMapper.getFor(CameraManagementComponent.class);
 
     private Engine engine;
     private Entity gameStateEntity;
@@ -73,7 +62,7 @@ public class ControllerInputSystem extends IteratingSystem {
         pic.inputFrame.changeCamera = buttons.back;
         if (pic.inputFrame.changeCamera && !pic.lastInputFrame.changeCamera)
         {
-            CameraComponent viewpoint = ccm.get(gameStateEntity);
+            CameraManagementComponent viewpoint = ccm.get(gameStateEntity);
             viewpoint.cycle();
         }
     }

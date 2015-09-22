@@ -34,7 +34,7 @@ public class StraightBallPath implements BallPath {
         // collide with either side wall or the floor, until we leave the court.
         int numFloorBounces = 0, numBounces = 1;
         BallFrame lastFrame = this.origin;
-        while (numBounces <= MAX_BOUNCES && bounces.isEmpty() || Math.abs(bounces.last().position.x) < Constants.ARENA_HALF_WIDTH)
+        while (numBounces <= MAX_BOUNCES && bounces.isEmpty() || Math.abs(bounces.last().position.x) < Constants.COURT_HALF_WIDTH)
         {
             // try colliding with the floor.
             BallFrame floorBounce = new BallFrame();
@@ -54,7 +54,7 @@ public class StraightBallPath implements BallPath {
             if (Math.abs(lastFrame.velocity.y) > Constants.EPSILON) {
                 wallBounce = _bounce_no_z(
                         lastFrame,
-                        (lastFrame.velocity.y < 0) ? Constants.COURT_FAR_PLANE : Constants.COURT_NEAR_PLANE,
+                        (lastFrame.velocity.y < 0) ? Constants.LEVEL_FAR_PLANE : Constants.LEVEL_NEAR_PLANE,
                         numFloorBounces);
             }
 
@@ -75,8 +75,8 @@ public class StraightBallPath implements BallPath {
         // drop last bounce (post-death) and figure out death time (x movement is constant)
         if (!bounces.isEmpty()) bounces.pollLast();
         deathTime = timeBase + (velocity.x > 0
-                ? (Constants.ARENA_HALF_WIDTH - position.x) / velocity.x
-                : (position.x + Constants.ARENA_HALF_WIDTH) / -velocity.x);
+                ? (Constants.LEVEL_HALF_WIDTH - position.x) / velocity.x
+                : (position.x + Constants.LEVEL_HALF_WIDTH) / -velocity.x);
     }
 
     private static Vector2 _dist = new Vector2(), _velo_2d = new Vector2();

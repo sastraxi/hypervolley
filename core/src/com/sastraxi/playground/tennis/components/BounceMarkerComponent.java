@@ -26,7 +26,7 @@ public class BounceMarkerComponent extends Component {
         Entity ballEntity = engine.getEntity(parentBallEntityId);
         if (ballEntity == null) return false;
         BallComponent ball = bcm.get(ballEntity);
-        return (ball.currentVolley == volley);
+        return (ball.currentVolley == this.volley);
     }
 
     public enum State {

@@ -37,6 +37,9 @@ public class ServingRobotSystem extends IteratingSystem {
     private static final Family GAME_STATE_FAMILY = Family.one(GameStateComponent.class).get();
     private ComponentMapper<GameStateComponent> gscm = ComponentMapper.getFor(GameStateComponent.class);
 
+    private static final Family TRACKING_CAMERA_FAMILY = Family.one(CameraComponent.class).get();
+    private ComponentMapper<CameraComponent> ccm = ComponentMapper.getFor(CameraComponent.class);
+
     private static final Family ballFamily = Family.one(BallComponent.class).get();
     private static final Family bounceMarkerFamily = Family.one(BounceMarkerComponent.class).get();
 
@@ -98,13 +101,13 @@ public class ServingRobotSystem extends IteratingSystem {
             lastSpawnedBall = new Entity();
             MovementComponent mc = new MovementComponent();
 
-            mc.position.x = 0.8f * Constants.ARENA_HALF_WIDTH;
-            mc.position.y = (random.nextFloat() - 0.5f) * Constants.BALL_SPAWN_COURT_COVERAGE * 2f * Constants.ARENA_HALF_DEPTH;
+            mc.position.x = 0.8f * Constants.COURT_HALF_WIDTH;
+            mc.position.y = (random.nextFloat() - 0.5f) * Constants.BALL_SPAWN_COURT_COVERAGE * 2f * Constants.COURT_HALF_DEPTH;
             mc.position.z = 40f;
 
             Vector2 target = new Vector2();
-            target.x = -0.8f * Constants.ARENA_HALF_WIDTH;
-            target.y = (random.nextFloat() - 0.5f) * Constants.BALL_TARGET_COURT_COVERAGE * Constants.ARENA_HALF_DEPTH;
+            target.x = -0.8f * Constants.COURT_HALF_WIDTH;
+            target.y = (random.nextFloat() - 0.5f) * Constants.BALL_TARGET_COURT_COVERAGE * Constants.COURT_HALF_DEPTH;
 
             float ballSpeed = 200f;
             mc.velocity.x = target.x - mc.position.x;
@@ -123,7 +126,14 @@ public class ServingRobotSystem extends IteratingSystem {
 
             engine.addEntity(lastSpawnedBall);
 
+            // track this ball on all cameras
+            for (Entity trackingCameraEntity: engine.getEntitiesFor(TRACKING_CAMERA_FAMILY)) {
+                CameraComponent camera = ccm.get(trackingCameraEntity);
+                camera.entities.add(lastSpawnedBall.getId());
+            }
+
             spawnBounceMarkers(engine, lastSpawnedBall);
+
         }
         super.update(deltaTime);
     }
