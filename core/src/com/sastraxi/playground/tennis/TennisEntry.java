@@ -11,18 +11,23 @@ import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g3d.*;
 import com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
+import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalShadowLight;
 import com.badlogic.gdx.graphics.g3d.model.Node;
 import com.badlogic.gdx.graphics.g3d.utils.DefaultShaderProvider;
 import com.badlogic.gdx.graphics.g3d.utils.DepthShaderProvider;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
+import com.badlogic.gdx.graphics.g3d.utils.ShaderProvider;
 import com.badlogic.gdx.math.*;
 import com.ivan.xinput.XInputDevice;
 import com.ivan.xinput.exceptions.XInputNotLoadedException;
+import com.sastraxi.playground.shaders.TennisCourtShader;
 import com.sastraxi.playground.tennis.components.*;
 import com.sastraxi.playground.tennis.game.Constants;
 import com.sastraxi.playground.tennis.game.PlayerType;
+import com.sastraxi.playground.tennis.graphics.CustomShaderAttribute;
+import com.sastraxi.playground.tennis.graphics.CustomShaderProvider;
 import com.sastraxi.playground.tennis.models.PlayerModel;
 import com.sastraxi.playground.tennis.systems.*;
 import org.lwjgl.opengl.GL30;
@@ -61,15 +66,18 @@ public class TennisEntry extends ApplicationAdapter {
     PerspectiveCamera camera;
     OrthographicCamera hudCamera;
     Environment environment;
-    DefaultShaderProvider shaderProvider;
+    ShaderProvider shaderProvider;
     ModelBatch batch;
     DirectionalShadowLight shadowLight;
     DirectionalLight sunLight;
     ModelBatch shadowBatch;
+    Shader tennisCourtShader;
 
     // things to draw
     ModelInstance tennisCourt;
+    ModelInstance tennisCourtFloor;
     ModelInstance[] playerModelInstances = new ModelInstance[2];
+
 
     @Override
 	public void create()
@@ -77,7 +85,7 @@ public class TennisEntry extends ApplicationAdapter {
         frames = 0;
 
         // libgdx
-        shaderProvider = new DefaultShaderProvider();
+        shaderProvider = new CustomShaderProvider();
         shadowBatch = new ModelBatch(new DepthShaderProvider());
         batch = new ModelBatch(shaderProvider);
 
@@ -249,22 +257,22 @@ public class TennisEntry extends ApplicationAdapter {
                        0f, -1f, 0f);
         builder.part("near", GL20.GL_TRIANGLES, vertexAttributes, translucentMaterial)
                 .rect(-Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, 0f,
-                       Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, 0f,
-                       Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, Constants.WALL_HEIGHT,
-                      -Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, Constants.WALL_HEIGHT,
-                       0f, -1f, 0f);
+                        Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, 0f,
+                        Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, Constants.WALL_HEIGHT,
+                        -Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, Constants.WALL_HEIGHT,
+                        0f, -1f, 0f);
         builder.part("left", GL20.GL_TRIANGLES, vertexAttributes, material)
                .rect(-Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, 0f,
-                     -Constants.LEVEL_HALF_WIDTH,  Constants.LEVEL_HALF_DEPTH, 0f,
-                     -Constants.LEVEL_HALF_WIDTH,  Constants.LEVEL_HALF_DEPTH, Constants.WALL_HEIGHT,
-                     -Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, Constants.WALL_HEIGHT,
-                      1f, 0f, 0f);
+                       -Constants.LEVEL_HALF_WIDTH, Constants.LEVEL_HALF_DEPTH, 0f,
+                       -Constants.LEVEL_HALF_WIDTH, Constants.LEVEL_HALF_DEPTH, Constants.WALL_HEIGHT,
+                       -Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, Constants.WALL_HEIGHT,
+                       1f, 0f, 0f);
         builder.part("right", GL20.GL_TRIANGLES, vertexAttributes, material)
-               .rect( Constants.LEVEL_HALF_WIDTH,  Constants.LEVEL_HALF_DEPTH, 0f,
-                      Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, 0f,
-                      Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, Constants.WALL_HEIGHT,
-                      Constants.LEVEL_HALF_WIDTH,  Constants.LEVEL_HALF_DEPTH, Constants.WALL_HEIGHT,
-                      -1f, 0f, 0f);
+               .rect(Constants.LEVEL_HALF_WIDTH, Constants.LEVEL_HALF_DEPTH, 0f,
+                       Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, 0f,
+                       Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, Constants.WALL_HEIGHT,
+                       Constants.LEVEL_HALF_WIDTH, Constants.LEVEL_HALF_DEPTH, Constants.WALL_HEIGHT,
+                       -1f, 0f, 0f);
         builder.part("floor", GL20.GL_TRIANGLES, vertexAttributes, material)
                .rect(-Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, 0f,
                       Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, 0f,
@@ -275,8 +283,23 @@ public class TennisEntry extends ApplicationAdapter {
         node = builder.node();
         node.translation.set(0f, 0f, 0.5f * Constants.NET_HEIGHT);
         builder.part("net", GL20.GL_TRIANGLES, vertexAttributes, material)
-               .box(2f*Constants.NET_RADIUS, 2f*Constants.COURT_HALF_DEPTH, Constants.NET_HEIGHT);
+               .box(2f * Constants.NET_RADIUS, 2f * Constants.COURT_HALF_DEPTH, Constants.NET_HEIGHT);
         tennisCourt = new ModelInstance(builder.end());
+
+        // create the tennis court floor and its shader
+        long floorVertexAttributes = VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal | VertexAttributes.Usage.TextureCoordinates;
+        Texture blankTexture = new Texture(Gdx.files.internal("textures/smiley-256.png"));
+        material = new Material(
+                TextureAttribute.createDiffuse(blankTexture),
+                new CustomShaderAttribute(CustomShaderAttribute.ShaderType.TENNIS_COURT_FLOOR));
+        builder.begin();
+        builder.part("floor", GL20.GL_TRIANGLES, floorVertexAttributes, material)
+               .rect(-Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, 0f,
+                      Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, 0f,
+                      Constants.LEVEL_HALF_WIDTH, Constants.LEVEL_HALF_DEPTH, 0f,
+                     -Constants.LEVEL_HALF_WIDTH, Constants.LEVEL_HALF_DEPTH, 0f,
+                      0f, 0f, 1f);
+        tennisCourtFloor = new ModelInstance(builder.end());
 
         // opengl
         // Gdx.gl.glDisable(GL20.GL_CULL_FACE);
@@ -449,6 +472,7 @@ public class TennisEntry extends ApplicationAdapter {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
         batch.begin(cameraManagementComponent.getCamera());
         batch.render(tennisCourt, environment);
+        batch.render(tennisCourtFloor, environment);
         for (Entity entity: ballEntities)
         {
             RenderableComponent rc = rcm.get(entity);

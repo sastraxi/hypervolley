@@ -12,13 +12,19 @@ import java.lang.reflect.Field;
  */
 public class DefinedShaderProgram {
 
-    public static ShaderProgram create(ConstRef[] constRefs, FileHandle vertexSourceFile, FileHandle fragmentSourceFile)
+    public static ShaderProgram create(ConstRef[] constRefs, FileHandle vertexSourceFile, FileHandle fragmentSourceFile) {
+        return create(constRefs, vertexSourceFile, fragmentSourceFile, "");
+    }
+
+
+    public static ShaderProgram create(ConstRef[] constRefs, FileHandle vertexSourceFile, FileHandle fragmentSourceFile, String prefix)
     {
         String[] defineStatements = generateDefineStatements(constRefs);
         StringBuffer buf;
 
         // build the vertex shader ///////////////////////////////////////////////////
         buf = new StringBuffer();
+        buf.append(prefix);
         for (String defineStatement: defineStatements) {
             buf.append(defineStatement);
             Gdx.app.log("DefinedShaderProgram", defineStatement);
@@ -29,6 +35,7 @@ public class DefinedShaderProgram {
 
         // build the fragment shader //////////////////////////////////////////////////
         buf = new StringBuffer();
+        buf.append(prefix);
         for (String defineStatement: defineStatements) {
             buf.append(defineStatement);
             buf.append("\n");

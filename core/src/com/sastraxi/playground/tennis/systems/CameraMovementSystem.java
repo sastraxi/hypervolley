@@ -106,10 +106,6 @@ public class CameraMovementSystem extends IteratingSystem {
 
         // goldshire footman time
         camera.camera.update();
-
-        System.out.println(camera.camera.fieldOfView);
-        System.out.println(camera.camera.position);
-        System.out.println(camera.camera.direction);
     }
 
 }

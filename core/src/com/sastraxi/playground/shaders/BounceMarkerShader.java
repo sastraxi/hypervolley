@@ -11,7 +11,7 @@ import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.sastraxi.playground.tennis.game.Constants;
 
-public class BallTargetShader implements Shader {
+public class BounceMarkerShader implements Shader {
 	ShaderProgram program;
 	Camera camera;
 	RenderContext context;
@@ -19,7 +19,7 @@ public class BallTargetShader implements Shader {
 	int u_worldTrans;
     int u_centre, u_radius;
 
-    public BallTargetShader() {
+    public BounceMarkerShader() {
     }
 
     @Override
