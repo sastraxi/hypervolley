@@ -117,6 +117,13 @@ public class Constants {
 
     public static final float EPSILON = 1e-9f;
 
-    public static final float CAMERA_INV_FRAME_FILL = 1.4f;
-
+    public static final Vector3 CAMERA_NEUTRAL_GAZE = new Vector3(0f, 0f, 50f);
+    public static final float CAMERA_NEUTRAL_FOV = 30f;
+    public static final float CAMERA_INV_FRAME_FILL = 4f;
+    public static final float CAMERA_POSITION_INTENSITY_INV = 0.8f;
+    public static final float CAMERA_HORIZONTAL_MOVEMENT_SCALE = 2f;
+    public static final float CAMERA_FOV_INTENSITY = 0.05f;
+    public static final int CAMERA_POSITION_SMOOTHING_FRAMES = 30;
+    public static final int CAMERA_FOV_SMOOTHING_FRAMES = 90;
+    public static final float CAMERA_MARKER_VELOCITY_ANTICIPATION_SEC = 1.5f;
 }

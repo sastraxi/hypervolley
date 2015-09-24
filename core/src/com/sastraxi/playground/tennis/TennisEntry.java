@@ -15,6 +15,7 @@ import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalShadowLight;
 import com.badlogic.gdx.graphics.g3d.model.Node;
+import com.badlogic.gdx.graphics.g3d.shaders.DepthShader;
 import com.badlogic.gdx.graphics.g3d.utils.DefaultShaderProvider;
 import com.badlogic.gdx.graphics.g3d.utils.DepthShaderProvider;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
@@ -87,6 +88,10 @@ public class TennisEntry extends ApplicationAdapter {
         // libgdx
         shaderProvider = new CustomShaderProvider();
         shadowBatch = new ModelBatch(new DepthShaderProvider());
+        /*
+                Gdx.files.internal("shaders/depth.vertex.glsl").readString(),
+                Gdx.files.internal("shaders/depth.fragment.glsl").readString()));
+         */
         batch = new ModelBatch(shaderProvider);
 
         // environment
@@ -202,7 +207,7 @@ public class TennisEntry extends ApplicationAdapter {
         Vector3 eyePlaneNormal = new Vector3(Constants.GAME_CAMERA_POINT_AT);
         eyePlaneNormal.sub(Constants.GAME_CAMERA_POSITION);
         Plane eyePlane = new Plane(eyePlaneNormal, Constants.GAME_CAMERA_POSITION);
-        CameraComponent cc = new CameraComponent(eyePlane, 1f, players[0].getId(), players[1].getId());
+        CameraComponent cc = new CameraComponent(eyePlane, Constants.CAMERA_NEUTRAL_GAZE, Constants.CAMERA_NEUTRAL_FOV, players[0].getId(), players[1].getId());
         trackingCamera.add(cc);
         engine.addEntity(trackingCamera);
         engine.addSystem(new CameraMovementSystem());
@@ -210,9 +215,8 @@ public class TennisEntry extends ApplicationAdapter {
         // add cameras to cycle through
         cameraManagementComponent = new CameraManagementComponent();
         cameraManagementComponent.cameras = new Camera[] {
-            camera,
+            cc.camera,
             orthographicCamera,
-            cc.camera
         };
 
         // game state
