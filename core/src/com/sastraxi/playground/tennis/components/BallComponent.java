@@ -12,6 +12,7 @@ public class BallComponent extends Component {
     public Vector3 shear;
     public int currentBounce, currentVolley;
     public BallPath path;
+    public Long lastHitByEID = null;
 
     // getPosition(t) / getVelocity(t) through path
 

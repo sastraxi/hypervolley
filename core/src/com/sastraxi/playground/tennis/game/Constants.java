@@ -97,7 +97,7 @@ public class Constants {
 
     // when we're set to a collision course (anywhere in the "strike zone") this many seconds in the future,
     // put the player's movement on auto-pilot and use input instead to aim/take the shot (w/perfect frame detection)
-    public static final float PLAYER_BALL_LOCK_LOOKAHEAD_SEC = 0.4f;
+    public static final float PLAYER_BALL_LOCK_LOOKAHEAD_SEC = 0.25f;
 
     public static final float PERFECT_HIT_VELOCITY_SCALE = 1.3f;
     public static final float VOLLEY_VELOCITY_SCALE = 1.1f;
