@@ -16,7 +16,6 @@ public class CharacterComponent extends Component {
 
     public final PlayerType type;
 
-
     public enum DashState {
         NONE,
         DASHING,
@@ -39,7 +38,7 @@ public class CharacterComponent extends Component {
     public float timeSinceStateChange = 0f;
     public float timeToHit = 0f;
     public float dashMeter = Constants.DASH_MAX_METER;
-    public boolean inStrikeZone = false;
+    public boolean isHitting = false;
 
     // input
     public InputFrame inputFrame = new InputFrame();

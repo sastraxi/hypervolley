@@ -6,6 +6,7 @@ import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Plane;
 import com.badlogic.gdx.math.Vector3;
 import com.sastraxi.playground.tennis.components.*;
 import com.sastraxi.playground.tennis.game.Constants;
@@ -31,8 +32,13 @@ public class PlayerMovementSystem extends IteratingSystem {
     Vector3 _tmp = new Vector3(),
             _tmp_player_ball = new Vector3(),
             _tmp_player_focal = new Vector3(),
-            _tmp_player_ball_prev = new Vector3(),
-            _tmp_player_offset = new Vector3();
+            _ball_prev = new Vector3(),
+            _ball_next = new Vector3(),
+            _tmp_player_offset = new Vector3(),
+            _ball_target = new Vector3(),
+            _avg_movement = new Vector3();
+
+    Plane _perfect_frame = new Plane();
 
     public PlayerMovementSystem() {
         super(Family.all(MovementComponent.class, CharacterComponent.class).get(), PRIORITY);
@@ -168,114 +174,126 @@ public class PlayerMovementSystem extends IteratingSystem {
             movement.position.y = Math.min(movement.position.y, pic.bounds.y + pic.bounds.height);
         }
 
-        // look the right way
-        // while the ball is > PLAYER_BALL_GLANCE_DISTANCE from the player, it doesn't affect orientation
-        // while the ball is < PLAYER_BALL_STARE_DISTANCE, the player is starting at the ball
-        // while the ball is between the two, lerp
+        // the player's interactions with the game ball.
         if (pic.ball != null) {
             MovementComponent ballMovement = mc.get(pic.ball);
+            BallComponent ballComponent = bcm.get(pic.ball);
 
-            // this "offset" position is behind the player
-            _tmp_player_offset.set(MathUtils.cos(_rot), MathUtils.sin(_rot), 0f).scl(-Constants.PLAYER_BALL_SUBTRACT_SCALE).add(movement.position);
-            _tmp_player_ball.set(ballMovement.position).sub(_tmp_player_offset);
-            _tmp_player_offset.z = 0; _tmp_player_ball.z = 0; // project onto 2D plane
-            float ballDistance = _tmp_player_ball.len();
-            float ballRadians = MathUtils.atan2(_tmp_player_ball.y, _tmp_player_ball.x);
+            if (!pic.isHitting) {
 
-            // glance or stare at the ball
-            // System.out.println(ballDistance);
-            /*
-            if (ballDistance <= Constants.PLAYER_BALL_GLANCE_DISTANCE)
-            {
-                float pct = (ballDistance - Constants.PLAYER_BALL_STARE_DISTANCE) / Constants.PLAYER_BALL_DIST_DIFF;
-                if (pct < 0f) {
-                    // complete stare
-                    movement.orientation.set(Constants.UP_VECTOR, MathUtils.radiansToDegrees * ballRadians);
-                } else {
-                    // orientation lerp
-                    movement.orientation.set(Constants.UP_VECTOR, MathUtils.radiansToDegrees * MiscMath.clerp(_rot, ballRadians, 1f-pct));
+                // this "offset" position is behind the player
+                _tmp_player_offset.set(MathUtils.cos(_rot), MathUtils.sin(_rot), 0f).scl(-Constants.PLAYER_BALL_SUBTRACT_SCALE).add(movement.position).mulAdd(movement.velocity, Constants.PLAYER_BALL_LOCK_LOOKAHEAD_SEC);
+                ballComponent.path.getPosition(time + Constants.PLAYER_BALL_LOCK_LOOKAHEAD_SEC, _tmp_player_ball);
+                _tmp_player_ball.sub(_tmp_player_offset);
+                _tmp_player_offset.z = 0;
+                _tmp_player_ball.z = 0; // project onto 2D plane
+                float ballDistance = _tmp_player_ball.len();
+                float ballRadians = MathUtils.atan2(_tmp_player_ball.y, _tmp_player_ball.x);
+
+                // glance or stare at the ball
+                // System.out.println(ballDistance);
+                /*
+                if (ballDistance <= Constants.PLAYER_BALL_GLANCE_DISTANCE)
+                {
+                    float pct = (ballDistance - Constants.PLAYER_BALL_STARE_DISTANCE) / Constants.PLAYER_BALL_DIST_DIFF;
+                    if (pct < 0f) {
+                        // complete stare
+                        movement.orientation.set(Constants.UP_VECTOR, MathUtils.radiansToDegrees * ballRadians);
+                    } else {
+                        // orientation lerp
+                        movement.orientation.set(Constants.UP_VECTOR, MathUtils.radiansToDegrees * MiscMath.clerp(_rot, ballRadians, 1f-pct));
+                    }
                 }
-            }
-            */
+                */
 
-            // strike zone
-            // FIXME we also need to account for when the ball is going so fast that it never actually lays inside the strike zone (rather; moves directly through it)
-            pic.inStrikeZone =
-                    ballDistance > Constants.PLAYER_BALL_MIN_REACH &&
-                    ballDistance < Constants.PLAYER_BALL_MAX_REACH &&
-                    Math.abs(_rot - ballRadians) < Constants.PLAYER_BALL_STRIKE_FOV_RADIANS;
+                // strike zone
+                // FIXME we also need to account for when the ball is going so fast that it never actually lays inside the strike zone (rather; moves directly through it)
+                pic.isHitting =
+                        ballDistance > Constants.PLAYER_BALL_MIN_REACH &&
+                        ballDistance < Constants.PLAYER_BALL_MAX_REACH &&
+                        Math.abs(_rot - ballRadians) < Constants.PLAYER_BALL_STRIKE_FOV_RADIANS;
 
-            // ball-hitting
-            if (pic.timeToHit > 0f)
-            {
-                pic.timeToHit -= deltaTime;
-                if (pic.timeToHit <= 0f) {
+                if (pic.isHitting) pic.timeToHit = Constants.PLAYER_BALL_LOCK_LOOKAHEAD_SEC;
 
-                    // we're "apex" of the swing;
-                    // determine where the ball is this frame, last frame, and next frame
-                    _tmp_player_ball_prev.set(ballMovement.velocity).scl(-deltaTime).add(ballMovement.position).sub(_tmp_player_offset);
-                    float prevBallRadians = MathUtils.atan2(_tmp_player_ball_prev.y, _tmp_player_ball_prev.x);
+            } else {
 
-                    // TODO determine heading of ball
-                    // swingDetector.averageRads
+                // ball-hitting
+                if (pic.timeToHit > 0f) {
+                    pic.timeToHit -= deltaTime;
+                    if (pic.timeToHit <= 0f) {
 
-                    if (pic.inStrikeZone)
-                    {
-                        float ballSpeed = (float) Math.sqrt(ballMovement.velocity.x * ballMovement.velocity.x +
-                                                            ballMovement.velocity.y * ballMovement.velocity.y);
+                        // determine where the ball is +/- 1 frame
+                        // between which two are we closest to the
+                        ballComponent.path.getPosition(time - Constants.FRAME_TIME_SEC, _ball_prev);
+                        ballComponent.path.getPosition(time + Constants.FRAME_TIME_SEC, _ball_next);
+                        _avg_movement.set(_ball_next).sub(_ball_prev).nor();
+                        _perfect_frame.set(movement.position, _avg_movement);
+                        float dst[] = new float[] {
+                            _perfect_frame.distance(_ball_prev),
+                            _perfect_frame.distance(ballMovement.position),
+                            _perfect_frame.distance(_ball_next)
+                        };
+
+                        boolean _is_perfect_frame = (Math.signum(dst[0]) !=  Math.signum(dst[1])) ||
+                                                    (Math.signum(dst[1]) !=  Math.signum(dst[2]));
+
+                        // xy ball speed.
+                        float ballSpeed = (float) Math.sqrt(
+                            ballMovement.velocity.x * ballMovement.velocity.x +
+                            ballMovement.velocity.y * ballMovement.velocity.y);
 
                         if (pic.state == CharacterComponent.DashState.DASHING) {
                             ballSpeed *= Constants.DASH_BALL_SPEED_MODIFIER;
-                        }
-
-                        // increase the velocity based on the elegance of the hit
-                        if (Math.signum(_rot - ballRadians) != Math.signum(_rot - prevBallRadians)) {
-                            // perfect hit
-                            // TODO define a perfect hit by obtaining the local minimum of some f(ballRadian - _rot, ballDistance - perfectDistance)
-                            // TODO this also fixes the fact that some balls cannot currently be hit if going too fast
-                            // TODO (the ball is never in the strike zone), as long as we move if (pic.inStrikeZone) into the else statement
-                            // TODO for the non-perfect hits, we don't technically require the ball to be in the strike zone
-                            // TODO ever for perfect hits for this reason
-                            System.out.println("Perfect hit!");
-                            ballSpeed *= Constants.PERFECT_HIT_VELOCITY_SCALE;
                         } else {
                             ballSpeed *= Constants.VOLLEY_VELOCITY_SCALE;
                         }
 
-                        // decide on the return velocity -- just the player's orientation right now
-                        // TODO look at the swing detector
-                        ballMovement.velocity.x = MathUtils.cos(_rot) * ballSpeed;
-                        ballMovement.velocity.y = MathUtils.sin(_rot) * ballSpeed;
+                        // decide on the return velocity
+                        // treat the controller input as the source
+                        // only take 90 degrees facing the direction of play
+
+                        float _return_lerp = 0f; /* -1 to 1 */
+                        if (pic.inputFrame.movement.len() > Constants.CONTROLLER_WALK_MAGNITUDE) {
+                            float _return_angle = pic.inputFrame.movement.angle();
+                            if (pic.focalPoint.x < ballMovement.position.x) {
+                                // going left; 90-270
+                                _return_lerp = MathUtils.clamp(_return_angle, 90f, 270f) - 180f / 90f;
+                            } else {
+                                // going right: 0-90, 270-360
+                                // 90-180 we want to turn into 90, 180-270 we want to turn into 270
+                                if (_return_angle < 90f) {
+                                    _return_lerp = _return_angle / 90f;
+                                } else if (_return_angle < 180f) {
+                                    _return_lerp = 1f;
+                                } else if (_return_angle < 270f) {
+                                    _return_lerp = -1f;
+                                } else { // return angle < 360f
+                                    _return_lerp = (_return_angle - 360f) / 90f;
+                                }
+                            }
+                        }
+                        _ball_target.set(pic.focalPoint)
+                                    .add(0f, Constants.COURT_HALF_DEPTH * _return_lerp, 0f)
+                                    .sub(ballMovement.position).nor();
+                        ballMovement.velocity.x = _ball_target.x * ballSpeed;
+                        ballMovement.velocity.y = _ball_target.y * ballSpeed;
                         ballMovement.velocity.z = Math.abs(ballMovement.velocity.z);
 
                         // craft the new path.
-                        BallComponent ballComponent = bcm.get(pic.ball);
                         ballComponent.path = new StraightBallPath(ballMovement.position, ballMovement.velocity, time); // FIXME new usage in game loop
                         ballComponent.currentBounce = 0;
                         ballComponent.currentVolley += 1;
                         ServingRobotSystem.spawnBounceMarkers(engine, pic.ball);
 
-                        /*
-                        if (pic.swingDetector.getRotation() > Constants.PLAYER_BALL_SPECIAL_MIN_ROTATION)
-                        {
-                            float specialScale = pic.swingDetector.getAverageMagnitude();
-                            // add spin to the ball based on specialScale
-
-                        }
-                        else
-                        {*/
-                            // ballMovement.velocity.x = -ballMovement.velocity.x;
-                        /*} */
+                        // that's all she wrote
+                        pic.isHitting = false;
                     }
-                }
-            }
-            else
-            {
-                if (pic.inputFrame.swing && !pic.lastInputFrame.swing)
-                {
-                    // wind up to hit the ball
-                    pic.timeToHit = Constants.PLAYER_BALL_SWING_DURATION;
-                    swingDetector.start();
+                } else {
+                    if (pic.inputFrame.swing && !pic.lastInputFrame.swing) {
+                        // wind up to hit the ball
+                        pic.timeToHit = Constants.PLAYER_BALL_SWING_DURATION;
+                        swingDetector.start();
+                    }
                 }
             }
         }

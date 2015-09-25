@@ -95,6 +95,10 @@ public class Constants {
     public static final float PLAYER_BALL_STRIKE_FOV_RADIANS = 100f * MathUtils.degreesToRadians;
     public static final float PLAYER_BALL_DIST_DIFF = PLAYER_BALL_GLANCE_DISTANCE - PLAYER_BALL_STARE_DISTANCE;
 
+    // when we're set to a collision course (anywhere in the "strike zone") this many seconds in the future,
+    // put the player's movement on auto-pilot and use input instead to aim/take the shot (w/perfect frame detection)
+    public static final float PLAYER_BALL_LOCK_LOOKAHEAD_SEC = 0.4f;
+
     public static final float PERFECT_HIT_VELOCITY_SCALE = 1.3f;
     public static final float VOLLEY_VELOCITY_SCALE = 1.1f;
 
