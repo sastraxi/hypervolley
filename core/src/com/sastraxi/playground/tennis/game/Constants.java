@@ -28,7 +28,7 @@ public class Constants {
     public static final Vector3 ACCEL_GRAVITY = new Vector3(UP_VECTOR).scl(-G);
     public static final Vector3 GAME_CAMERA_POSITION = new Vector3(0f, -300f, 600f);
     public static final Vector3 GAME_CAMERA_POINT_AT = new Vector3(0f, 0.5f * COURT_HALF_DEPTH, 0f);
-    public static final float GAME_ORTHOGRAPHIC_CAMERA_ZOOM = 0.42f;
+    public static final float GAME_ORTHOGRAPHIC_CAMERA_ZOOM = 0.54f;
 
     public static final float PLAYER_HEIGHT = 52f;
     public static final float PLAYER_RADIUS = 8f;
@@ -45,9 +45,9 @@ public class Constants {
     public static final float DASH_SPEED = 600f;
     public static final float DASH_ACCEL = 0.12f; // seconds to get up to speed
     public static final float DASH_DECEL = 0.12f; // seconds to slow down to regular speed
-    public static final float DASH_MAX_METER = 2f; // how many seconds it takes to recharge
+    public static final float DASH_MAX_METER = 1.5f; // how many seconds it takes to recharge
     public static final float DASH_METER_DEPLETION_RATE = 4f; // how many times faster it depletes
-    public static final float DASH_MIN_METER = 2f; // this much of the meter must be full to dash
+    public static final float DASH_MIN_METER = 1.5f; // this much of the meter must be full to dash
     public static final float DASH_BALL_SPEED_MODIFIER = 2f;
 
     public static final Plane LEVEL_GROUND_PLANE = new Plane(Constants.UP_VECTOR, 0f);
@@ -104,7 +104,6 @@ public class Constants {
     public static final float BALL_SPAWN_COURT_COVERAGE = 0.6f;
     public static final float BALL_TARGET_COURT_COVERAGE = 6f;
     public static final float PLAYER_BALL_SUBTRACT_SCALE = Constants.PLAYER_RADIUS * 2f;
-
 
     public static final float JUICY_ANIMATION_LENGTH = 0.2f;            // used for bounce marker
     public static final float JUICY_ROTATIONS_PER_SECOND = 0.2f;
