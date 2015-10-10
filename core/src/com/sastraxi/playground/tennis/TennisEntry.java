@@ -289,7 +289,7 @@ public class TennisEntry extends ApplicationAdapter {
 
         // create the tennis court floor and its shader
         long floorVertexAttributes = VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal | VertexAttributes.Usage.TextureCoordinates;
-        Texture blankTexture = new Texture(Gdx.files.internal("textures/smiley-256.png"));
+        Texture blankTexture = new Texture(256, 256, Pixmap.Format.RGBA8888);
         material = new Material(
                 TextureAttribute.createDiffuse(blankTexture),
                 new CustomShaderAttribute(CustomShaderAttribute.ShaderType.TENNIS_COURT_FLOOR));
