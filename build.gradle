@@ -56,7 +56,7 @@ project(":core") {
         compile "com.badlogicgames.gdx:gdx-bullet:$gdxVersion"
         compile "com.badlogicgames.gdx:gdx-ai:$aiVersion"
         compile "com.badlogicgames.ashley:ashley:$ashleyVersion"
-        compile group: 'com.ivan', name: 'xinput-device', 'version': '0.4'
+        compile group: 'com.ivan', name: 'xinput-device', 'version': '0.5'
     }
 }
 
