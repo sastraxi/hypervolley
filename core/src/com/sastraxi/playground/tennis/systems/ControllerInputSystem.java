@@ -54,6 +54,12 @@ public class ControllerInputSystem extends IteratingSystem {
         pic.inputFrame.movement.set(axes.lx, axes.ly);
         pic.inputFrame.swing = buttons.a;
 
+        if (buttons.a) {
+            controller.setVibration(65535, 65535);
+        } else {
+            controller.setVibration(0, 0);
+        }
+
         boolean isLeftBumperPressed = Math.abs(axes.lt) > 0.5f;
         boolean isRightBumperPressed = Math.abs(axes.rt) > 0.5f;
         pic.inputFrame.dash = isLeftBumperPressed | isRightBumperPressed;
