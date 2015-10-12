@@ -27,11 +27,6 @@ void main() {
 	#endif // blendedTextureFlag
 
 	#ifdef PackedDepthFlag
-		HIGH float depth = v_depth;
-		const HIGH vec4 bias = vec4(1.0 / 255.0, 1.0 / 255.0, 1.0 / 255.0, 0.0);
-		HIGH vec4 color = vec4(depth, fract(depth * 255.0), fract(depth * 65025.0), fract(depth * 160581375.0));
-		gl_FragColor = color - (color.yzww * bias);
+		gl_FragColor.r = v_depth;
 	#endif // PackedDepthFlag
-
-	// gl_FragColor.rgb = vec3(1.0, 0.7, 0.2);
 }
