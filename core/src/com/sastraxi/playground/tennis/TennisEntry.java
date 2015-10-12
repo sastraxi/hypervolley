@@ -13,8 +13,8 @@ import com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
-import com.badlogic.gdx.graphics.g3d.environment.DirectionalShadowLight;
 import com.badlogic.gdx.graphics.g3d.model.Node;
+import com.badlogic.gdx.graphics.g3d.shaders.DepthShader;
 import com.badlogic.gdx.graphics.g3d.utils.DepthShaderProvider;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.graphics.g3d.utils.ShaderProvider;
@@ -26,6 +26,7 @@ import com.sastraxi.playground.tennis.game.Constants;
 import com.sastraxi.playground.tennis.game.PlayerType;
 import com.sastraxi.playground.tennis.graphics.CustomShaderAttribute;
 import com.sastraxi.playground.tennis.graphics.CustomShaderProvider;
+import com.sastraxi.playground.tennis.graphics.DirectionalShadowLight;
 import com.sastraxi.playground.tennis.models.PlayerModel;
 import com.sastraxi.playground.tennis.systems.*;
 import org.lwjgl.opengl.GL30;
@@ -84,11 +85,9 @@ public class TennisEntry extends ApplicationAdapter {
 
         // libgdx
         shaderProvider = new CustomShaderProvider();
-        shadowBatch = new ModelBatch(new DepthShaderProvider());
-        /*
+        shadowBatch = new ModelBatch(new DepthShaderProvider(
                 Gdx.files.internal("shaders/depth.vertex.glsl").readString(),
                 Gdx.files.internal("shaders/depth.fragment.glsl").readString()));
-         */
         batch = new ModelBatch(shaderProvider);
 
         // environment
@@ -184,8 +183,8 @@ public class TennisEntry extends ApplicationAdapter {
         camera.position.set(Constants.GAME_CAMERA_POSITION);
         camera.up.set(Constants.UP_VECTOR);
         camera.lookAt(Constants.GAME_CAMERA_POINT_AT);
-        camera.near = 0.1f;
-        camera.far = 1000.0f;
+        camera.near = 10f;
+        camera.far = 300.0f;
         camera.update();
 
         // orthographic camera
@@ -194,8 +193,8 @@ public class TennisEntry extends ApplicationAdapter {
         orthographicCamera.zoom = Constants.GAME_ORTHOGRAPHIC_CAMERA_ZOOM;
         orthographicCamera.up.set(Constants.UP_VECTOR);
         orthographicCamera.lookAt(Constants.GAME_CAMERA_POINT_AT);
-        orthographicCamera.near = 0.1f;
-        orthographicCamera.far = 1000.0f;
+        orthographicCamera.near = 10f;
+        orthographicCamera.far = 300.0f;
         orthographicCamera.update();
 
         // a new camera that tries to keep all points in the frame of the shot
@@ -535,7 +534,7 @@ public class TennisEntry extends ApplicationAdapter {
 
     private void setupShadowLight(int width, int height)
     {
-        shadowLight = (DirectionalShadowLight) new DirectionalShadowLight(2048, 2048, width, height, 1f, 300f).set(sunLight);
+        shadowLight = (DirectionalShadowLight) new DirectionalShadowLight(2048, 2048, width, height, 2f, 300f).set(sunLight);
         environment.shadowMap = shadowLight;
     }
 

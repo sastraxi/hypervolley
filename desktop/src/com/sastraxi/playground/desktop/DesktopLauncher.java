@@ -9,9 +9,11 @@ public class DesktopLauncher {
 	public static void main (String[] arg) {
 		LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
 		config.samples = 8;
-		config.vSyncEnabled  = false;
+		config.vSyncEnabled = false;
 		config.width = 1280;
 		config.height = 720;
+		config.depth = 32;
+		config.useGL30 = true;
 		new LwjglApplication(new TennisEntry(), config);
 	}
 }
