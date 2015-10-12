@@ -79,13 +79,13 @@ varying vec3 v_shadowMapUv;
 
 float getShadowness(vec2 offset)
 {
-    const vec4 bitShifts = vec4(1.0, 1.0 / 255.0, 1.0 / 65025.0, 1.0 / 16581375.0);
+    const vec4 bitShifts = vec4(1.0, 1.0 / 255.0, 1.0 / 65025.0, 1.0 / 160581375.0);
     return step(v_shadowMapUv.z, dot(texture2D(u_shadowTexture, v_shadowMapUv.xy + offset), bitShifts));//+(1.0/255.0));
 }
 
-float getShadow() 
+float getShadow()
 {
-	return (getShadowness(vec2(0,0)) +
+	return (//getShadowness(vec2(0,0)) +
 			getShadowness(vec2(u_shadowPCFOffset, u_shadowPCFOffset)) +
 			getShadowness(vec2(-u_shadowPCFOffset, u_shadowPCFOffset)) +
 			getShadowness(vec2(u_shadowPCFOffset, -u_shadowPCFOffset)) +
@@ -140,7 +140,7 @@ float PenumbraSize(float zReceiver, float zBlocker) //Parallel plane estimation
 // TODO: need to set shadow map filtering to: MIN:GL_LINEAR_MIPMAP_LINEAR+MAG:GL_LINEAR and format to R32F.
 // unfortunately this means we need to extend pixmap to have the right format...
 
-
+/*
 
 void FindBlocker(out float avgBlockerDepth, out float numBlockers, float2 uv, float zReceiver)
 {
@@ -194,6 +194,8 @@ float PCSS(Texture2D shadowMapTex, float4 coords)
  	// STEP 3: filtering
  	return PCF_Filter(uv, zReceiver, filterRadiusUV);
 }
+*/
+
 #endif //shadowMapFlag
 
 #if defined(ambientFlag) && defined(separateAmbientFlag)
@@ -341,5 +343,8 @@ void main() {
 	#else
 		gl_FragColor.a = 1.0;
 	#endif
+
+	//gl_FragColor.rgb = v_shadowMapUv.xyz;
+	//gl_FragColor.rgb = texture2D(u_shadowTexture, v_shadowMapUv.xy).rgb;
 
 }

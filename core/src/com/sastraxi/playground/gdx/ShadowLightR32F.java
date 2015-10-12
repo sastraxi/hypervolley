@@ -1,4 +1,4 @@
-package com.sastraxi.playground.tennis.graphics;
+package com.sastraxi.playground.gdx;
 /*******************************************************************************
  * Copyright 2011 See AUTHORS file.
  *
@@ -26,8 +26,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Disposable;
 
 /* @author Xoppa */
-public class DirectionalShadowLight extends DirectionalLight implements ShadowMap, Disposable {
-
+public class ShadowLightR32F extends DirectionalLight implements ShadowMap, Disposable {
     protected FrameBuffer fbo;
     protected Camera cam;
     protected float halfDepth;
@@ -35,9 +34,10 @@ public class DirectionalShadowLight extends DirectionalLight implements ShadowMa
     protected final Vector3 tmpV = new Vector3();
     protected final TextureDescriptor textureDesc;
 
-    public DirectionalShadowLight (int shadowMapWidth, int shadowMapHeight, float shadowViewportWidth, float shadowViewportHeight,
+    /** @deprecated Experimental, likely to change, do not use! */
+    public ShadowLightR32F (int shadowMapWidth, int shadowMapHeight, float shadowViewportWidth, float shadowViewportHeight,
                                    float shadowNear, float shadowFar) {
-        fbo = new FrameBuffer(Pixmap.Format.RGBA8888, shadowMapWidth, shadowMapHeight, true);
+        fbo = new FrameBufferR32F(shadowMapWidth, shadowMapHeight, true);
         cam = new OrthographicCamera(shadowViewportWidth, shadowViewportHeight);
         cam.near = shadowNear;
         cam.far = shadowFar;

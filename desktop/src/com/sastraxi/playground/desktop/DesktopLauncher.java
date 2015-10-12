@@ -12,8 +12,8 @@ public class DesktopLauncher {
 		config.vSyncEnabled = false;
 		config.width = 1280;
 		config.height = 720;
-		config.depth = 32;
-		config.useGL30 = true;
+		config.depth = 24;
+		//config.useGL30 = true;
 		new LwjglApplication(new TennisEntry(), config);
 	}
 }

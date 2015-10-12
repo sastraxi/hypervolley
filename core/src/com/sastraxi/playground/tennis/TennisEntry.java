@@ -13,8 +13,9 @@ import com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
+import com.badlogic.gdx.graphics.g3d.environment.DirectionalShadowLight;
+import com.badlogic.gdx.graphics.g3d.environment.ShadowMap;
 import com.badlogic.gdx.graphics.g3d.model.Node;
-import com.badlogic.gdx.graphics.g3d.shaders.DepthShader;
 import com.badlogic.gdx.graphics.g3d.utils.DepthShaderProvider;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.graphics.g3d.utils.ShaderProvider;
@@ -26,7 +27,7 @@ import com.sastraxi.playground.tennis.game.Constants;
 import com.sastraxi.playground.tennis.game.PlayerType;
 import com.sastraxi.playground.tennis.graphics.CustomShaderAttribute;
 import com.sastraxi.playground.tennis.graphics.CustomShaderProvider;
-import com.sastraxi.playground.tennis.graphics.DirectionalShadowLight;
+import com.sastraxi.playground.gdx.ShadowLightR32F;
 import com.sastraxi.playground.tennis.models.PlayerModel;
 import com.sastraxi.playground.tennis.systems.*;
 import org.lwjgl.opengl.GL30;
@@ -67,7 +68,7 @@ public class TennisEntry extends ApplicationAdapter {
     Environment environment;
     ShaderProvider shaderProvider;
     ModelBatch batch;
-    DirectionalShadowLight shadowLight;
+    ShadowLightR32F shadowLight;
     DirectionalLight sunLight;
     ModelBatch shadowBatch;
     Shader tennisCourtShader;
@@ -91,7 +92,7 @@ public class TennisEntry extends ApplicationAdapter {
         batch = new ModelBatch(shaderProvider);
 
         // environment
-        sunLight = new DirectionalLight().set(0.6f, 0.6f, 0.6f, 0.3f, 0.2f, -0.8f);
+        sunLight = new DirectionalLight().set(0.6f, 0.6f, 0.6f, -3f, 2f, -8f);
         environment = new Environment();
         environment.add(sunLight);
         environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.4f, 0.4f, 0.4f, 1f));
@@ -534,7 +535,13 @@ public class TennisEntry extends ApplicationAdapter {
 
     private void setupShadowLight(int width, int height)
     {
-        shadowLight = (DirectionalShadowLight) new DirectionalShadowLight(2048, 2048, width, height, 2f, 300f).set(sunLight);
+        // TODO determine smallest AABB around entirety of court area
+        // TODO update to cover entire level environment geometry + generate shadow cascades
+        int shadow_bounds_w = 700;
+        int shadow_bounds_h = 400;
+
+        shadowLight = (ShadowLightR32F) new ShadowLightR32F(1024, 1024, shadow_bounds_w, shadow_bounds_h, 2f, 300f).set(sunLight);
+        // shadowLight = (DirectionalShadowLight) new DirectionalShadowLight(1024, 1024, shadow_bounds_w, shadow_bounds_h, 2f, 300f).set(sunLight);
         environment.shadowMap = shadowLight;
     }
 
