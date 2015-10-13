@@ -35,7 +35,6 @@ public class TextureDataR32F implements TextureData {
     int width = 0;
     int height = 0;
     boolean isPrepared = false;
-    // FloatBuffer buffer;
     FloatBuffer buffer;
 
     public TextureDataR32F(int w, int h) {
@@ -56,8 +55,7 @@ public class TextureDataR32F implements TextureData {
     @Override
     public void prepare () {
         if (isPrepared) throw new GdxRuntimeException("Already prepared");
-        //this.buffer = BufferUtils.newByteBuffer(width * height * 4);
-        this.buffer = BufferUtils.newFloatBuffer(width * height * 4);
+        this.buffer = BufferUtils.newFloatBuffer(width * height);
         isPrepared = true;
     }
 
@@ -66,7 +64,7 @@ public class TextureDataR32F implements TextureData {
         if (!Gdx.graphics.supportsExtension("texture_float"))
             throw new GdxRuntimeException("Extension OES_TEXTURE_FLOAT not supported!");
 
-        Gdx.gl.glTexImage2D(target, 0, GL30.GL_RGBA32F, width, height, 0, GL30.GL_RGBA, GL20.GL_FLOAT, buffer);
+        Gdx.gl.glTexImage2D(target, 0, GL30.GL_R32F, width, height, 0, GL30.GL_RED, GL20.GL_FLOAT, buffer);
     }
 
     @Override

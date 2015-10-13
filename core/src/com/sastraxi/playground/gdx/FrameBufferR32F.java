@@ -40,7 +40,7 @@ public class FrameBufferR32F extends FrameBuffer {
     protected void setupTexture () {
         TextureDataR32F data = new TextureDataR32F(width, height);
         colorTexture = new Texture(data);
-        colorTexture.setFilter(TextureFilter.MipMapLinearLinear, TextureFilter.Linear);
+        colorTexture.setFilter(TextureFilter.Nearest, TextureFilter.Nearest);
         colorTexture.setWrap(TextureWrap.ClampToEdge, TextureWrap.ClampToEdge);
     }
 }

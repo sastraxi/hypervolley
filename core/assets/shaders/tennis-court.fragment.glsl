@@ -82,7 +82,7 @@ float getShadowness(vec2 offset)
     return step(v_shadowMapUv.z, texture2D(u_shadowTexture, v_shadowMapUv.xy + offset));
 }
 
-float getShadow()
+float getShadowOld()
 {
 	return (//getShadowness(vec2(0,0)) +
 			getShadowness(vec2(u_shadowPCFOffset, u_shadowPCFOffset)) +
@@ -91,20 +91,19 @@ float getShadow()
 			getShadowness(vec2(-u_shadowPCFOffset, -u_shadowPCFOffset))) * 0.25;
 }
 
-/* **************************************************************************	 */
+/* ************************************************************************** */
 /* http://developer.download.nvidia.com/whitepapers/2008/PCSS_Integration.pdf */
 /* ************************************************************************** */
 
-#define BLOCKER_SEARCH_NUM_SAMPLES 16
-#define PCF_NUM_SAMPLES 16
-#define NEAR_PLANE 9.5
-#define LIGHT_WORLD_SIZE 0.5
-#define LIGHT_FRUSTUM_WIDTH 3.75
+#define NEAR_PLANE 1
+#define LIGHT_WORLD_SIZE 0.005
+#define LIGHT_FRUSTUM_WIDTH 1
 
 // Assuming that LIGHT_FRUSTUM_WIDTH == LIGHT_FRUSTUM_HEIGHT
 #define LIGHT_SIZE_UV (LIGHT_WORLD_SIZE / LIGHT_FRUSTUM_WIDTH)
 
-const vec2 poissonDisk[] = {
+#define BLOCKER_SEARCH_NUM_SAMPLES 16
+const vec2 poissonDiskBlocker[] = {
     vec2( -0.94201624, -0.39906216 ),
     vec2( 0.94558609, -0.76890725 ),
     vec2( -0.094184101, -0.92938870 ),
@@ -123,25 +122,42 @@ const vec2 poissonDisk[] = {
     vec2( 0.14383161, -0.14100790 )
 };
 
-float unpackDepth(sampler2D shadowMap, vec2 uv)
-{
-	const vec4 bitShifts = vec4(1.0, 1.0 / 255.0, 1.0 / 65025.0, 1.0 / 16581375.0);
-    return dot(texture2D(shadowMap, uv), bitShifts);
-}
+#define PCF_NUM_SAMPLES 25
+const vec2 poissonDiskPCF[] = {
+    vec2( -0.7505342, 0.5912911 ),
+    vec2( -0.6739749, 0.2554671 ),
+    vec2( -0.2951576, 0.6270834 ),
+    vec2( -0.371296, 0.1871899 ),
+    vec2( -0.7291721, -0.08390427 ),
+    vec2( -0.4435159, -0.2342117 ),
+    vec2( -0.5003734, -0.6009152 ),
+    vec2( -0.09212996, -0.005192649 ),
+    vec2( -0.004650356, -0.5252756 ),
+    vec2( 0.376779, 0.04625643 ),
+    vec2( -0.0335904, 0.4419256 ),
+    vec2( 0.1714043, -0.2117357 ),
+    vec2( -0.9311763, -0.3311462 ),
+    vec2( -0.2234885, -0.8848045 ),
+    vec2( 0.1046409, -0.9366635 ),
+    vec2( -0.9846501, 0.1148771 ),
+    vec2( 0.4942736, 0.3433943 ),
+    vec2( 0.9006424, -0.02421155 ),
+    vec2( 0.7949737, 0.4719028 ),
+    vec2( 0.6461979, -0.3156413 ),
+    vec2( 0.3756832, 0.7479037 ),
+    vec2( 0.4115427, -0.8772281 ),
+    vec2( 0.05674819, 0.9628649 ),
+    vec2( 0.6714596, -0.6865104 ),
+    vec2( 0.3584906, -0.4865665 )
+};
+
 
 float PenumbraSize(float zReceiver, float zBlocker) //Parallel plane estimation
 {
     return (zReceiver - zBlocker) / zBlocker;
 }
 
-
-
-// TODO: need to set shadow map filtering to: MIN:GL_LINEAR_MIPMAP_LINEAR+MAG:GL_LINEAR and format to R32F.
-// unfortunately this means we need to extend pixmap to have the right format...
-
-/*
-
-void FindBlocker(out float avgBlockerDepth, out float numBlockers, float2 uv, float zReceiver)
+void FindBlocker(out float avgBlockerDepth, out float numBlockers, vec2 uv, float zReceiver)
 {
     // This uses similar triangles to compute what
     // area of the shadow map we should search
@@ -151,7 +167,7 @@ void FindBlocker(out float avgBlockerDepth, out float numBlockers, float2 uv, fl
 
     for (int i = 0; i < BLOCKER_SEARCH_NUM_SAMPLES; ++i)
     {
-        float shadowMapDepth = unpackDepth(u_shadowTexture, uv + poissonDisk[i] * searchWidth);
+        float shadowMapDepth = texture2D(u_shadowTexture, uv + poissonDiskBlocker[i] * searchWidth);
 
  		if (shadowMapDepth < zReceiver) {
  			blockerSum += shadowMapDepth;
@@ -161,21 +177,22 @@ void FindBlocker(out float avgBlockerDepth, out float numBlockers, float2 uv, fl
  	avgBlockerDepth = blockerSum / numBlockers;
 }
 
-float PCF_Filter(float2 uv, float zReceiver, float filterRadiusUV)
+float PCF_Filter(vec2 uv, float zReceiver, float filterRadiusUV)
 {
-	float sum = 0.0f;
+	float sum = 0.0;
 	for ( int i = 0; i < PCF_NUM_SAMPLES; ++i )
 	{
- 		float2 offset = poissonDisk[i] * filterRadiusUV;
- 		sum += step(tDepthMap.SampleCmpLevelZero(PCF_Sampler, uv + offset, zReceiver);
+ 		vec2 offset = poissonDiskPCF[i] * filterRadiusUV;
+ 		// TODO rotate poisson disk "randomly" (but actually based on uv coord hash)
+		// TODO incorporate reasonable biasing
+ 		sum += step(zReceiver, texture2D(u_shadowTexture, uv + offset));
  	}
  	return sum / PCF_NUM_SAMPLES;
 }
 
-float PCSS(Texture2D shadowMapTex, float4 coords)
+float PCSS(sampler2D shadowMapTex, vec2 uv, float eye_z)
 {
-	float2 uv = coords.xy;
- 	float zReceiver = coords.z; // Assumed to be eye-space z in this code
+ 	float zReceiver = eye_z;
 
  	// STEP 1: blocker search
  	float avgBlockerDepth = 0;
@@ -183,17 +200,24 @@ float PCSS(Texture2D shadowMapTex, float4 coords)
  	FindBlocker(avgBlockerDepth, numBlockers, uv, zReceiver);
 
     // early-out if there are no occluders (saves filtering)
- 	if (numBlockers < 1)
- 		return 1.0f;
+ 	if (numBlockers < 1) {
+ 		return 1.0;
+ 	}
 
  	// STEP 2: penumbra size
  	float penumbraRatio = PenumbraSize(zReceiver, avgBlockerDepth);
- 	float filterRadiusUV = penumbraRatio * LIGHT_SIZE_UV * NEAR_PLANE / coords.z;
+ 	float filterRadiusUV = penumbraRatio * LIGHT_SIZE_UV; // * NEAR_PLANE / eye_z;
 
  	// STEP 3: filtering
  	return PCF_Filter(uv, zReceiver, filterRadiusUV);
 }
-*/
+
+float getShadow()
+{
+	// return getShadowOld();
+	return PCSS(u_shadowTexture, v_shadowMapUv.xy, v_shadowMapUv.z);
+	// return PCF_Filter(v_shadowMapUv.xy, v_shadowMapUv.z, 0.001);
+}
 
 #endif //shadowMapFlag
 
@@ -315,7 +339,7 @@ void main() {
 
 		#if defined(ambientFlag) && defined(separateAmbientFlag)
 			#ifdef shadowMapFlag
-			gl_FragColor.rgb = (diffuse.rgb * (getShadow() * v_lightDiffuse + v_ambientLight)) + specular;
+				gl_FragColor.rgb = (diffuse.rgb * (getShadow() * v_lightDiffuse + v_ambientLight)) + specular;
 				//gl_FragColor.rgb = texture2D(u_shadowTexture, v_shadowMapUv.xy);
 			#else
 				gl_FragColor.rgb = (diffuse.rgb * (v_lightDiffuse + v_ambientLight)) + specular;
@@ -343,7 +367,7 @@ void main() {
 		gl_FragColor.a = 1.0;
 	#endif
 
-	//gl_FragColor.rgb = v_shadowMapUv.xyz;
-	//gl_FragColor.rgb = texture2D(u_shadowTexture, v_shadowMapUv.xy).rgb;
+	// gl_FragColor.rg = v_shadowMapUv.xy;
+	// gl_FragColor.rgb = texture2D(u_shadowTexture, v_shadowMapUv.xy).rrr;
 
 }

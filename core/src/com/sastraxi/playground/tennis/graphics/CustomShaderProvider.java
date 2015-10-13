@@ -11,6 +11,11 @@ import com.sastraxi.playground.shaders.TennisCourtShader;
  */
 public class CustomShaderProvider extends DefaultShaderProvider {
 
+    public CustomShaderProvider() {
+        // TODO incorporate PCSS shader into default vert/frag
+        // TODO and use those here, so that everything gets soft shadows
+    }
+
     /**
      * If the given Renderable has a custom shader set, create and use that.
      * Otherwise, defer to the default libgdx shader.

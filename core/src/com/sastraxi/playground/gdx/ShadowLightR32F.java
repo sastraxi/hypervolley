@@ -78,12 +78,12 @@ public class ShadowLightR32F extends DirectionalLight implements ShadowMap, Disp
         Gdx.gl.glViewport(0, 0, w, h);
         Gdx.gl.glClearColor(1, 1, 1, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
-        Gdx.gl.glEnable(GL20.GL_SCISSOR_TEST);
-        Gdx.gl.glScissor(1, 1, w - 2, h - 2);
+        // Gdx.gl.glEnable(GL20.GL_SCISSOR_TEST);
+        // Gdx.gl.glScissor(1, 1, w - 2, h - 2);
     }
 
     public void end () {
-        Gdx.gl.glDisable(GL20.GL_SCISSOR_TEST);
+        // Gdx.gl.glDisable(GL20.GL_SCISSOR_TEST);
         fbo.end();
     }
 
