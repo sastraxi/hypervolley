@@ -1,4 +1,6 @@
-#ifdef GL_ES 
+#version 400
+
+#ifdef GL_ES
 #define LOWP lowp
 #define MED mediump
 #define HIGH highp
@@ -153,7 +155,7 @@ void FindBlocker(out float avgBlockerDepth, out float numBlockers, vec2 uv, floa
 
     for (int i = 0; i < BLOCKER_SEARCH_NUM_SAMPLES; ++i)
     {
-        float shadowMapDepth = texture2D(u_shadowTexture, uv + poissonDiskBlocker[i] * searchWidth);
+        float shadowMapDepth = texture2D(u_shadowTexture, uv + poissonDiskBlocker[i] * searchWidth).r;
 
  		if (shadowMapDepth < zReceiver) {
  			blockerSum += shadowMapDepth;
@@ -177,7 +179,7 @@ float PCF_Filter(vec2 uv, float zReceiver, float filterRadiusUV)
         float sa = sin(angle);
         offset = vec2(ca*offset.x - sa*offset.y, sa*offset.x + ca*offset.y);
 
- 		sum += step(zReceiver, texture2D(u_shadowTexture, uv + offset));
+ 		sum += step(zReceiver, texture2D(u_shadowTexture, uv + offset).r);
  	}
  	return sum / PCF_NUM_SAMPLES;
 }

@@ -1,4 +1,6 @@
-#ifdef GL_ES 
+#version 400
+
+#ifdef GL_ES
 #define LOWP lowp
 #define MED mediump
 #define HIGH highp
