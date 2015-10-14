@@ -442,6 +442,7 @@ public class TennisEntry extends ApplicationAdapter {
         }
 
         // render the shadow map
+        Gdx.gl.glDisable(GL20.GL_CULL_FACE);
         Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
         shadowLight.begin(Vector3.Zero, cameraManagementComponent.getCamera().direction);
@@ -467,6 +468,7 @@ public class TennisEntry extends ApplicationAdapter {
         }
         shadowBatch.end();
         shadowLight.end();
+        Gdx.gl.glEnable(GL20.GL_CULL_FACE);
 
         // render our regular view
         Gdx.gl.glClearColor(0f, 0.2f, 0.3f, 1f);
@@ -537,11 +539,10 @@ public class TennisEntry extends ApplicationAdapter {
     {
         // TODO determine smallest AABB around entirety of court area
         // TODO update to cover entire level environment geometry + generate shadow cascades
-        int shadow_bounds_w = 700;
-        int shadow_bounds_h = 400;
+        int shadow_bounds_w = 800;
+        int shadow_bounds_h = 500;
 
-        shadowLight = (ShadowLightR32F) new ShadowLightR32F(1024, 1024, shadow_bounds_w, shadow_bounds_h, 2f, 300f).set(sunLight);
-        // shadowLight = (DirectionalShadowLight) new DirectionalShadowLight(1024, 1024, shadow_bounds_w, shadow_bounds_h, 2f, 300f).set(sunLight);
+        shadowLight = (ShadowLightR32F) new ShadowLightR32F(2048, 2048, shadow_bounds_w, shadow_bounds_h, 2f, 300f).set(sunLight);
         environment.shadowMap = shadowLight;
     }
 

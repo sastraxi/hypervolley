@@ -1,5 +1,6 @@
 package com.sastraxi.playground.tennis.graphics;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g3d.Renderable;
 import com.badlogic.gdx.graphics.g3d.Shader;
 import com.badlogic.gdx.graphics.g3d.utils.DefaultShaderProvider;
@@ -12,8 +13,11 @@ import com.sastraxi.playground.shaders.TennisCourtShader;
 public class CustomShaderProvider extends DefaultShaderProvider {
 
     public CustomShaderProvider() {
-        // TODO incorporate PCSS shader into default vert/frag
-        // TODO and use those here, so that everything gets soft shadows
+        // we have a customized default shader that implements PCSS shadows
+        super(
+            Gdx.files.internal("shaders/default.vertex.glsl").readString(),
+            Gdx.files.internal("shaders/default.fragment.glsl").readString()
+        );
     }
 
     /**

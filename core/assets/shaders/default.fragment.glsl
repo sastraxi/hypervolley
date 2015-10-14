@@ -205,9 +205,7 @@ float PCSS(sampler2D shadowMapTex, vec2 uv, float eye_z)
 
 float getShadow()
 {
-	// return getShadowOld();
 	return PCSS(u_shadowTexture, v_shadowMapUv.xy, v_shadowMapUv.z);
-	// return PCF_Filter(v_shadowMapUv.xy, v_shadowMapUv.z, 0.001);
 }
 
 #endif //shadowMapFlag
@@ -223,84 +221,30 @@ uniform vec4 u_fogColor;
 varying float v_fog;
 #endif // fogFlag
 
-/**
- * Create the tennis court figure.
- */
-#define COURT_HALF_WIDTH 0.35
-#define COURT_HALF_HEIGHT 0.3
-#define CENTRE vec2(0.5, 0.5)
-#define CLAMP_START 51.4
-#define BACKGROUND_COLOUR 	vec4(0.8, 0.8, 0.8, 1.0)
-#define PATTERN_COLOUR    	vec4(0.88, 0.88, 0.88, 1.0)
-#define PERIOD 0.029
-
-vec4 getCourt(float aspect, vec2 uv)
-{
-    vec2 courtUV = (uv - CENTRE) / vec2(COURT_HALF_WIDTH, COURT_HALF_HEIGHT);
-    courtUV = 0.5 * (courtUV + vec2(1,1));
-
-    vec2 Exy = fwidth(courtUV);
-
-    if (courtUV.x > 0.0 && courtUV.x < 1.0 && courtUV.y > 0.0 && courtUV.y < 1.0)
-    {
-        // two circles: one at the bottom-right (aspect,0) and one at the top-left (0,1)
-       	courtUV.x *= aspect;
-
-        float E = 0.5 * (Exy.x + Exy.y);
-
-        float c1x = aspect - courtUV.x;
-        float c1y = courtUV.y;
-        float c1r = sqrt(c1x * c1x + c1y * c1y);
-        bool c1 = mod(c1r, PERIOD) < (0.5 * PERIOD);
-        bool c1next = mod(c1r + E, PERIOD) < (0.5 * PERIOD);
-        float c1s = clamp(CLAMP_START - c1r, 0.0, 1.0);
-        if (c1 != c1next) {
-            float edge = floor((c1r + E) / (0.5*PERIOD)) * 0.5*PERIOD;
-            if (c1) {
-                c1s *= ((edge - c1r) / E);
-            } else {
-                c1s *= ((c1r + E - edge) / E);
-            }
-        }
-
-        float c2x = courtUV.x;
-        float c2y = 1.0 - courtUV.y;
-        float c2r = sqrt(c2x * c2x + c2y * c2y);
-        bool c2 = mod(c2r, PERIOD) < (0.5 * PERIOD);
-        bool c2next = mod(c2r + E, PERIOD) < (0.5 * PERIOD);
-        float c2s = clamp(CLAMP_START - c2r, 0.0, 1.0);
-        if (c2 != c2next) {
-            float edge = floor((c2r + E) / (0.5*PERIOD)) * 0.5*PERIOD;
-            if (c2) {
-                c2s *= ((edge - c2r) / E);
-            } else {
-                c2s *= ((c2r + E - edge) / E);
-            }
-        }
-
-        // base colour
-        if ((c1 || c1next) && c1r < c2r) {
-            return mix(BACKGROUND_COLOUR, PATTERN_COLOUR, c1s);
-        } else if ((c2 || c2next) && c2r < c1r) {
-            return mix(BACKGROUND_COLOUR, PATTERN_COLOUR, c2s);
-        } else {
-            return BACKGROUND_COLOUR;
-        }
-
-    } else {
-    	return BACKGROUND_COLOUR;
-    }
-}
-
 void main() {
-	#if defined(normalFlag)
+	#if defined(normalFlag) 
 		vec3 normal = v_normal;
 	#endif // normalFlag
+		
+	#if defined(diffuseTextureFlag) && defined(diffuseColorFlag) && defined(colorFlag)
+		vec4 diffuse = texture2D(u_diffuseTexture, v_diffuseUV) * u_diffuseColor * v_color;
+	#elif defined(diffuseTextureFlag) && defined(diffuseColorFlag)
+		vec4 diffuse = texture2D(u_diffuseTexture, v_diffuseUV) * u_diffuseColor;
+	#elif defined(diffuseTextureFlag) && defined(colorFlag)
+		vec4 diffuse = texture2D(u_diffuseTexture, v_diffuseUV) * v_color;
+	#elif defined(diffuseTextureFlag)
+		vec4 diffuse = texture2D(u_diffuseTexture, v_diffuseUV);
+	#elif defined(diffuseColorFlag) && defined(colorFlag)
+		vec4 diffuse = u_diffuseColor * v_color;
+	#elif defined(diffuseColorFlag)
+		vec4 diffuse = u_diffuseColor;
+	#elif defined(colorFlag)
+		vec4 diffuse = v_color;
+	#else
+		vec4 diffuse = vec4(1.0);
+	#endif
 
-	// draw the tennis court
-	vec4 diffuse = getCourt(TENNIS_COURT_ASPECT, v_diffuseUV);
-
-	#if (!defined(lightingFlag))
+	#if (!defined(lightingFlag))  
 		gl_FragColor.rgb = diffuse.rgb;
 	#elif (!defined(specularFlag))
 		#if defined(ambientFlag) && defined(separateAmbientFlag)
@@ -327,10 +271,10 @@ void main() {
 		#else
 			vec3 specular = v_lightSpecular;
 		#endif
-
+			
 		#if defined(ambientFlag) && defined(separateAmbientFlag)
 			#ifdef shadowMapFlag
-				gl_FragColor.rgb = (diffuse.rgb * (getShadow() * v_lightDiffuse + v_ambientLight)) + specular;
+			gl_FragColor.rgb = (diffuse.rgb * (getShadow() * v_lightDiffuse + v_ambientLight)) + specular;
 				//gl_FragColor.rgb = texture2D(u_shadowTexture, v_shadowMapUv.xy);
 			#else
 				gl_FragColor.rgb = (diffuse.rgb * (v_lightDiffuse + v_ambientLight)) + specular;
@@ -357,8 +301,5 @@ void main() {
 	#else
 		gl_FragColor.a = 1.0;
 	#endif
-
-	// gl_FragColor.rg = v_shadowMapUv.xy;
-	// gl_FragColor.rgb = texture2D(u_shadowTexture, v_shadowMapUv.xy).rrr;
 
 }
