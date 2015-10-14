@@ -7,14 +7,13 @@ import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.utils.ImmutableArray;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g3d.*;
 import com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
-import com.badlogic.gdx.graphics.g3d.environment.DirectionalShadowLight;
-import com.badlogic.gdx.graphics.g3d.environment.ShadowMap;
 import com.badlogic.gdx.graphics.g3d.model.Node;
 import com.badlogic.gdx.graphics.g3d.utils.DepthShaderProvider;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
@@ -77,26 +76,13 @@ public class TennisEntry extends ApplicationAdapter {
     ModelInstance tennisCourt;
     ModelInstance tennisCourtFloor;
     ModelInstance[] playerModelInstances = new ModelInstance[2];
+    private AssetManager assets;
 
 
     @Override
 	public void create()
 	{
         frames = 0;
-
-        // libgdx
-        shaderProvider = new CustomShaderProvider();
-        shadowBatch = new ModelBatch(new DepthShaderProvider(
-                Gdx.files.internal("shaders/depth.vertex.glsl").readString(),
-                Gdx.files.internal("shaders/depth.fragment.glsl").readString()));
-        batch = new ModelBatch(shaderProvider);
-
-        // environment
-        sunLight = new DirectionalLight().set(0.6f, 0.6f, 0.6f, -3f, 2f, -8f);
-        environment = new Environment();
-        environment.add(sunLight);
-        environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.4f, 0.4f, 0.4f, 1f));
-        setupShadowLight(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
         // determine game type based on # of controllers
         XInputDevice[] controllers = null;
@@ -179,6 +165,22 @@ public class TennisEntry extends ApplicationAdapter {
         // entity families
         swingDetectorEntities = engine.getEntitiesFor(Family.one(SwingDetectorComponent.class).get());
 
+        //////////////////////////////////////////////////////////////////////////////////////
+
+        // libgdx
+        shaderProvider = new CustomShaderProvider();
+        shadowBatch = new ModelBatch(new DepthShaderProvider(
+                Gdx.files.internal("shaders/depth.vertex.glsl").readString(),
+                Gdx.files.internal("shaders/depth.fragment.glsl").readString()));
+        batch = new ModelBatch(shaderProvider);
+
+        // environment
+        sunLight = new DirectionalLight().set(0.6f, 0.6f, 0.6f, -3f, 1f, -8f);
+        environment = new Environment();
+        environment.add(sunLight);
+        environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.4f, 0.4f, 0.4f, 1f));
+        setupShadowLight(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+
         // perspective camera
         camera = new PerspectiveCamera(Constants.CAMERA_FOV, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         camera.position.set(Constants.GAME_CAMERA_POSITION);
@@ -239,68 +241,8 @@ public class TennisEntry extends ApplicationAdapter {
         ballEntities = engine.getEntitiesFor(BALL_ENTITIES);
         bounceMarkers = engine.getEntitiesFor(BOUNCE_MARKER_ENTITIES);
 
-        // ....
-        long vertexAttributes = VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal;
-        Material material;
-        ModelBuilder builder = new ModelBuilder();
-        Node node;
-
         // tennis court
-        material = new Material(ColorAttribute.createDiffuse(new Color(0.8f, 0.8f, 0.8f, 1.0f)));
-        Material translucentMaterial = new Material(ColorAttribute.createDiffuse(new Color(0.8f, 0.8f, 0.8f, 1.0f)), new BlendingAttribute(true, 0.5f));
-        builder.begin();
-        node = builder.node();
-        builder.part("far", GL20.GL_TRIANGLES, vertexAttributes, material)
-               .rect(-Constants.LEVEL_HALF_WIDTH, Constants.LEVEL_HALF_DEPTH, 0f,
-                       Constants.LEVEL_HALF_WIDTH, Constants.LEVEL_HALF_DEPTH, 0f,
-                       Constants.LEVEL_HALF_WIDTH, Constants.LEVEL_HALF_DEPTH, Constants.WALL_HEIGHT,
-                       -Constants.LEVEL_HALF_WIDTH, Constants.LEVEL_HALF_DEPTH, Constants.WALL_HEIGHT,
-                       0f, -1f, 0f);
-        builder.part("near", GL20.GL_TRIANGLES, vertexAttributes, translucentMaterial)
-                .rect(-Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, 0f,
-                        Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, 0f,
-                        Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, Constants.WALL_HEIGHT,
-                        -Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, Constants.WALL_HEIGHT,
-                        0f, -1f, 0f);
-        builder.part("left", GL20.GL_TRIANGLES, vertexAttributes, material)
-               .rect(-Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, 0f,
-                       -Constants.LEVEL_HALF_WIDTH, Constants.LEVEL_HALF_DEPTH, 0f,
-                       -Constants.LEVEL_HALF_WIDTH, Constants.LEVEL_HALF_DEPTH, Constants.WALL_HEIGHT,
-                       -Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, Constants.WALL_HEIGHT,
-                       1f, 0f, 0f);
-        builder.part("right", GL20.GL_TRIANGLES, vertexAttributes, material)
-               .rect(Constants.LEVEL_HALF_WIDTH, Constants.LEVEL_HALF_DEPTH, 0f,
-                       Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, 0f,
-                       Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, Constants.WALL_HEIGHT,
-                       Constants.LEVEL_HALF_WIDTH, Constants.LEVEL_HALF_DEPTH, Constants.WALL_HEIGHT,
-                       -1f, 0f, 0f);
-        builder.part("floor", GL20.GL_TRIANGLES, vertexAttributes, material)
-               .rect(-Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, 0f,
-                      Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, 0f,
-                      Constants.LEVEL_HALF_WIDTH,  Constants.LEVEL_HALF_DEPTH, 0f,
-                     -Constants.LEVEL_HALF_WIDTH,  Constants.LEVEL_HALF_DEPTH, 0f,
-                      0f, 0f, 1f);
-        material = new Material(ColorAttribute.createDiffuse(new Color(0.3f, 0.3f, 0.3f, 1.0f)));
-        node = builder.node();
-        node.translation.set(0f, 0f, 0.5f * Constants.NET_HEIGHT);
-        builder.part("net", GL20.GL_TRIANGLES, vertexAttributes, material)
-               .box(2f * Constants.NET_RADIUS, 2f * Constants.COURT_HALF_DEPTH, Constants.NET_HEIGHT);
-        tennisCourt = new ModelInstance(builder.end());
-
-        // create the tennis court floor and its shader
-        long floorVertexAttributes = VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal | VertexAttributes.Usage.TextureCoordinates;
-        Texture blankTexture = new Texture(256, 256, Pixmap.Format.RGBA8888);
-        material = new Material(
-                TextureAttribute.createDiffuse(blankTexture),
-                new CustomShaderAttribute(CustomShaderAttribute.ShaderType.TENNIS_COURT_FLOOR));
-        builder.begin();
-        builder.part("floor", GL20.GL_TRIANGLES, floorVertexAttributes, material)
-               .rect(-Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, 0f,
-                      Constants.LEVEL_HALF_WIDTH, -Constants.LEVEL_HALF_DEPTH, 0f,
-                      Constants.LEVEL_HALF_WIDTH, Constants.LEVEL_HALF_DEPTH, 0f,
-                     -Constants.LEVEL_HALF_WIDTH, Constants.LEVEL_HALF_DEPTH, 0f,
-                      0f, 0f, 1f);
-        tennisCourtFloor = new ModelInstance(builder.end());
+        tennisCourt = getTennisCourt();
 
         // opengl
         // Gdx.gl.glDisable(GL20.GL_CULL_FACE);
@@ -441,8 +383,10 @@ public class TennisEntry extends ApplicationAdapter {
                     .rotate(mc.orientation);
         }
 
+        // put the tennis court somewhere reasonable?
+        tennisCourt.transform.idt().scl(0.01f).rotate(1f, 0f, 0f, 90f);
+
         // render the shadow map
-        Gdx.gl.glDisable(GL20.GL_CULL_FACE);
         Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
         shadowLight.begin(Vector3.Zero, cameraManagementComponent.getCamera().direction);
@@ -468,14 +412,13 @@ public class TennisEntry extends ApplicationAdapter {
         }
         shadowBatch.end();
         shadowLight.end();
-        Gdx.gl.glEnable(GL20.GL_CULL_FACE);
 
         // render our regular view
         Gdx.gl.glClearColor(0f, 0.2f, 0.3f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
         batch.begin(cameraManagementComponent.getCamera());
         batch.render(tennisCourt, environment);
-        batch.render(tennisCourtFloor, environment);
+        // batch.render(tennisCourtFloor, environment);
         for (Entity entity: ballEntities)
         {
             RenderableComponent rc = rcm.get(entity);
@@ -540,11 +483,30 @@ public class TennisEntry extends ApplicationAdapter {
         // TODO determine smallest AABB around entirety of court area
         // TODO update to cover entire level environment geometry + generate shadow cascades
         int shadow_bounds_w = 800;
-        int shadow_bounds_h = 500;
+        int shadow_bounds_h = 800;
 
-        shadowLight = (ShadowLightR32F) new ShadowLightR32F(2048, 2048, shadow_bounds_w, shadow_bounds_h, 2f, 300f).set(sunLight);
+        shadowLight = (ShadowLightR32F) new ShadowLightR32F(2048, 2048, shadow_bounds_w, shadow_bounds_h, 20f, 1000f).set(sunLight);
         environment.shadowMap = shadowLight;
     }
+
+    private static final String TENNIS_COURT_PATH = "models/tennis-court.g3db";
+
+    /**
+     * Loads (if necessary) then creates an instance of the Tennis Court model.
+     */
+    private ModelInstance getTennisCourt()
+    {
+        if (assets == null) {
+            assets = new AssetManager();
+            assets.load(TENNIS_COURT_PATH, Model.class);
+            assets.finishLoading();
+        }
+
+        // Create an instance of our crate model and put it in an array
+        Model model = assets.get(TENNIS_COURT_PATH, Model.class);
+        return new ModelInstance(model);
+    }
+
 
     @Override
     public void resume() {

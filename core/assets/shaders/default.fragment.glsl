@@ -80,9 +80,9 @@ varying vec3 v_shadowMapUv;
 /* http://developer.download.nvidia.com/whitepapers/2008/PCSS_Integration.pdf */
 /* ************************************************************************** */
 
-#define NEAR_PLANE 1
-#define LIGHT_WORLD_SIZE 0.009
-#define LIGHT_FRUSTUM_WIDTH 1
+#define NEAR_PLANE 20
+#define LIGHT_WORLD_SIZE 0.2
+#define LIGHT_FRUSTUM_WIDTH 1000
 
 // Assuming that LIGHT_FRUSTUM_WIDTH == LIGHT_FRUSTUM_HEIGHT
 #define LIGHT_SIZE_UV (LIGHT_WORLD_SIZE / LIGHT_FRUSTUM_WIDTH)
@@ -147,6 +147,7 @@ void FindBlocker(out float avgBlockerDepth, out float numBlockers, vec2 uv, floa
     // This uses similar triangles to compute what
     // area of the shadow map we should search
     float searchWidth = LIGHT_SIZE_UV * (zReceiver - NEAR_PLANE) / zReceiver;
+    searchWidth *= 1.0;
     float blockerSum = 0;
     numBlockers = 0;
 
@@ -162,7 +163,7 @@ void FindBlocker(out float avgBlockerDepth, out float numBlockers, vec2 uv, floa
  	avgBlockerDepth = blockerSum / numBlockers;
 }
 
-#define XOR_SCALE 512
+#define XOR_SCALE 4000
 float PCF_Filter(vec2 uv, float zReceiver, float filterRadiusUV)
 {
 	float sum = 0.0;
@@ -171,7 +172,7 @@ float PCF_Filter(vec2 uv, float zReceiver, float filterRadiusUV)
  		vec2 offset = poissonDiskPCF[i] * filterRadiusUV;
 
  		// rotate poisson disk sample "randomly" (but actually based on uv coord hash, so it's temporally stable)
-        float angle = 0.6 * ((int(XOR_SCALE * uv.x) ^ int(XOR_SCALE * uv.y)) + 50.0 * uv.x * uv.y);
+        float angle = 0.6 * ((int(XOR_SCALE * uv.x) ^ int(XOR_SCALE * uv.y)) + 500.0 * uv.x * uv.y);
         float ca = cos(angle);
         float sa = sin(angle);
         offset = vec2(ca*offset.x - sa*offset.y, sa*offset.x + ca*offset.y);
@@ -197,7 +198,7 @@ float PCSS(sampler2D shadowMapTex, vec2 uv, float eye_z)
 
  	// STEP 2: penumbra size
  	float penumbraRatio = PenumbraSize(zReceiver, avgBlockerDepth);
- 	float filterRadiusUV = penumbraRatio * LIGHT_SIZE_UV * eye_z;
+ 	float filterRadiusUV = penumbraRatio * LIGHT_SIZE_UV * NEAR_PLANE / eye_z;
 
  	// STEP 3: filtering
  	return PCF_Filter(uv, zReceiver, filterRadiusUV);

@@ -78,8 +78,8 @@ public class Constants {
             LEVEL_HALF_WIDTH - 2f*PLAYER_RADIUS - NET_RADIUS - NET_PADDING,
             2f*(LEVEL_HALF_DEPTH - PLAYER_RADIUS));
 
-    public static final Color PLAYER_ONE_COLOUR = new Color(0.8f, 0.3f, 0.2f, 1.0f);
-    public static final Color PLAYER_TWO_COLOUR = new Color(0.2f, 0.5f, 0.8f, 1.0f);
+    public static final Color PLAYER_ONE_COLOUR = new Color(0.2f, 0.5f, 0.8f, 1.0f);
+    public static final Color PLAYER_TWO_COLOUR = new Color(0.8f, 0.3f, 0.2f, 1.0f);
 
     public static final float BALL_SPIN_INFLUENCE = 0.2f;
 
