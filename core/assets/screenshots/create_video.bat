@@ -1,0 +1,1 @@
+c:\ffmpeg\bin\ffmpeg.exe -framerate 60 -i sc%06d.png -vcodec libvpx -quality good -cpu-used 0 -b:v 1000k -qmin 10 -qmax 42 -framerate 60 -maxrate 1000k -bufsize 2000k -threads 4 -vf scale=-1:480 15seconds.webm

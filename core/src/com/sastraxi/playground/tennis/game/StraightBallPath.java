@@ -34,7 +34,7 @@ public class StraightBallPath implements BallPath {
         // collide with either side wall or the floor, until we leave the court.
         int numFloorBounces = 0, numBounces = 1;
         BallFrame lastFrame = this.origin;
-        while (numBounces <= MAX_BOUNCES && bounces.isEmpty() || Math.abs(bounces.last().position.x) < Constants.COURT_HALF_WIDTH)
+        while (numBounces <= MAX_BOUNCES && bounces.isEmpty() || Math.abs(bounces.last().position.x) < Constants.LEVEL_HALF_WIDTH)
         {
             // try colliding with the floor.
             BallFrame floorBounce = new BallFrame();

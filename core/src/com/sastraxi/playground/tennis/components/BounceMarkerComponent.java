@@ -80,7 +80,7 @@ public class BounceMarkerComponent extends Component {
 
     public float getOpacity() {
         if (state == State.LIVING) {
-            return Constants.BALL_RADIUS;
+            return Constants.JUICY_BOUNCE_MARKER_OPACITY;
         } else if (state == State.SPAWNING) {
             return easeIn.apply(0f, Constants.JUICY_BOUNCE_MARKER_OPACITY, age / Constants.JUICY_ANIMATION_LENGTH);
         } else {

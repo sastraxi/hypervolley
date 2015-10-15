@@ -109,9 +109,11 @@ public class Constants {
     public static final float BALL_TARGET_COURT_COVERAGE = 6f;
     public static final float PLAYER_BALL_SUBTRACT_SCALE = Constants.PLAYER_RADIUS * 2f;
 
+    public static final float BOUNCE_MARKER_RADIUS = 5f;
     public static final float JUICY_ANIMATION_LENGTH = 0.2f;            // used for bounce marker
     public static final float JUICY_ROTATIONS_PER_SECOND = 0.2f;
-    public static final float JUICY_BOUNCE_MARKER_OPACITY = 0.6f;
+    public static final float JUICY_BOUNCE_MARKER_OPACITY = 1f;
+
     public static final float JUICY_BALL_SHEAR = 0.002f;                 // exaggerate ball movement
     public static final float JUICY_BALL_SHEAR_THINNING = 0.2f;         // % of shear magnitude
 

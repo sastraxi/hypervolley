@@ -5,14 +5,13 @@ import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
-import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.VertexAttributes;
+import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g3d.Material;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
+import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.RandomXS128;
 import com.badlogic.gdx.math.Vector2;
@@ -21,6 +20,7 @@ import com.sastraxi.playground.tennis.components.*;
 import com.sastraxi.playground.tennis.game.BallFrame;
 import com.sastraxi.playground.tennis.game.Constants;
 import com.sastraxi.playground.tennis.game.StraightBallPath;
+import com.sastraxi.playground.tennis.graphics.CustomShaderAttribute;
 
 public class ServingRobotSystem extends IteratingSystem {
 
@@ -70,14 +70,19 @@ public class ServingRobotSystem extends IteratingSystem {
         shadowModel = builder.end();
 
         // bounce markers
-        material = new Material(ColorAttribute.createDiffuse(new Color(0.2f, 0.6f, 0.3f, 1.0f)), new BlendingAttribute(true, 0f));
+        Texture blankTexture = new Texture(1, 1, Pixmap.Format.RGBA8888);
+        material = new Material(
+                ColorAttribute.createDiffuse(new Color(0.2f, 0.6f, 0.2f, 1.0f)),
+                new CustomShaderAttribute(CustomShaderAttribute.ShaderType.BOUNCE_MARKER),
+                TextureAttribute.createDiffuse(blankTexture),
+                new BlendingAttribute(true, 0f));
         bounceMarkerModel = builder.createRect(
-                -2f * Constants.BALL_RADIUS, -2f * Constants.BALL_RADIUS, 0f,
-                2f * Constants.BALL_RADIUS, -2f * Constants.BALL_RADIUS, 0f,
-                2f * Constants.BALL_RADIUS, 2f * Constants.BALL_RADIUS, 0f,
-                -2f * Constants.BALL_RADIUS, 2f * Constants.BALL_RADIUS, 0f,
+                -2f * Constants.BOUNCE_MARKER_RADIUS, -2f * Constants.BOUNCE_MARKER_RADIUS, 0f,
+                2f * Constants.BOUNCE_MARKER_RADIUS, -2f * Constants.BOUNCE_MARKER_RADIUS, 0f,
+                2f * Constants.BOUNCE_MARKER_RADIUS, 2f * Constants.BOUNCE_MARKER_RADIUS, 0f,
+                -2f * Constants.BOUNCE_MARKER_RADIUS, 2f * Constants.BOUNCE_MARKER_RADIUS, 0f,
                 0f, 0f, 1f,
-                material, vertexAttributes);
+                material, vertexAttributes | VertexAttributes.Usage.TextureCoordinates);
     }
 
 

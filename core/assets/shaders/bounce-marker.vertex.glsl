@@ -237,7 +237,6 @@ void main() {
 	#else
 		vec4 pos = u_worldTrans * vec4(a_position, 1.0);
 	#endif
-		
 	gl_Position = u_projViewTrans * pos;
 		
 	#ifdef shadowMapFlag

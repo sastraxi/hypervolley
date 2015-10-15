@@ -31,7 +31,7 @@ public class CustomShaderProvider extends DefaultShaderProvider {
             CustomShaderAttribute attrib = (CustomShaderAttribute) renderable.material.get(CustomShaderAttribute.ID);
             switch (attrib.shaderType) {
                 case BOUNCE_MARKER:
-                    return new BounceMarkerShader();
+                    return BounceMarkerShader.create(renderable);
                 case TENNIS_COURT_FLOOR:
                     return TennisCourtShader.create(renderable);
             }

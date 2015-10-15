@@ -13,7 +13,6 @@ import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g3d.*;
 import com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
-import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.model.Node;
 import com.badlogic.gdx.graphics.g3d.utils.DepthShaderProvider;
@@ -517,7 +516,6 @@ public class TennisEntry extends ApplicationAdapter {
         lastUpdateTime = System.nanoTime();
     }
 
-
     private void saveScreenshot() {
         int MAX_DIGITS = 6;
         String fname = "" + gameState.getTick();
@@ -526,7 +524,7 @@ public class TennisEntry extends ApplicationAdapter {
             fname = "0" + fname;
         }
 
-        FileHandle file = new FileHandle("tmp/sc" + fname + ".png");
+        FileHandle file = new FileHandle("screenshots/sc" + fname + ".png");
         Pixmap pixmap = getScreenshot(0, 0, Gdx.graphics.getWidth(),
                 Gdx.graphics.getHeight(), true);
         PixmapIO.writePNG(file, pixmap);
