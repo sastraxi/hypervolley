@@ -8,6 +8,7 @@ import com.badlogic.ashley.utils.ImmutableArray;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.assets.AssetManager;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g3d.*;
 import com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute;
@@ -31,6 +32,8 @@ import com.sastraxi.playground.tennis.models.PlayerModel;
 import com.sastraxi.playground.tennis.systems.*;
 import org.lwjgl.opengl.GL30;
 
+import java.nio.ByteBuffer;
+
 public class TennisEntry extends ApplicationAdapter {
 
     static final Family BALL_ENTITIES = Family.all(BallComponent.class).get();
@@ -45,7 +48,7 @@ public class TennisEntry extends ApplicationAdapter {
 
     static final long FRAME_TIME_NS = 1000000000 / Constants.FRAME_RATE;
     static final long MICRO_TO_NANO = 1000000;
-    long lastUpdateTime, frames;
+    long lastUpdateTime;
 
     // entities and game logic
     GameStateComponent gameState;
@@ -82,8 +85,6 @@ public class TennisEntry extends ApplicationAdapter {
     @Override
 	public void create()
 	{
-        frames = 0;
-
         // determine game type based on # of controllers
         XInputDevice[] controllers = null;
         try
@@ -450,6 +451,9 @@ public class TennisEntry extends ApplicationAdapter {
 
         }
 
+        // then ffmpeg webm -> gfycat
+        // if (gameState.getTick() < 900) saveScreenshot();
+
         //stage.draw();
     }
 
@@ -511,6 +515,46 @@ public class TennisEntry extends ApplicationAdapter {
     @Override
     public void resume() {
         lastUpdateTime = System.nanoTime();
+    }
+
+
+    private void saveScreenshot() {
+        int MAX_DIGITS = 6;
+        String fname = "" + gameState.getTick();
+        int zeros = MAX_DIGITS - fname.length();
+        for (int i = 0; i < zeros; i++) {
+            fname = "0" + fname;
+        }
+
+        FileHandle file = new FileHandle("tmp/sc" + fname + ".png");
+        Pixmap pixmap = getScreenshot(0, 0, Gdx.graphics.getWidth(),
+                Gdx.graphics.getHeight(), true);
+        PixmapIO.writePNG(file, pixmap);
+    }
+
+    private Pixmap getScreenshot(int x, int y, int w, int h, boolean flipY) {
+        Gdx.gl.glPixelStorei(GL20.GL_PACK_ALIGNMENT, 1);
+
+        final Pixmap pixmap = new Pixmap(w, h, Pixmap.Format.RGBA8888);
+        ByteBuffer pixels = pixmap.getPixels();
+        Gdx.gl.glReadPixels(x, y, w, h, GL20.GL_RGBA, GL20.GL_UNSIGNED_BYTE, pixels);
+
+        final int numBytes = w * h * 4;
+        byte[] lines = new byte[numBytes];
+        if (flipY) {
+            final int numBytesPerLine = w * 4;
+            for (int i = 0; i < h; i++) {
+                pixels.position((h - i - 1) * numBytesPerLine);
+                pixels.get(lines, i * numBytesPerLine, numBytesPerLine);
+            }
+            pixels.clear();
+            pixels.put(lines);
+        } else {
+            pixels.clear();
+            pixels.get(lines);
+        }
+
+        return pixmap;
     }
 
 }

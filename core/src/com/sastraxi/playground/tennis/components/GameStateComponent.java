@@ -8,6 +8,7 @@ import com.sastraxi.playground.tennis.game.Constants;
  */
 public class GameStateComponent extends Component {
 
+    // TODO change to long?
     private int frames;
 
     public void tick() {
@@ -17,5 +18,7 @@ public class GameStateComponent extends Component {
     public float getPreciseTime() {
         return frames / (float) Constants.FRAME_RATE;
     }
+
+    public int getTick() { return frames; }
 
 }
