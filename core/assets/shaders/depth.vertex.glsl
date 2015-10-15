@@ -1,3 +1,5 @@
+#version 400
+
 attribute vec3 a_position;
 uniform mat4 u_projViewWorldTrans;
 
