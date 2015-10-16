@@ -43,6 +43,8 @@ public class Constants {
 
     public static final float CONTROLLER_WALK_MAGNITUDE = 0.2f;
     public static final float CONTROLLER_RUN_MAGNITUDE = 0.75f;
+    public static final float CONTROLLER_AIM_MAGNITUDE = 0.15f;
+    public static final int CONTROLLER_VIBRATION_SCALE = 65535;
 
     public static final float PLAYER_WALK_MULTIPLIER = 0.4f;
     public static final float PLAYER_SPEED = 140f;
@@ -149,5 +151,4 @@ public class Constants {
     public static final int CAMERA_FOV_SMOOTHING_FRAMES = 90;
     public static final float CAMERA_MARKER_VELOCITY_ANTICIPATION_SEC = 1.5f;
 
-    public static final int CONTROLLER_VIBRATION_SCALE = 65535;
 }

@@ -273,11 +273,11 @@ public class PlayerMovementSystem extends IteratingSystem {
                             // decide on the return velocity
                             // treat the controller input as the source
                             // only take 180 degrees facing the direction of play
-                            if (pic.inputFrame.movement.len() > Constants.CONTROLLER_WALK_MAGNITUDE)
+                            if (pic.inputFrame.movement.len() > Constants.CONTROLLER_AIM_MAGNITUDE)
                             {
                                 float _return_angle = pic.inputFrame.movement.angle();
-                                float _return_magnitude = (pic.inputFrame.movement.len() - Constants.CONTROLLER_WALK_MAGNITUDE) /
-                                                          (1f - Constants.CONTROLLER_WALK_MAGNITUDE);
+                                float _return_magnitude = (pic.inputFrame.movement.len() - Constants.CONTROLLER_AIM_MAGNITUDE) /
+                                                          (1f - Constants.CONTROLLER_AIM_MAGNITUDE);
 
                                 // set to -1..1
                                 _return_magnitude = (MathUtils.clamp(_return_magnitude, 0.0f, 1.0f) - 0.5f) / 0.5f;

@@ -124,7 +124,6 @@ public class CameraMovementSystem extends IteratingSystem {
         // determine FOV (imagine a triangle from the camera to the scene extents for each x/y)
         camera.camera.fieldOfView = 2f * MathUtils.radiansToDegrees * (float) Math.atan2((float) 0.5f * _height, (float) camera.eyePlane.distance(_camera_target));
 
-
         // insert our calculated values into the smoothers and get smoothed values
         camera.positionEstimator.insert(camera.camera.position);
         camera.positionEstimator.getValue(camera.camera.position);
