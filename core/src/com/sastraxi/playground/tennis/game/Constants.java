@@ -84,8 +84,8 @@ public class Constants {
             COURT_HALF_DEPTH * 2f);
 
     public static final Rectangle PLAYER_TWO_BOUNDS = new Rectangle(
-            PLAYER_RADIUS,
-            -LEVEL_HALF_DEPTH + PLAYER_RADIUS + NET_RADIUS + NET_PADDING,
+            PLAYER_RADIUS + NET_RADIUS + NET_PADDING,
+            -LEVEL_HALF_DEPTH + PLAYER_RADIUS,
             LEVEL_HALF_WIDTH - 2f*PLAYER_RADIUS - NET_RADIUS - NET_PADDING,
             2f*(LEVEL_HALF_DEPTH - PLAYER_RADIUS));
 
