@@ -5,33 +5,29 @@ import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.utils.ImmutableArray;
-import com.badlogic.gdx.ApplicationAdapter;
-import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.*;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g3d.*;
-import com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
-import com.badlogic.gdx.graphics.g3d.model.Node;
 import com.badlogic.gdx.graphics.g3d.utils.DepthShaderProvider;
-import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.graphics.g3d.utils.ShaderProvider;
 import com.badlogic.gdx.math.*;
 import com.ivan.xinput.XInputDevice;
 import com.ivan.xinput.exceptions.XInputNotLoadedException;
+import com.sastraxi.playground.gdx.ShadowLightR32F;
 import com.sastraxi.playground.tennis.components.*;
 import com.sastraxi.playground.tennis.game.Constants;
 import com.sastraxi.playground.tennis.game.PlayerType;
-import com.sastraxi.playground.tennis.graphics.CustomShaderAttribute;
 import com.sastraxi.playground.tennis.graphics.CustomShaderProvider;
-import com.sastraxi.playground.gdx.ShadowLightR32F;
 import com.sastraxi.playground.tennis.models.PlayerModel;
 import com.sastraxi.playground.tennis.systems.*;
 import org.lwjgl.opengl.GL30;
 
 import java.nio.ByteBuffer;
+import java.util.concurrent.locks.LockSupport;
 
 public class TennisEntry extends ApplicationAdapter {
 
@@ -45,11 +41,10 @@ public class TennisEntry extends ApplicationAdapter {
     final ComponentMapper<BallComponent> bcm = ComponentMapper.getFor(BallComponent.class);
     final ComponentMapper<AlertedComponent> acm = ComponentMapper.getFor(AlertedComponent.class);
 
-    static final long FRAME_TIME_NS = 1000000000 / Constants.FRAME_RATE;
-    static final long MICRO_TO_NANO = 1000000;
     long lastUpdateTime;
 
     // entities and game logic
+    Engine engine;
     GameStateComponent gameState;
     CameraManagementComponent cameraManagementComponent;
     PlayerType[] playerTypes = new PlayerType[2];
@@ -57,11 +52,6 @@ public class TennisEntry extends ApplicationAdapter {
     ImmutableArray<Entity> ballEntities;
     ImmutableArray<Entity> swingDetectorEntities;
     ImmutableArray<Entity> bounceMarkers;
-
-    // systems
-    Engine engine;
-    BallMovementSystem bms;
-    ServingRobotSystem bss;
 
     // graphics
     PerspectiveCamera camera;
@@ -225,19 +215,20 @@ public class TennisEntry extends ApplicationAdapter {
         gameStateEntity.add(gameState);
         engine.addEntity(gameStateEntity);
 
-        // add a system to respond to player input
+        // general game logic that needs to happen after everything else
+        engine.addSystem(new GlobalAfterSystem());
+
+        // add a system to respond to player input (and rumble controllers)
         engine.addSystem(new ControllerInputSystem());
+        engine.addSystem(new ControllerFeedbackSystem());
 
-        // add a ball launcher on the other side of the court
-        // and ball movement
-        bms = new BallMovementSystem();
-        engine.addSystem(bms);
-
-        bss = new ServingRobotSystem();
-        engine.addSystem(bss);
-
+        // ball mechanics
+        engine.addSystem(new BallMovementSystem());
+        engine.addSystem(new ServingRobotSystem());
         engine.addSystem(new BounceMarkerUpdateSystem());
 
+        // we draw graphics locally, so we need to register
+        // these entity collections to iterate over later on
         ballEntities = engine.getEntitiesFor(BALL_ENTITIES);
         bounceMarkers = engine.getEntitiesFor(BOUNCE_MARKER_ENTITIES);
 
@@ -253,10 +244,21 @@ public class TennisEntry extends ApplicationAdapter {
         // hud camera
         hudCamera = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         hudCamera.update();
+        InputProcessor exitProcessor = new InputAdapter() {
+            @Override
+            public boolean keyDown(int keycode) {
+                if ((keycode == Input.Keys.ESCAPE) || (keycode == Input.Keys.BACK)) {
+                    // TODO perform other operations before exiting
+                    Gdx.app.exit();
+                    return true;
+                }
+                return false;
+            }
+        };
 
-        // InputMultiplexer multiplexer = new InputMultiplexer();
+        InputMultiplexer multiplexer = new InputMultiplexer(exitProcessor);
         // multiplexer.addProcessor(stage);
-        // Gdx.input.setInputProcessor(multiplexer);
+        Gdx.input.setInputProcessor(multiplexer);
 	}
 
     @Override
@@ -272,13 +274,26 @@ public class TennisEntry extends ApplicationAdapter {
 	public void render()
 	{
         // wait for the right time
-        long soughtTime = lastUpdateTime + FRAME_TIME_NS;
-        while (System.nanoTime() < soughtTime) {
+        // TODO determine soughtTime as a function f(current-tick).
+        // TODO if we've "missed" this tick, advance game logic to the next one
+        // TODO and re-try the whole thing.
+        /*
+        boolean wasBehind = true;
+        long soughtTime = lastUpdateTime + Constants.FRAME_TIME_NS;
+        long thisTime = System.nanoTime();
+        if (thisTime == soughtTime) wasBehind = false;
+        while (thisTime < soughtTime) {
+            wasBehind = false;
             try {
-                long sleepTime = soughtTime - System.nanoTime();
-                Thread.sleep(sleepTime / MICRO_TO_NANO, (int) (sleepTime % MICRO_TO_NANO));
-            } catch (InterruptedException e) { /* no-op */ }
+                Thread.sleep(0);
+            } catch (InterruptedException e) {}
+            thisTime = System.nanoTime();
+
         }
+        lastUpdateTime = thisTime;
+
+        if (wasBehind) System.out.println("XRUN");
+        */
 
         // process all systems
         gameState.tick();
@@ -382,9 +397,6 @@ public class TennisEntry extends ApplicationAdapter {
                     .setToTranslation(mc.position)
                     .rotate(mc.orientation);
         }
-
-        // put the tennis court somewhere reasonable?
-        tennisCourt.transform.idt().scl(0.01f).rotate(1f, 0f, 0f, 90f);
 
         // render the shadow map
         Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
@@ -507,7 +519,9 @@ public class TennisEntry extends ApplicationAdapter {
 
         // Create an instance of our crate model and put it in an array
         Model model = assets.get(TENNIS_COURT_PATH, Model.class);
-        return new ModelInstance(model);
+        ModelInstance tennisCourt = new ModelInstance(model);
+        tennisCourt.transform.idt().scl(0.01f).rotate(1f, 0f, 0f, 90f);
+        return tennisCourt;
     }
 
 

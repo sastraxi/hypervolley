@@ -11,8 +11,12 @@ import com.badlogic.gdx.math.Vector3;
  */
 public class Constants {
 
+    public static final double SEC_TO_NS = 0.000000001;
+    public static final long FRAME_TIME_NS = 1000000000 / Constants.FRAME_RATE;
+    public static final long MICRO_TO_NANO = 1000000;
     public static final long FRAME_RATE = 60;
     public static final float FRAME_TIME_SEC = 1f / (float) FRAME_RATE;
+    public static final double FRAME_TIME_SEC_DBL = 1f / (double) FRAME_RATE;
 
     // N.B. game scale: 1f ~ 0.1m
 
@@ -43,12 +47,12 @@ public class Constants {
     public static final float PLAYER_SPEED = 140f;
 
     public static final float DASH_SPEED = 600f;
-    public static final float DASH_ACCEL = 0.12f; // seconds to get up to speed
-    public static final float DASH_DECEL = 0.12f; // seconds to slow down to regular speed
-    public static final float DASH_MAX_METER = 1.5f; // how many seconds it takes to recharge
+    public static final float DASH_ACCEL = 0.04f; // seconds to get up to speed
+    public static final float DASH_DECEL = 0.04f; // seconds to slow down to regular speed
+    public static final float DASH_MAX_METER = 0.5f; // how many seconds it takes to recharge
     public static final float DASH_METER_DEPLETION_RATE = 4f; // how many times faster it depletes
-    public static final float DASH_MIN_METER = 1.5f; // this much of the meter must be full to dash
-    public static final float DASH_BALL_SPEED_MODIFIER = 2f;
+    public static final float DASH_MIN_METER = 0.5f; // this much of the meter must be full to dash
+    public static final float DASH_BALL_SPEED_MODIFIER = 1.7f;
 
     public static final Plane LEVEL_GROUND_PLANE = new Plane(Constants.UP_VECTOR, 0f);
     public static final Plane LEVEL_FAR_PLANE = new Plane(new Vector3(0f, 1f, 0f), LEVEL_HALF_DEPTH);
@@ -131,4 +135,5 @@ public class Constants {
     public static final int CAMERA_POSITION_SMOOTHING_FRAMES = 90;
     public static final int CAMERA_FOV_SMOOTHING_FRAMES = 90;
     public static final float CAMERA_MARKER_VELOCITY_ANTICIPATION_SEC = 1.5f;
+    public static final int CONTROLLER_VIBRATION_SCALE = 65535;
 }

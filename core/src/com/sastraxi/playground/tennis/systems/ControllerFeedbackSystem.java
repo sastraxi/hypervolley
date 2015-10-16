@@ -8,22 +8,25 @@ import com.badlogic.ashley.systems.IteratingSystem;
 import com.ivan.xinput.XInputAxes;
 import com.ivan.xinput.XInputButtons;
 import com.ivan.xinput.XInputDevice;
-import com.sastraxi.playground.tennis.components.*;
+import com.sastraxi.playground.tennis.components.CameraManagementComponent;
+import com.sastraxi.playground.tennis.components.CharacterComponent;
+import com.sastraxi.playground.tennis.components.ControllerInputComponent;
+import com.sastraxi.playground.tennis.components.GameStateComponent;
+import com.sastraxi.playground.tennis.game.Constants;
 
-public class ControllerInputSystem extends IteratingSystem {
+public class ControllerFeedbackSystem extends IteratingSystem {
 
-    private static final int PRIORITY = 0; // before everything
+    private static final int PRIORITY = 3; // after player movement system
 
     private static final Family GAME_STATE_FAMILY = Family.all(GameStateComponent.class, CameraManagementComponent.class).get();
 
     private ComponentMapper<CharacterComponent> picm = ComponentMapper.getFor(CharacterComponent.class);
     private ComponentMapper<ControllerInputComponent> cicm = ComponentMapper.getFor(ControllerInputComponent.class);
-    private ComponentMapper<CameraManagementComponent> ccm = ComponentMapper.getFor(CameraManagementComponent.class);
 
     private Engine engine;
     private Entity gameStateEntity;
 
-    public ControllerInputSystem() {
+    public ControllerFeedbackSystem() {
         super(Family.all(CharacterComponent.class, ControllerInputComponent.class).get(), PRIORITY);
     }
 
@@ -41,33 +44,15 @@ public class ControllerInputSystem extends IteratingSystem {
         CharacterComponent pic = picm.get(entity);
         ControllerInputComponent cic = cicm.get(entity);
         XInputDevice controller = cic.controller;
+        float totalVibration = 0;
 
-        // poll the controller & get input buttons/axes
-        controller.poll();
-        XInputButtons buttons = controller.getComponents().getButtons();
-        XInputAxes axes = controller.getComponents().getAxes();
+        if (pic.state == CharacterComponent.DashState.DASHING) totalVibration += 0.4f;
+        if (pic.isHitting)                                     totalVibration += 0.2f;
+        if (cic.wasHitting && !pic.isHitting)                  totalVibration += 0.4f; // state transition out; see
+                                                                                       // also ControllerInputSystem
 
-        // save last input state
-        pic.lastInputFrame.set(pic.inputFrame);
-
-        // figure out new input state
-        pic.inputFrame.movement.set(axes.lx, axes.ly);
-        pic.inputFrame.swing = buttons.a;
-
-        boolean isLeftBumperPressed = Math.abs(axes.lt) > 0.5f;
-        boolean isRightBumperPressed = Math.abs(axes.rt) > 0.5f;
-        pic.inputFrame.dash = isLeftBumperPressed | isRightBumperPressed;
-
-        // see also ControllerFeedbackSystem
-        cic.wasHitting = pic.isHitting;
-
-        // hacky public gamestate stuff
-        pic.inputFrame.changeCamera = buttons.back;
-        if (pic.inputFrame.changeCamera && !pic.lastInputFrame.changeCamera)
-        {
-            CameraManagementComponent viewpoint = ccm.get(gameStateEntity);
-            viewpoint.cycle();
-        }
+        int _vib = (int) (totalVibration * Constants.CONTROLLER_VIBRATION_SCALE);
+        controller.setVibration(_vib, _vib);
     }
 
 }
