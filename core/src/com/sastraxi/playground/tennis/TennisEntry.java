@@ -115,8 +115,8 @@ public class TennisEntry extends ApplicationAdapter {
 
             // determine focal point (on the other side of the court)
             Vector2 focalPoint = new Vector2();
-            if (i == 0) Constants.PLAYER_TWO_BOUNDS.getCenter(focalPoint);
-            else        Constants.PLAYER_ONE_BOUNDS.getCenter(focalPoint);
+            if (i == 0) Constants.RIGHT_COURT_BOUNDS.getCenter(focalPoint);
+            else        Constants.LEFT_COURT_BOUNDS.getCenter(focalPoint);
 
             // an exclamation mark above the player's head
             // used to signify when ball is in strike zone

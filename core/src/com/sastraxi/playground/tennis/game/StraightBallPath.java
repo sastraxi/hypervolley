@@ -18,12 +18,44 @@ public class StraightBallPath implements BallPath {
     private static final int NUM_BOUNCES = 1;
     public static final int MAX_BOUNCES = 50; // FIXME if there are more bounces, the ball (path) will ignore them!
 
+    private BallFrame origin;
+    private NavigableSet<BallFrame> bounces = new TreeSet<>();
+    private float deathTime;
 
-    private final BallFrame origin;
-    private final NavigableSet<BallFrame> bounces = new TreeSet<>();
-    private final float deathTime;
+    private static Vector3 _velocity = new Vector3();
+
+    /**
+     * Creates a path based on hitting a certain bounce target from a certain position
+     * knowing the initial angle with the Z axis.
+     */
+    public StraightBallPath(Vector3 position, float zAngle, Vector2 bounceTarget, float timeBase)
+    {
+        // System.out.println("pos=" + position + "   zAngle=" + zAngle + "   bounceTarget=" + bounceTarget);
+
+        _velocity.set(bounceTarget, 0f).sub(position.x, position.y, 0f);
+        float xyAngle = (float) Math.atan2(_velocity.y, _velocity.x);
+
+        // solve for initial speed (v0)
+        float d = _velocity.len();
+        float numerator = 0.5f * Constants.G * d * d;
+        float denom = d * (float) Math.tan(zAngle) + position.z;
+        float v0 = (float) ((1.0 / Math.cos(zAngle)) * Math.sqrt(numerator / denom));
+
+        _velocity.set(
+            (float) (Math.cos(zAngle) * Math.cos(xyAngle)),
+            (float) (Math.cos(zAngle) * Math.sin(xyAngle)),
+            (float) Math.sin(zAngle)
+        ).scl(v0);
+
+        setup(position, _velocity, timeBase);
+    }
 
     public StraightBallPath(Vector3 position, Vector3 velocity, float timeBase)
+    {
+        setup(position, velocity, timeBase);
+    }
+
+    protected void setup(Vector3 position, Vector3 velocity, float timeBase)
     {
         float _t, dt;
         this.origin = new BallFrame(position, velocity, velocity, timeBase, 0);

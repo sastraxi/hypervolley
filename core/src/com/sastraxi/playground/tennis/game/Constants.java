@@ -24,7 +24,8 @@ public class Constants {
     public static final float LEVEL_HALF_DEPTH = 150f;
     public static final float COURT_HALF_WIDTH = 200f;
     public static final float COURT_HALF_DEPTH = 100f;
-    public static final float WALL_HEIGHT = 30f;
+    public static final float SHOT_HALF_WIDTH = (COURT_HALF_WIDTH / 2f) * 0.8f;
+    public static final float SHOT_HALF_DEPTH = COURT_HALF_DEPTH * 0.8f;
 
     public static final float CAMERA_FOV = 30f;
     public static final Vector3 UP_VECTOR = Vector3.Z;
@@ -76,11 +77,23 @@ public class Constants {
             LEVEL_HALF_WIDTH - 2f*PLAYER_RADIUS - NET_RADIUS - NET_PADDING,
             2f*(LEVEL_HALF_DEPTH - PLAYER_RADIUS));
 
+    public static final Rectangle LEFT_COURT_BOUNDS = new Rectangle(
+            -COURT_HALF_WIDTH,
+            -COURT_HALF_DEPTH,
+            COURT_HALF_WIDTH,
+            COURT_HALF_DEPTH * 2f);
+
     public static final Rectangle PLAYER_TWO_BOUNDS = new Rectangle(
             PLAYER_RADIUS,
             -LEVEL_HALF_DEPTH + PLAYER_RADIUS + NET_RADIUS + NET_PADDING,
             LEVEL_HALF_WIDTH - 2f*PLAYER_RADIUS - NET_RADIUS - NET_PADDING,
             2f*(LEVEL_HALF_DEPTH - PLAYER_RADIUS));
+
+    public static final Rectangle RIGHT_COURT_BOUNDS = new Rectangle(
+            0,
+            -COURT_HALF_DEPTH,
+            COURT_HALF_WIDTH,
+            COURT_HALF_DEPTH * 2f);
 
     public static final Color PLAYER_ONE_COLOUR = new Color(0.2f, 0.5f, 0.8f, 1.0f);
     public static final Color PLAYER_TWO_COLOUR = new Color(0.8f, 0.3f, 0.2f, 1.0f);
@@ -135,5 +148,6 @@ public class Constants {
     public static final int CAMERA_POSITION_SMOOTHING_FRAMES = 90;
     public static final int CAMERA_FOV_SMOOTHING_FRAMES = 90;
     public static final float CAMERA_MARKER_VELOCITY_ANTICIPATION_SEC = 1.5f;
+
     public static final int CONTROLLER_VIBRATION_SCALE = 65535;
 }

@@ -7,6 +7,7 @@ import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Plane;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.sastraxi.playground.tennis.components.*;
 import com.sastraxi.playground.tennis.game.Constants;
@@ -35,8 +36,9 @@ public class PlayerMovementSystem extends IteratingSystem {
             _ball_prev = new Vector3(),
             _ball_next = new Vector3(),
             _tmp_player_offset = new Vector3(),
-            _ball_target = new Vector3(),
             _avg_movement = new Vector3();
+
+    Vector2 _ball_target = new Vector2();
 
     Plane _perfect_frame = new Plane();
 
@@ -256,6 +258,7 @@ public class PlayerMovementSystem extends IteratingSystem {
                                     (Math.signum(dst[1]) != Math.signum(dst[2]));
 
                             // xy ball speed.
+                            /*
                             float ballSpeed = (float) Math.sqrt(
                                     ballMovement.velocity.x * ballMovement.velocity.x +
                                             ballMovement.velocity.y * ballMovement.velocity.y);
@@ -265,39 +268,54 @@ public class PlayerMovementSystem extends IteratingSystem {
                             } else {
                                 ballSpeed *= Constants.VOLLEY_VELOCITY_SCALE;
                             }
+                            */
 
                             // decide on the return velocity
                             // treat the controller input as the source
                             // only take 180 degrees facing the direction of play
-                            float _return_lerp = 0f; /* -1 to 1 */
-                            if (pic.inputFrame.movement.len() > Constants.CONTROLLER_WALK_MAGNITUDE) {
+                            if (pic.inputFrame.movement.len() > Constants.CONTROLLER_WALK_MAGNITUDE)
+                            {
                                 float _return_angle = pic.inputFrame.movement.angle();
-                                if (pic.focalPoint.x < ballMovement.position.x) {
+                                float _return_magnitude = (pic.inputFrame.movement.len() - Constants.CONTROLLER_WALK_MAGNITUDE) /
+                                                          (1f - Constants.CONTROLLER_WALK_MAGNITUDE);
+
+                                // set to -1..1
+                                _return_magnitude = (MathUtils.clamp(_return_magnitude, 0.0f, 1.0f) - 0.5f) / 0.5f;
+
+                                float xc = 0f;
+                                if (pic.focalPoint.x < ballMovement.position.x)
+                                {
                                     // going left; 90-270
-                                    _return_lerp = MathUtils.clamp(_return_angle, 90f, 270f) - 180f / 90f;
-                                } else {
-                                    // going right: 0-90, 270-360
-                                    // 90-180 we want to turn into 90, 180-270 we want to turn into 270
-                                    if (_return_angle < 90f) {
-                                        _return_lerp = _return_angle / 90f;
-                                    } else if (_return_angle < 180f) {
-                                        _return_lerp = 1f;
-                                    } else if (_return_angle < 270f) {
-                                        _return_lerp = -1f;
-                                    } else { // return angle < 360f
-                                        _return_lerp = (_return_angle - 360f) / 90f;
-                                    }
+                                    if (_return_angle < 90f) _return_angle = 90f;
+                                    else if (_return_angle > 270f) _return_angle = 270f;
+                                    xc = (180f - _return_angle) / 90f;
                                 }
+                                else
+                                {
+                                    // going right: 0-90, 270-360
+                                    if (_return_angle < 90f) xc = _return_angle / 90f;
+                                    else if (_return_angle < 180f) xc = 1f;
+                                    else if (_return_angle < 270f) xc = -1f;
+                                    else xc = (_return_angle - 360f) / 90f;
+
+                                }
+
+                                _ball_target.set(pic.focalPoint.x, pic.focalPoint.y)
+                                            .add(_return_magnitude * Constants.SHOT_HALF_WIDTH, 0f)
+                                            .add(0f, xc * Constants.SHOT_HALF_DEPTH);
                             }
-                            _ball_target.set(pic.focalPoint)
-                                    .add(0f, Constants.COURT_HALF_DEPTH * _return_lerp, 0f)
-                                    .sub(ballMovement.position).nor();
-                            ballMovement.velocity.x = _ball_target.x * ballSpeed;
-                            ballMovement.velocity.y = _ball_target.y * ballSpeed;
-                            ballMovement.velocity.z = Math.abs(ballMovement.velocity.z);
+                            else
+                            {
+                                // neutral hit; right to centre
+                                _ball_target.set(pic.focalPoint.x, pic.focalPoint.y);
+                            }
+
+                            float _xy_comp = (float) Math.sqrt(ballMovement.velocity.x * ballMovement.velocity.x + ballMovement.velocity.y + ballMovement.velocity.y);
+                            float zAngle = (float) Math.abs(Math.atan2(ballMovement.velocity.z, _xy_comp));
+                            zAngle = MathUtils.lerp(zAngle, 0.2f, 0.5f);
 
                             // craft the new path.
-                            ballComponent.path = new StraightBallPath(ballMovement.position, ballMovement.velocity, time); // FIXME new usage in game loop
+                            ballComponent.path = new StraightBallPath(ballMovement.position, zAngle, _ball_target, time); // FIXME new usage in game loop
                             ballComponent.currentBounce = 0;
                             ballComponent.currentVolley += 1;
                             ballComponent.lastHitByEID = entity.getId();
