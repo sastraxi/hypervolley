@@ -13,6 +13,7 @@ public class MovementComponent extends Component {
     public Vector3 position = new Vector3();
     public Vector3 velocity = new Vector3();
     public Quaternion orientation = new Quaternion(Constants.UP_VECTOR, 0f);
+    public float scale = 1f;
 
     public MovementComponent() { }
 
@@ -20,5 +21,6 @@ public class MovementComponent extends Component {
         this.position = o.position;
         this.velocity = o.velocity;
         this.orientation = o.orientation;
+        this.scale = o.scale;
     }
 }

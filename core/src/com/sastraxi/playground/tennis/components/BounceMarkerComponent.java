@@ -74,7 +74,8 @@ public class BounceMarkerComponent extends Component {
             return easeIn.apply(0f, Constants.BALL_RADIUS, age / Constants.JUICY_ANIMATION_LENGTH);
         } else {
             assert(state == State.DYING);
-            return easeOut.apply(Constants.BALL_RADIUS, 4f*Constants.BALL_RADIUS, age / Constants.JUICY_ANIMATION_LENGTH);
+            //return Constants.BALL_RADIUS;
+            return easeOut.apply(Constants.BALL_RADIUS, 2.5f*Constants.BALL_RADIUS, age / Constants.JUICY_ANIMATION_LENGTH);
         }
     }
 
@@ -88,6 +89,18 @@ public class BounceMarkerComponent extends Component {
             return easeOut.apply(Constants.JUICY_BOUNCE_MARKER_OPACITY, 0f, age / Constants.JUICY_ANIMATION_LENGTH);
         }
     }
+
+    public float getScale() {
+        if (state == State.LIVING) {
+            return 1.0f;
+        } else if (state == State.SPAWNING) {
+            return 1.0f;
+        } else {
+            assert(state == State.DYING);
+            return easeOut.apply(1f, 1.2f, age / Constants.JUICY_ANIMATION_LENGTH);
+        }
+    }
+
 
     public boolean hasSpawned() {
         return state == State.SPAWNING && age > Constants.JUICY_ANIMATION_LENGTH;

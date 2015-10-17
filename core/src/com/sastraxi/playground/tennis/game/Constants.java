@@ -39,13 +39,14 @@ public class Constants {
     public static final float PLAYER_WALK_MULTIPLIER = 0.4f;
     public static final float PLAYER_SPEED = 140f;
 
+    public static final int CONTROLLER_VIBRATION_MAX_VALUE = 65535;
     public static final float CONTROLLER_WALK_MAGNITUDE = 0.2f;
     public static final float CONTROLLER_RUN_MAGNITUDE = 0.75f;
     public static final float CONTROLLER_AIM_MAGNITUDE = 0.15f;
-    public static final int CONTROLLER_VIBRATION_SCALE = 65535;
-
-    public static final float CONTROLLER_VIBRATION_BOUNCE_SCALE = 0.6f;
+    public static final float CONTROLLER_VIBRATION_BOUNCE_ADD = 0.1f;
+    public static final float CONTROLLER_VIBRATION_BOUNCE_SCALE = 0.4f;
     public static final float CONTROLLER_VIBRATION_BOUNCE_POWER = 2f;
+    public static final float CONTROLLER_FINE_LEFT_MOTOR = 0.4f; // positional effects need finer left motor control (in 360 controllers, it's the bigger one).
 
     public static final float DASH_SPEED = 600f;
     public static final float DASH_ACCEL = 0.04f; // seconds to get up to speed

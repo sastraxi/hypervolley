@@ -33,7 +33,7 @@ public class CharacterComponent extends Component {
     }
 
     // ball set by ServingRobotSystem
-    public Entity ball = null;
+    public Entity ball = null; // FIXME this should be an entity ID and a getter
     public final Vector3 focalPoint = new Vector3(); // a place to look at on the other side of the court
     public final Rectangle shotBounds;
     public final Rectangle bounds;

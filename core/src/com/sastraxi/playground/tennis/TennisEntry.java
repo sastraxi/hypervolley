@@ -392,7 +392,9 @@ public class TennisEntry extends ApplicationAdapter {
             MovementComponent mc = mcm.get(entity);
             RenderableComponent rc = rcm.get(entity);
             rc.modelInstance.transform
-                    .setToTranslation(mc.position)
+                    .idt()
+                    .translate(mc.position)
+                    .scale(mc.scale, mc.scale, mc.scale)
                     .rotate(mc.orientation);
         }
 

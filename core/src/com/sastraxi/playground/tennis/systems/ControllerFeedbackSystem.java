@@ -64,11 +64,14 @@ public class ControllerFeedbackSystem extends IteratingSystem {
             if (ball.justBounced) {
                 // use x axis of ball position for a "directional" vibration
                 float pct = 0.5f * (1f + (ballpos.position.x / Constants.LEVEL_HALF_WIDTH));
-                float left = Constants.CONTROLLER_VIBRATION_BOUNCE_SCALE * pct;
-                float right = Constants.CONTROLLER_VIBRATION_BOUNCE_SCALE * (1.0f - pct);
+                float left = Constants.CONTROLLER_VIBRATION_BOUNCE_SCALE * (1.0f - pct);
+                float right = Constants.CONTROLLER_VIBRATION_BOUNCE_SCALE * pct;
 
                 left = (float) Math.pow(left, Constants.CONTROLLER_VIBRATION_BOUNCE_POWER);
                 right = (float) Math.pow(right, Constants.CONTROLLER_VIBRATION_BOUNCE_POWER);
+
+                left += Constants.CONTROLLER_VIBRATION_BOUNCE_ADD;
+                right += Constants.CONTROLLER_VIBRATION_BOUNCE_ADD;
 
                 impulse(left, right);
             }
@@ -76,8 +79,9 @@ public class ControllerFeedbackSystem extends IteratingSystem {
 
         // set the vibration
         Impulse current = tickAndGetImpulse();
-        int _left = (int) (MathUtils.clamp(current.left, 0f, 1f) * Constants.CONTROLLER_VIBRATION_SCALE);
-        int _right = (int) (MathUtils.clamp(current.right, 0f, 1f) * Constants.CONTROLLER_VIBRATION_SCALE);
+        current.add(new Impulse(combinedVibration, combinedVibration));
+        int _left = (int) (MathUtils.clamp(current.left, 0f, 1f) * Constants.CONTROLLER_VIBRATION_MAX_VALUE);
+        int _right = (int) (MathUtils.clamp(current.right, 0f, 1f) * Constants.CONTROLLER_VIBRATION_MAX_VALUE);
         controller.setVibration(_left, _right);
     }
 
@@ -99,7 +103,7 @@ public class ControllerFeedbackSystem extends IteratingSystem {
         }
 
         Impulse(float left, float right) {
-            this.left = left;
+            this.left = left * Constants.CONTROLLER_FINE_LEFT_MOTOR;
             this.right = right;
             this.frames = IMPULSE_FRAMES;
         }

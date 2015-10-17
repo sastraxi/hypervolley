@@ -66,6 +66,7 @@ public class BounceMarkerUpdateSystem extends IteratingSystem  {
         // update opacity
         BlendingAttribute blend = (BlendingAttribute) rc.modelInstance.materials.get(0).get(BlendingAttribute.Type);
         blend.opacity = bounceMarker.getOpacity();
+        movement.scale = bounceMarker.getScale();
 
         // die when the ball hits here or its ball becomes invalid
         if ((!bounceMarker.ballIsValid(engine) || bounceMarker.hasBeenPassed(engine))
