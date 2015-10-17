@@ -10,14 +10,16 @@ import com.sastraxi.playground.tennis.game.Constants;
 public class DesktopLauncher {
 	public static void main (String[] arg) {
 		LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
-		config.samples = 8;
 		config.vSyncEnabled = false;
-		config.width = 1280;
-		config.height = 720;
+
+		config.width = 1280; config.height = 720; config.samples = 8;
+		// config.width = 1920; config.height = 1080; config.samples = 16;
+		// config.width = 960; config.height = 540; config.samples = 2;
+
 		config.depth = 24;
 		config.fullscreen = false;
 		config.foregroundFPS = 60;
-		config.backgroundFPS = 60;
+		config.backgroundFPS = 10;
 		//config.useGL30 = true;
 		new LwjglApplication(new TennisEntry(), config);
 	}

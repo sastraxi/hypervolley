@@ -13,10 +13,12 @@ public class BallComponent extends Component {
     public int currentBounce, currentVolley;
     public BallPath path;
     public Long lastHitByEID = null;
+    public boolean justBounced;
 
     // getPosition(t) / getVelocity(t) through path
 
     public BallComponent(BallPath path) {
+        this.justBounced = false;
         this.currentBounce = 0;
         this.currentVolley = 0;
         this.path = path;

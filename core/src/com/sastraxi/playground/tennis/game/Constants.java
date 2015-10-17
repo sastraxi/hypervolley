@@ -35,17 +35,17 @@ public class Constants {
 
     public static final float PLAYER_HEIGHT = 52f;
     public static final float PLAYER_RADIUS = 8f;
-    public static final float BALL_RADIUS = 4f;
-
     public static final float PLAYER_SIZE = 2f * PLAYER_RADIUS;
+    public static final float PLAYER_WALK_MULTIPLIER = 0.4f;
+    public static final float PLAYER_SPEED = 140f;
 
     public static final float CONTROLLER_WALK_MAGNITUDE = 0.2f;
     public static final float CONTROLLER_RUN_MAGNITUDE = 0.75f;
     public static final float CONTROLLER_AIM_MAGNITUDE = 0.15f;
     public static final int CONTROLLER_VIBRATION_SCALE = 65535;
 
-    public static final float PLAYER_WALK_MULTIPLIER = 0.4f;
-    public static final float PLAYER_SPEED = 140f;
+    public static final float CONTROLLER_VIBRATION_BOUNCE_SCALE = 0.6f;
+    public static final float CONTROLLER_VIBRATION_BOUNCE_POWER = 2f;
 
     public static final float DASH_SPEED = 600f;
     public static final float DASH_ACCEL = 0.04f; // seconds to get up to speed
@@ -136,9 +136,9 @@ public class Constants {
     public static final float JUICY_ROTATIONS_PER_SECOND = 0.2f;
     public static final float JUICY_BOUNCE_MARKER_OPACITY = 1f;
 
+    public static final float BALL_RADIUS = 4f;
     public static final float JUICY_BALL_SHEAR = 0.002f;                 // exaggerate ball movement
     public static final float JUICY_BALL_SHEAR_THINNING = 0.2f;         // % of shear magnitude
-
     public static final float JUICY_BALL_SHEAR_LERP_TOP = 20f;
     public static final float JUICY_BALL_SHEAR_LERP_BOTTOM = 0f;
 
@@ -153,5 +153,4 @@ public class Constants {
     public static final int CAMERA_POSITION_SMOOTHING_FRAMES = 90;
     public static final int CAMERA_FOV_SMOOTHING_FRAMES = 90;
     public static final float CAMERA_MARKER_VELOCITY_ANTICIPATION_SEC = 1.5f;
-
 }

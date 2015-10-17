@@ -45,8 +45,13 @@ public class BallMovementSystem extends IteratingSystem {
 
         ball.path.getPosition(time, movement.position);
         ball.path.getVelocity(time, movement.velocity);
-        ball.currentBounce = ball.path.getNumBounces(time);
         ball.shear.set(movement.velocity);
+
+        // create a "just bounced" flag
+        int previousBounce = ball.currentBounce;
+        ball.currentBounce = ball.path.getNumBounces(time);
+        ball.justBounced = (previousBounce != ball.currentBounce);
+
 
         if (!ball.path.isAlive(time)) {
             for (Entity trackingCameraEntity: engine.getEntitiesFor(TRACKING_CAMERA_FAMILY)) {

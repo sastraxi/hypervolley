@@ -5,12 +5,10 @@ import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
+import com.badlogic.ashley.utils.ImmutableArray;
 import com.badlogic.gdx.math.MathUtils;
 import com.ivan.xinput.XInputDevice;
-import com.sastraxi.playground.tennis.components.CameraManagementComponent;
-import com.sastraxi.playground.tennis.components.CharacterComponent;
-import com.sastraxi.playground.tennis.components.ControllerInputComponent;
-import com.sastraxi.playground.tennis.components.GameStateComponent;
+import com.sastraxi.playground.tennis.components.*;
 import com.sastraxi.playground.tennis.game.Constants;
 
 import java.util.ArrayList;
@@ -23,11 +21,15 @@ public class ControllerFeedbackSystem extends IteratingSystem {
 
     private static final Family GAME_STATE_FAMILY = Family.all(GameStateComponent.class, CameraManagementComponent.class).get();
 
+    private ComponentMapper<BallComponent> bcm = ComponentMapper.getFor(BallComponent.class);
+    private ComponentMapper<MovementComponent> mcm = ComponentMapper.getFor(MovementComponent.class);
     private ComponentMapper<CharacterComponent> picm = ComponentMapper.getFor(CharacterComponent.class);
     private ComponentMapper<ControllerInputComponent> cicm = ComponentMapper.getFor(ControllerInputComponent.class);
 
     private Engine engine;
     private Entity gameStateEntity;
+    private ImmutableArray<Entity> ballEntities;
+
 
     public ControllerFeedbackSystem() {
         super(Family.all(CharacterComponent.class, ControllerInputComponent.class).get(), PRIORITY);
@@ -38,6 +40,7 @@ public class ControllerFeedbackSystem extends IteratingSystem {
         super.addedToEngine(engine);
         this.engine = engine;
         this.gameStateEntity = engine.getEntitiesFor(GAME_STATE_FAMILY).get(0);
+        this.ballEntities = engine.getEntitiesFor(Family.one(BallComponent.class).get());
         // FIXME game state entity can never change after this system is created
     }
 
@@ -47,49 +50,89 @@ public class ControllerFeedbackSystem extends IteratingSystem {
         CharacterComponent pic = picm.get(entity);
         ControllerInputComponent cic = cicm.get(entity);
         XInputDevice controller = cic.controller;
-        float totalVibration = 0;
+        float combinedVibration = 0;
 
         if (pic.state == CharacterComponent.DashState.DASHING) impulse(0.2f);
-        if (pic.isHitting)                                     totalVibration += 0.15f;
+        if (pic.isHitting)                                     combinedVibration += 0.15f;
         if (cic.wasHitting && !pic.isHitting)                  impulse(0.7f); // state transition out; see
                                                                               // also ControllerInputSystem
 
-        totalVibration += tickAndGetImpulse();
-        int _vib = (int) (MathUtils.clamp(totalVibration, 0f, 1f) * Constants.CONTROLLER_VIBRATION_SCALE);
-        controller.setVibration(_vib, _vib);
+        //
+        for (Entity ballEntity : ballEntities) {
+            BallComponent ball = bcm.get(ballEntity);
+            MovementComponent ballpos = mcm.get(ballEntity);
+            if (ball.justBounced) {
+                // use x axis of ball position for a "directional" vibration
+                float pct = 0.5f * (1f + (ballpos.position.x / Constants.LEVEL_HALF_WIDTH));
+                float left = Constants.CONTROLLER_VIBRATION_BOUNCE_SCALE * pct;
+                float right = Constants.CONTROLLER_VIBRATION_BOUNCE_SCALE * (1.0f - pct);
+
+                left = (float) Math.pow(left, Constants.CONTROLLER_VIBRATION_BOUNCE_POWER);
+                right = (float) Math.pow(right, Constants.CONTROLLER_VIBRATION_BOUNCE_POWER);
+
+                impulse(left, right);
+            }
+        }
+
+        // set the vibration
+        Impulse current = tickAndGetImpulse();
+        int _left = (int) (MathUtils.clamp(current.left, 0f, 1f) * Constants.CONTROLLER_VIBRATION_SCALE);
+        int _right = (int) (MathUtils.clamp(current.right, 0f, 1f) * Constants.CONTROLLER_VIBRATION_SCALE);
+        controller.setVibration(_left, _right);
     }
 
-    private class Impulse {
+    ////////////////////////////////////////////////////
+
+    /**
+     * Represents a vibration that "plays" for a certain number of frames.
+     * Interact with the concept below (the two protected impulse(...) methods)
+     */
+    private class Impulse
+    {
+        final int IMPULSE_FRAMES = 6;
         public int frames;
-        public final float amt;
-        Impulse(float amt) {
-            this.amt = amt;
+        public float left, right;
+
+        Impulse() {
+            this.left = 0;
+            this.right = 0;
+        }
+
+        Impulse(float left, float right) {
+            this.left = left;
+            this.right = right;
             this.frames = IMPULSE_FRAMES;
+        }
+
+        public void add(Impulse other) {
+            this.left += other.left;
+            this.right += other.right;
         }
     }
 
     List<Impulse> impulses = new ArrayList<>();
 
-    private void impulse(float amt) {
-        impulses.add(new Impulse(amt));
+    protected void impulse(float amt) {
+        impulses.add(new Impulse(amt, amt));
     }
 
-    private float tickAndGetImpulse()
+    protected void impulse(float left, float right) {
+        impulses.add(new Impulse(left, right));
+    }
+
+    private Impulse tickAndGetImpulse()
     {
-        float total = 0f;
+        Impulse total = new Impulse();
 
         Iterator<Impulse> it = impulses.iterator();
         while (it.hasNext()) {
             Impulse impulse = it.next();
-            total += impulse.amt;
+            total.add(impulse);
             impulse.frames--;
             if (impulse.frames == 0) it.remove();
         }
 
         return total;
     }
-
-
-    final int IMPULSE_FRAMES = 6;
 
 }
