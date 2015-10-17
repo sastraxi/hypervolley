@@ -20,7 +20,7 @@ import java.util.ArrayList;
  */
 public class CameraMovementSystem extends IteratingSystem {
 
-    private static final int PRIORITY = 4; // after all movement systems
+    private static final int PRIORITY = 5; // after all movement systems
 
     private static final Family GAME_STATE_FAMILY = Family.one(GameStateComponent.class).get();
     private ComponentMapper<GameStateComponent> gscm = ComponentMapper.getFor(GameStateComponent.class);

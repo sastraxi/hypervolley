@@ -17,7 +17,7 @@ import com.sastraxi.playground.tennis.game.SwingDetector;
 public class PlayerMovementSystem extends IteratingSystem {
 
     private static final Family BALL_FAMILY = Family.one(BallComponent.class).get();
-    private static final int PRIORITY = 2; // before ball movement system
+    private static final int PRIORITY = 3; // before ball movement system
 
     private ComponentMapper<CameraManagementComponent> vpmc = ComponentMapper.getFor(CameraManagementComponent.class);
     private ComponentMapper<BallComponent> bcm = ComponentMapper.getFor(BallComponent.class);
@@ -262,12 +262,8 @@ public class PlayerMovementSystem extends IteratingSystem {
                             _ball_target.add(0.5f * pic.inputFrame.movement.x * pic.shotBounds.width,
                                              0.5f * pic.inputFrame.movement.y * pic.shotBounds.height);
 
-                            float _xy_comp = (float) Math.sqrt(ballMovement.velocity.x * ballMovement.velocity.x + ballMovement.velocity.y + ballMovement.velocity.y);
-                            float zAngle = (float) Math.abs(Math.atan2(ballMovement.velocity.z, _xy_comp));
-                            zAngle = MathUtils.lerp(zAngle, 0.2f, 0.5f);
-
                             // craft the new path.
-                            ballComponent.path = new StraightBallPath(ballMovement.position, zAngle, _ball_target, time); // FIXME new usage in game loop
+                            ballComponent.path = new StraightBallPath(ballMovement.position, Constants.HIT_HEIGHT, _ball_target, time); // FIXME new usage in game loop
                             ballComponent.currentBounce = 0;
                             ballComponent.currentVolley += 1;
                             ballComponent.lastHitByEID = entity.getId();

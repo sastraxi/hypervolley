@@ -19,7 +19,7 @@ import com.sastraxi.playground.tennis.game.Constants;
  */
 public class BounceMarkerUpdateSystem extends IteratingSystem  {
 
-    private static final int PRIORITY = 3; // after player movement system
+    private static final int PRIORITY = 4; // after player movement system
 
     private ComponentMapper<MovementComponent> mcm = ComponentMapper.getFor(MovementComponent.class);
     private ComponentMapper<BounceMarkerComponent> bmcm = ComponentMapper.getFor(BounceMarkerComponent.class);

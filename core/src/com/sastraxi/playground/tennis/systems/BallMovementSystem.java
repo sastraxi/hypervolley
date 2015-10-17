@@ -12,7 +12,7 @@ import com.sastraxi.playground.tennis.game.Constants;
 
 public class BallMovementSystem extends IteratingSystem {
 
-    private static final int PRIORITY = 3; // after player movement system
+    private static final int PRIORITY = 2; // after player movement system
 
     private static final Family GAME_STATE_FAMILY = Family.one(GameStateComponent.class).get();
     private ComponentMapper<GameStateComponent> gscm = ComponentMapper.getFor(GameStateComponent.class);

@@ -17,7 +17,7 @@ import java.util.List;
 
 public class ControllerFeedbackSystem extends IteratingSystem {
 
-    private static final int PRIORITY = 3; // after player movement system
+    private static final int PRIORITY = 4; // after player movement system
 
     private static final Family GAME_STATE_FAMILY = Family.all(GameStateComponent.class, CameraManagementComponent.class).get();
 

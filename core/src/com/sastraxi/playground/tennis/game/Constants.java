@@ -154,4 +154,7 @@ public class Constants {
     public static final int CAMERA_POSITION_SMOOTHING_FRAMES = 90;
     public static final int CAMERA_FOV_SMOOTHING_FRAMES = 90;
     public static final float CAMERA_MARKER_VELOCITY_ANTICIPATION_SEC = 1.5f;
+
+    // how high balls should be
+    public static final float HIT_HEIGHT = PLAYER_HEIGHT * 0.6f;
 }

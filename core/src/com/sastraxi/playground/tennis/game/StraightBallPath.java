@@ -26,26 +26,20 @@ public class StraightBallPath implements BallPath {
 
     /**
      * Creates a path based on hitting a certain bounce target from a certain position
-     * knowing the initial angle with the Z axis.
+     * know the highest Z point achieved during flight.
      */
-    public StraightBallPath(Vector3 position, float zAngle, Vector2 bounceTarget, float timeBase)
+    public StraightBallPath(Vector3 position, float zHigh, Vector2 bounceTarget, float timeBase)
     {
-        // System.out.println("pos=" + position + "   zAngle=" + zAngle + "   bounceTarget=" + bounceTarget);
+        // System.out.println("pos=" + position + "   zHigh=" + zHigh + "   bounceTarget=" + bounceTarget);
+        zHigh = Math.max(zHigh, position.z);
+
+        float t_apex = (float) Math.sqrt(2f * (zHigh - position.z) / Constants.G);
+        float t_end = t_apex + (float) Math.sqrt(t_apex * t_apex + (2 * position.z / Constants.G));
 
         _velocity.set(bounceTarget, 0f).sub(position.x, position.y, 0f);
-        float xyAngle = (float) Math.atan2(_velocity.y, _velocity.x);
-
-        // solve for initial speed (v0)
-        float d = _velocity.len();
-        float numerator = 0.5f * Constants.G * d * d;
-        float denom = d * (float) Math.tan(zAngle) + position.z;
-        float v0 = (float) ((1.0 / Math.cos(zAngle)) * Math.sqrt(numerator / denom));
-
-        _velocity.set(
-            (float) (Math.cos(zAngle) * Math.cos(xyAngle)),
-            (float) (Math.cos(zAngle) * Math.sin(xyAngle)),
-            (float) Math.sin(zAngle)
-        ).scl(v0);
+        _velocity.x /= t_end;
+        _velocity.y /= t_end;
+        _velocity.z = Constants.G * t_apex;
 
         setup(position, _velocity, timeBase);
     }
