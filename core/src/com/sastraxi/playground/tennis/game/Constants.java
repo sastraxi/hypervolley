@@ -24,8 +24,6 @@ public class Constants {
     public static final float LEVEL_HALF_DEPTH = 150f;
     public static final float COURT_HALF_WIDTH = 200f;
     public static final float COURT_HALF_DEPTH = 100f;
-    public static final float SHOT_HALF_WIDTH = (COURT_HALF_WIDTH / 2f) * 0.8f;
-    public static final float SHOT_HALF_DEPTH = COURT_HALF_DEPTH * 0.8f;
 
     public static final float CAMERA_FOV = 30f;
     public static final Vector3 UP_VECTOR = Vector3.Z;
@@ -79,22 +77,27 @@ public class Constants {
             LEVEL_HALF_WIDTH - 2f*PLAYER_RADIUS - NET_RADIUS - NET_PADDING,
             2f*(LEVEL_HALF_DEPTH - PLAYER_RADIUS));
 
-    public static final Rectangle LEFT_COURT_BOUNDS = new Rectangle(
-            -COURT_HALF_WIDTH,
-            -COURT_HALF_DEPTH,
-            COURT_HALF_WIDTH,
-            COURT_HALF_DEPTH * 2f);
-
     public static final Rectangle PLAYER_TWO_BOUNDS = new Rectangle(
             PLAYER_RADIUS + NET_RADIUS + NET_PADDING,
             -LEVEL_HALF_DEPTH + PLAYER_RADIUS,
             LEVEL_HALF_WIDTH - 2f*PLAYER_RADIUS - NET_RADIUS - NET_PADDING,
             2f*(LEVEL_HALF_DEPTH - PLAYER_RADIUS));
 
-    public static final Rectangle RIGHT_COURT_BOUNDS = new Rectangle(
-            0,
+    ///////////////////////////////////////
+    // TODO the shot area should be a trapezoid somewhat based on hitter position
+    // TODO and not allow super-shallow shots.
+    ///////////////////////////////////////
+
+    public static final Rectangle LEFT_SHOT_BOUNDS = new Rectangle(
+            -0.9f * COURT_HALF_WIDTH,
             -COURT_HALF_DEPTH,
-            COURT_HALF_WIDTH,
+            0.6f * COURT_HALF_WIDTH,
+            COURT_HALF_DEPTH * 2f);
+
+    public static final Rectangle RIGHT_SHOT_BOUNDS = new Rectangle(
+            0.3f * COURT_HALF_WIDTH,
+            -COURT_HALF_DEPTH,
+            0.6f * COURT_HALF_WIDTH,
             COURT_HALF_DEPTH * 2f);
 
     public static final Color PLAYER_ONE_COLOUR = new Color(0.2f, 0.5f, 0.8f, 1.0f);

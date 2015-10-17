@@ -257,58 +257,10 @@ public class PlayerMovementSystem extends IteratingSystem {
                             boolean _is_perfect_frame = (Math.signum(dst[0]) != Math.signum(dst[1])) ||
                                     (Math.signum(dst[1]) != Math.signum(dst[2]));
 
-                            // xy ball speed.
-                            /*
-                            float ballSpeed = (float) Math.sqrt(
-                                    ballMovement.velocity.x * ballMovement.velocity.x +
-                                            ballMovement.velocity.y * ballMovement.velocity.y);
-
-                            if (pic.state == CharacterComponent.DashState.DASHING) {
-                                ballSpeed *= Constants.DASH_BALL_SPEED_MODIFIER;
-                            } else {
-                                ballSpeed *= Constants.VOLLEY_VELOCITY_SCALE;
-                            }
-                            */
-
-                            // decide on the return velocity
-                            // treat the controller input as the source
-                            // only take 180 degrees facing the direction of play
-                            if (pic.inputFrame.movement.len() > Constants.CONTROLLER_AIM_MAGNITUDE)
-                            {
-                                float _return_angle = pic.inputFrame.movement.angle();
-                                float _return_magnitude = (pic.inputFrame.movement.len() - Constants.CONTROLLER_AIM_MAGNITUDE) /
-                                                          (1f - Constants.CONTROLLER_AIM_MAGNITUDE);
-
-                                // set to -1..1
-                                _return_magnitude = (MathUtils.clamp(_return_magnitude, 0.0f, 1.0f) - 0.5f) / 0.5f;
-
-                                float xc = 0f;
-                                if (pic.focalPoint.x < ballMovement.position.x)
-                                {
-                                    // going left; 90-270
-                                    if (_return_angle < 90f) _return_angle = 90f;
-                                    else if (_return_angle > 270f) _return_angle = 270f;
-                                    xc = (180f - _return_angle) / 90f;
-                                }
-                                else
-                                {
-                                    // going right: 0-90, 270-360
-                                    if (_return_angle < 90f) xc = _return_angle / 90f;
-                                    else if (_return_angle < 180f) xc = 1f;
-                                    else if (_return_angle < 270f) xc = -1f;
-                                    else xc = (_return_angle - 360f) / 90f;
-
-                                }
-
-                                _ball_target.set(pic.focalPoint.x, pic.focalPoint.y)
-                                            .add(_return_magnitude * Constants.SHOT_HALF_WIDTH, 0f)
-                                            .add(0f, xc * Constants.SHOT_HALF_DEPTH);
-                            }
-                            else
-                            {
-                                // neutral hit; right to centre
-                                _ball_target.set(pic.focalPoint.x, pic.focalPoint.y);
-                            }
+                            // decide the return position
+                            pic.shotBounds.getCenter(_ball_target);
+                            _ball_target.add(0.5f * pic.inputFrame.movement.x * pic.shotBounds.width,
+                                             0.5f * pic.inputFrame.movement.y * pic.shotBounds.height);
 
                             float _xy_comp = (float) Math.sqrt(ballMovement.velocity.x * ballMovement.velocity.x + ballMovement.velocity.y + ballMovement.velocity.y);
                             float zAngle = (float) Math.abs(Math.atan2(ballMovement.velocity.z, _xy_comp));

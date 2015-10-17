@@ -27,7 +27,6 @@ import com.sastraxi.playground.tennis.systems.*;
 import org.lwjgl.opengl.GL30;
 
 import java.nio.ByteBuffer;
-import java.util.concurrent.locks.LockSupport;
 
 public class TennisEntry extends ApplicationAdapter {
 
@@ -113,10 +112,9 @@ public class TennisEntry extends ApplicationAdapter {
             Rectangle bounds = (i == 0 ? Constants.PLAYER_ONE_BOUNDS : Constants.PLAYER_TWO_BOUNDS);
             players[i] = new Entity();
 
-            // determine focal point (on the other side of the court)
-            Vector2 focalPoint = new Vector2();
-            if (i == 0) Constants.RIGHT_COURT_BOUNDS.getCenter(focalPoint);
-            else        Constants.LEFT_COURT_BOUNDS.getCenter(focalPoint);
+            // determine shot area (on the other side of the court)
+            Rectangle shotBounds = (i == 0) ? Constants.RIGHT_SHOT_BOUNDS
+                                            : Constants.LEFT_SHOT_BOUNDS;
 
             // an exclamation mark above the player's head
             // used to signify when ball is in strike zone
@@ -129,7 +127,7 @@ public class TennisEntry extends ApplicationAdapter {
             mc.position.set(center, 0f);
             if (i == 1) mc.orientation = new Quaternion(Constants.UP_VECTOR, 180f);
             players[i].add(mc);
-            players[i].add(new CharacterComponent(playerTypes[i], bounds, new Vector3(focalPoint, 0f)));
+            players[i].add(new CharacterComponent(playerTypes[i], bounds, shotBounds));
 
             // the player's input is a controller
             if (playerTypes[i] == PlayerType.HUMAN) {
