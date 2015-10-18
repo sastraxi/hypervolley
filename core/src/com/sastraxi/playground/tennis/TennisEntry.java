@@ -184,8 +184,8 @@ public class TennisEntry extends ApplicationAdapter {
         orthographicCamera.zoom = Constants.GAME_ORTHOGRAPHIC_CAMERA_ZOOM;
         orthographicCamera.up.set(Constants.UP_VECTOR);
         orthographicCamera.lookAt(Constants.GAME_CAMERA_POINT_AT);
-        orthographicCamera.near = 10f;
-        orthographicCamera.far = 300.0f;
+        orthographicCamera.near = 300f;
+        orthographicCamera.far = 1000.0f;
         orthographicCamera.update();
 
         // a new camera that tries to keep all points in the frame of the shot
@@ -242,18 +242,19 @@ public class TennisEntry extends ApplicationAdapter {
         // hud camera
         hudCamera = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         hudCamera.update();
+
+        // exit the game using ESC
         InputProcessor exitProcessor = new InputAdapter() {
             @Override
             public boolean keyDown(int keycode) {
-                if ((keycode == Input.Keys.ESCAPE) || (keycode == Input.Keys.BACK)) {
-                    // TODO perform other operations before exiting
+                if (keycode == Input.Keys.ESCAPE) {
+                    // TODO perform cleanup before exiting
                     Gdx.app.exit();
                     return true;
                 }
                 return false;
             }
         };
-
         InputMultiplexer multiplexer = new InputMultiplexer(exitProcessor);
         // multiplexer.addProcessor(stage);
         Gdx.input.setInputProcessor(multiplexer);
@@ -272,6 +273,7 @@ public class TennisEntry extends ApplicationAdapter {
 	public void render()
 	{
         // wait for the right time
+        // TODO this does nothing right now as GDX does it for us :) remove at some point!
         // TODO determine soughtTime as a function f(current-tick).
         // TODO if we've "missed" this tick, advance game logic to the next one
         // TODO and re-try the whole thing.

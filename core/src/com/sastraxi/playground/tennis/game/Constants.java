@@ -1,7 +1,6 @@
 package com.sastraxi.playground.tennis.game;
 
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Plane;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
@@ -11,6 +10,8 @@ import com.badlogic.gdx.math.Vector3;
  */
 public class Constants {
 
+    public static final float EPSILON = 1e-9f;
+
     public static final double SEC_TO_NS = 0.000000001;
     public static final long FRAME_TIME_NS = 1000000000 / Constants.FRAME_RATE;
     public static final long MICRO_TO_NANO = 1000000;
@@ -19,6 +20,7 @@ public class Constants {
     public static final double FRAME_TIME_SEC_DBL = 1f / (double) FRAME_RATE;
 
     // N.B. game scale: 1f ~ 0.1m
+    public static final float G = 98.1f;
 
     public static final float LEVEL_HALF_WIDTH = 300f;
     public static final float LEVEL_HALF_DEPTH = 150f;
@@ -27,8 +29,6 @@ public class Constants {
 
     public static final float CAMERA_FOV = 30f;
     public static final Vector3 UP_VECTOR = Vector3.Z;
-    public static final float G = 98.1f;
-    public static final Vector3 ACCEL_GRAVITY = new Vector3(UP_VECTOR).scl(-G);
     public static final Vector3 GAME_CAMERA_POSITION = new Vector3(0f, -300f, 600f);
     public static final Vector3 GAME_CAMERA_POINT_AT = new Vector3(0f, 0.5f * COURT_HALF_DEPTH, 0f);
     public static final float GAME_ORTHOGRAPHIC_CAMERA_ZOOM = 0.54f;
@@ -38,6 +38,9 @@ public class Constants {
     public static final float PLAYER_SIZE = 2f * PLAYER_RADIUS;
     public static final float PLAYER_WALK_MULTIPLIER = 0.4f;
     public static final float PLAYER_SPEED = 140f;
+
+    public static final Color PLAYER_ONE_COLOUR = new Color(0.2f, 0.5f, 0.8f, 1.0f);
+    public static final Color PLAYER_TWO_COLOUR = new Color(0.8f, 0.3f, 0.2f, 1.0f);
 
     public static final int CONTROLLER_VIBRATION_MAX_VALUE = 65535;
     public static final float CONTROLLER_WALK_MAGNITUDE = 0.2f;
@@ -101,22 +104,18 @@ public class Constants {
             0.6f * COURT_HALF_WIDTH,
             COURT_HALF_DEPTH * 2f);
 
-    public static final Color PLAYER_ONE_COLOUR = new Color(0.2f, 0.5f, 0.8f, 1.0f);
-    public static final Color PLAYER_TWO_COLOUR = new Color(0.8f, 0.3f, 0.2f, 1.0f);
+    public static final float BALL_RADIUS = 4f;
+    public static final float JUICY_BALL_SHEAR = 0.002f;                 // exaggerate ball movement
+    public static final float JUICY_BALL_SHEAR_LERP_TOP = 10f;           // "splat" ball back to a sphere
+    public static final float JUICY_BALL_SHEAR_LERP_BOTTOM = 0f;         // when we're close to the tennis court
 
-    public static final float BALL_SPIN_INFLUENCE = 0.2f;
-
-    // the player should attempt to hit the ball when it is directly in front of their orientation
-    // but we want the ideal hit to be slightly before the ball would actually get there.
-    // PLAYER_BALL_SWING_DURATION says how many seconds we should extrapolate a ball's position into the future
-    // in order to compare it with a ray shooting forward from the player of length PLAYER_BALL_REACH
-    public static final float PLAYER_BALL_MIN_REACH = 1f*PLAYER_RADIUS;
-    public static final float PLAYER_BALL_MAX_REACH = 6f*PLAYER_RADIUS;
+    public static final float PLAYER_BALL_MIN_REACH = 0.6f * PLAYER_RADIUS;       // units
+    public static final float PLAYER_BALL_MAX_REACH = 2f*PLAYER_RADIUS;           // units
+    public static final float PLAYER_BALL_MAX_SPEEDUP_UNITS = Constants.PLAYER_SPEED * 0.3f;
+    public static final float PLAYER_BALL_MAX_SLOWDOWN_UNITS = Constants.PLAYER_SPEED * 0.3f;
+    public static final float PLAYER_BALL_HALF_SIDESTEP = Constants.PLAYER_RADIUS; // units
     public static final float PLAYER_BALL_SWING_DURATION = Constants.FRAME_TIME_SEC * 4; // 4 frames
-    public static final float PLAYER_BALL_GLANCE_DISTANCE = 90f;
-    public static final float PLAYER_BALL_STARE_DISTANCE = 20f;
-    public static final float PLAYER_BALL_STRIKE_FOV_RADIANS = 100f * MathUtils.degreesToRadians;
-    public static final float PLAYER_BALL_DIST_DIFF = PLAYER_BALL_GLANCE_DISTANCE - PLAYER_BALL_STARE_DISTANCE;
+    public static final float PLAYER_BALL_STRIKE_LEEWAY = BALL_RADIUS * 10f; // how far away from perfect can we be and still hit the ball?
 
     // when we're set to a collision course (anywhere in the "strike zone") this many seconds in the future,
     // put the player's movement on auto-pilot and use input instead to aim/take the shot (w/perfect frame detection)
@@ -136,14 +135,6 @@ public class Constants {
     public static final float JUICY_ANIMATION_LENGTH = 0.2f;            // used for bounce marker
     public static final float JUICY_ROTATIONS_PER_SECOND = 0.2f;
     public static final float JUICY_BOUNCE_MARKER_OPACITY = 1f;
-
-    public static final float BALL_RADIUS = 4f;
-    public static final float JUICY_BALL_SHEAR = 0.002f;                 // exaggerate ball movement
-    public static final float JUICY_BALL_SHEAR_THINNING = 0.2f;         // % of shear magnitude
-    public static final float JUICY_BALL_SHEAR_LERP_TOP = 20f;
-    public static final float JUICY_BALL_SHEAR_LERP_BOTTOM = 0f;
-
-    public static final float EPSILON = 1e-9f;
 
     public static final Vector3 CAMERA_NEUTRAL_GAZE = new Vector3(0f, 0f, 50f);
     public static final float CAMERA_NEUTRAL_FOV = 33f;

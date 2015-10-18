@@ -43,8 +43,6 @@ public class DefinedShaderProgram {
         buf.append(fragmentSourceFile.readString());
         String fragmentShader = buf.toString();
 
-        System.out.println(vertexShader);
-        System.out.println(fragmentShader);
         return new ShaderProgram(vertexShader, fragmentShader);
     }
 

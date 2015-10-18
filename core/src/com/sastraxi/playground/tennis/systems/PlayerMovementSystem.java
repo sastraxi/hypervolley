@@ -5,10 +5,7 @@ import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
-import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.math.Plane;
-import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.math.*;
 import com.sastraxi.playground.tennis.components.*;
 import com.sastraxi.playground.tennis.game.Constants;
 import com.sastraxi.playground.tennis.game.StraightBallPath;
@@ -31,14 +28,17 @@ public class PlayerMovementSystem extends IteratingSystem {
     private Engine engine;
 
     Vector3 _tmp = new Vector3(),
-            _tmp_player_ball = new Vector3(),
             _tmp_player_focal = new Vector3(),
             _ball_prev = new Vector3(),
             _ball_next = new Vector3(),
-            _tmp_player_offset = new Vector3(),
             _avg_movement = new Vector3();
 
-    Vector2 _ball_target = new Vector2();
+    Vector2 _ball_target = new Vector2(),
+            _isect_tmp = new Vector2(),
+            _a = new Vector2(), _b = new Vector2(),
+            _isect_pt = new Vector2(),
+            _heading = new Vector2(),
+            _right = new Vector2();
 
     Plane _perfect_frame = new Plane();
 
@@ -186,98 +186,192 @@ public class PlayerMovementSystem extends IteratingSystem {
             if (ballComponent.lastHitByEID == null || ballComponent.lastHitByEID != entity.getId()) {
                 if (!pic.isHitting) {
 
-                    // this "offset" position is behind the player
-                    _tmp_player_offset.set(MathUtils.cos(_rot), MathUtils.sin(_rot), 0f).scl(-Constants.PLAYER_BALL_SUBTRACT_SCALE).add(movement.position).mulAdd(movement.velocity, Constants.PLAYER_BALL_LOCK_LOOKAHEAD_SEC);
-                    ballComponent.path.getPosition(time + Constants.PLAYER_BALL_LOCK_LOOKAHEAD_SEC, _tmp_player_ball);
-                    _tmp_player_ball.sub(_tmp_player_offset);
-                    _tmp_player_offset.z = 0;
-                    _tmp_player_ball.z = 0; // project onto 2D plane
-                    float ballDistance = _tmp_player_ball.len();
-                    float ballRadians = MathUtils.atan2(_tmp_player_ball.y, _tmp_player_ball.x);
+                    float cosHeading = (float) Math.cos(_rot);
+                    float sinHeading = (float) Math.sin(_rot);
+                    float cosRight = (float) Math.cos(_rot - 0.5f * Math.PI);
+                    float sinRight = (float) Math.sin(_rot - 0.5f * Math.PI);
 
-                    // glance or stare at the ball
-                    // System.out.println(ballDistance);
-                    /*
-                    if (ballDistance <= Constants.PLAYER_BALL_GLANCE_DISTANCE)
-                    {
-                        float pct = (ballDistance - Constants.PLAYER_BALL_STARE_DISTANCE) / Constants.PLAYER_BALL_DIST_DIFF;
-                        if (pct < 0f) {
-                            // complete stare
-                            movement.orientation.set(Constants.UP_VECTOR, MathUtils.radiansToDegrees * ballRadians);
-                        } else {
-                            // orientation lerp
-                            movement.orientation.set(Constants.UP_VECTOR, MathUtils.radiansToDegrees * MiscMath.clerp(_rot, ballRadians, 1f-pct));
+                    // determine t_min and t_max, the time frame in which we can hit the ball
+                    // given max. speed up/slow down from current speed on the same trajectory
+                    float currentSpeed = movement.velocity.len();
+                    float maxTheoreticalSpeed = pic.state == CharacterComponent.DashState.DASHING ? Constants.DASH_SPEED : Constants.PLAYER_SPEED;
+                    float maxSpeed = Math.min(currentSpeed + Constants.PLAYER_BALL_MAX_SPEEDUP_UNITS, maxTheoreticalSpeed);
+                    float minSpeed = Math.max(currentSpeed - Constants.PLAYER_BALL_MAX_SLOWDOWN_UNITS, 0f);
+
+                    // extents of our search area (y component)
+                    float d_min = Constants.PLAYER_BALL_MIN_REACH;
+                    float d_max = Constants.PLAYER_BALL_MAX_REACH + maxSpeed * Constants.PLAYER_BALL_LOCK_LOOKAHEAD_SEC;
+                    float t_max = d_max / maxSpeed;
+
+                    // time/distance at which we don't need to speed up or slow down
+                    float t_neutral = t_max * ((currentSpeed - minSpeed) / (maxSpeed - minSpeed));
+                    float d_neutral = t_neutral * currentSpeed;
+
+                    // determine extents of rectangle we'll be checking against for intersections
+                    // the further away we get from the player in y, the further in the future we are considering
+                    float x = movement.position.x + cosHeading * d_min;
+                    float y = movement.position.y + sinHeading * d_min;
+                    _right.set(cosRight * Constants.PLAYER_BALL_HALF_SIDESTEP, sinRight * Constants.PLAYER_BALL_HALF_SIDESTEP);
+                    _heading.set(cosHeading * (d_max - d_min), sinHeading * (d_max - d_min));
+                    float x_neutral = x + cosHeading * d_neutral;
+                    float y_neutral = y + sinHeading * d_neutral;
+
+                    // the ball's trajectory is constant in all of our intersections
+                    float ball_end_x = ballMovement.position.x + ballMovement.velocity.x * t_max;
+                    float ball_end_y = ballMovement.position.y + ballMovement.velocity.y * t_max;
+
+                    // System.out.println("x: ball=" + ballMovement.position.x + "   @t_max=" + ball_end_x + "   player=" + movement.position.x);
+
+                    // determine if either ball start/end is inside the rect
+                    // here we use _isect_pt as a temp variable as well
+                    int points = 0;
+
+                    // test ball start
+                    _isect_tmp.set(ballMovement.position.x, ballMovement.position.y).sub(x, y);
+                    float p_x = _isect_pt.set(_right).nor().dot(_isect_tmp) / (Constants.PLAYER_BALL_HALF_SIDESTEP);
+                    float p_y = _isect_pt.set(_heading).nor().dot(_isect_tmp) / (d_max - d_min);
+                    if (-1f <= p_x && p_x <= 1f && 0f <= p_y && p_y <= 1f)
+                    { // x in [-1..1], y in [0..1]
+                        _a.set(ballMovement.position.x, ballMovement.position.y);
+                        points += 1;
+                    }
+
+                    // test ball end
+                    _isect_tmp.set(ball_end_x, ball_end_y).sub(x, y);
+                    p_x = _isect_pt.set(_right).nor().dot(_isect_tmp) / (Constants.PLAYER_BALL_HALF_SIDESTEP);
+                    p_y = _isect_pt.set(_heading).nor().dot(_isect_tmp) / (d_max - d_min);
+                    if (-1f <= p_x && p_x <= 1f && 0f <= p_y && p_y <= 1f)
+                    { // x in [-1..1], y in [0..1]
+                        Vector2 to_set = (points == 0 ? _a : _b);
+                        to_set.set(ball_end_x, ball_end_y);
+                        points += 1;
+                    }
+
+                    // try each line segment against the ball's trajectory (windowed to [0, t_max])
+                    if (points < 2) { // left
+                        boolean intersects = Intersector.intersectSegments(
+                                // line of rect
+                                x - _right.x,              y - _right.y,
+                                x - _right.x + _heading.x, y - _right.y + _heading.y,
+                                // ball's current + predicted position
+                                ballMovement.position.x, ballMovement.position.y,
+                                ball_end_x, ball_end_y,
+                                points == 0 ? _a : _b);
+
+                        if (intersects) {
+                            points += 1;
                         }
                     }
-                    */
+                    if (points < 2) { // right
+                        boolean intersects = Intersector.intersectSegments(
+                                // line of rect
+                                x + _right.x,              y + _right.y,
+                                x + _right.x + _heading.x, y + _right.y + _heading.y,
+                                // ball's current + predicted position
+                                ballMovement.position.x, ballMovement.position.y,
+                                ball_end_x, ball_end_y,
+                                points == 0 ? _a : _b);
 
-                    // strike zone
-                    // FIXME we also need to account for when the ball is going so fast that it never actually lays inside the strike zone (rather; moves directly through it)
-                    pic.isHitting =
-                            ballDistance > Constants.PLAYER_BALL_MIN_REACH &&
-                                    ballDistance < Constants.PLAYER_BALL_MAX_REACH &&
-                                    Math.abs(_rot - ballRadians) < Constants.PLAYER_BALL_STRIKE_FOV_RADIANS;
+                        if (intersects) {
+                            points += 1;
+                        }
+                    }
+                    if (points < 2) { // t_min
+                        boolean intersects = Intersector.intersectSegments(
+                                // line of rect
+                                x - _right.x, y - _right.y,
+                                x + _right.x, y + _right.y,
+                                // ball's current + predicted position
+                                ballMovement.position.x, ballMovement.position.y,
+                                ball_end_x, ball_end_y,
+                                points == 0 ? _a : _b);
 
-                    // start a count-down to when we'll hit
-                    if (pic.isHitting) {
+                        if (intersects) {
+                            points += 1;
+                        }
+                    }
+                    if (points < 2) { // t_max
+                        boolean intersects = Intersector.intersectSegments(
+                                // line of rect
+                                x - _right.x + _heading.x, y - _right.y + _heading.y,
+                                x + _right.x + _heading.x, y + _right.y + _heading.y,
+                                // ball's current + predicted position
+                                ballMovement.position.x, ballMovement.position.y,
+                                ball_end_x, ball_end_y,
+                                points == 0 ? _a : _b);
 
-                        // trigger actually hitting the ball in a different direction later on.
-                        pic.timeToHit = Constants.PLAYER_BALL_LOCK_LOOKAHEAD_SEC;
+                        if (intersects) {
+                            points += 1;
+                        }
+                    }
 
-                        // calculate perfect position to be in, set velocity so we get there
-                        ballComponent.path.getPosition(time + pic.timeToHit, _ball_next);
-                        _ball_next.z = 0;
-                        _ball_next.sub(movement.position);
-                        _ball_next.scl(1f / pic.timeToHit);
-                        movement.velocity.set(_ball_next);
-                        float _new_direction = (float) Math.atan2(movement.velocity.y, movement.velocity.x);
-                        movement.orientation.set(Constants.UP_VECTOR, MathUtils.radiansToDegrees * _new_direction);
+                    // if we have 2 points (either in the rect or on its perimeter), we can hit the ball
+                    // at some t in [0, t_max] in the future. calculate that hit now.
+                    if (points == 2)
+                    {
+                        // this gross code determines the closest point
+                        // on line segment (_a, _b) to the neutral point -> _isect_pt
+                        _isect_tmp.set(x_neutral, y_neutral).sub(_a);
+                        _isect_pt.set(_b).sub(_a);
+                        float d_ab = _isect_pt.len();
+                        float p = _isect_pt.nor().dot(_isect_tmp) / d_ab;
+                        if (p <= 0f) {
+                            _isect_pt.set(_a);
+                        } else if (p >= 1f) {
+                            _isect_pt.set(_b);
+                        } else {
+                            _isect_pt.set(_b).sub(_a).scl(p).add(_a);
+                        }
 
+                        // start hittin' the ball
+                        float distToBall = _isect_pt.dst(ballMovement.position.x, ballMovement.position.y);
+                        float t = distToBall / ballMovement.velocity.len();
+                        if (t <= t_max) {
+                            float d = t / t_max;
+                            float speed = minSpeed + d * (maxSpeed - minSpeed);
+                            pic.isHitting = true;
+                            pic.timeToHit = t;
+                            movement.velocity.set(cosHeading * speed, sinHeading * speed, 0f);
+                            System.out.println(pic.timeToHit);
+                        }
                     }
 
                 } else {
 
                     // ball-hitting
-                    if (pic.timeToHit > 0f) {
-                        pic.timeToHit -= deltaTime;
-                        if (pic.timeToHit <= 0f) {
+                    pic.timeToHit -= deltaTime;
+                    if (pic.timeToHit <= 0f) {
 
-                            // determine where the ball is +/- 1 frame
-                            // between which two are we closest to the
-                            ballComponent.path.getPosition(time - Constants.FRAME_TIME_SEC, _ball_prev);
-                            ballComponent.path.getPosition(time + Constants.FRAME_TIME_SEC, _ball_next);
-                            _avg_movement.set(_ball_next).sub(_ball_prev).nor();
-                            _perfect_frame.set(movement.position, _avg_movement);
-                            float dst[] = new float[]{
-                                    _perfect_frame.distance(_ball_prev),
-                                    _perfect_frame.distance(ballMovement.position),
-                                    _perfect_frame.distance(_ball_next)
-                            };
+                        // determine where the ball is +/- 1 frame
+                        // between which two are we closest to the
+                        ballComponent.path.getPosition(time - Constants.FRAME_TIME_SEC, _ball_prev);
+                        ballComponent.path.getPosition(time + Constants.FRAME_TIME_SEC, _ball_next);
+                        _avg_movement.set(_ball_next).sub(_ball_prev).nor();
+                        _perfect_frame.set(movement.position, _avg_movement);
+                        float dst[] = new float[]{
+                                _perfect_frame.distance(_ball_prev),
+                                _perfect_frame.distance(ballMovement.position),
+                                _perfect_frame.distance(_ball_next)
+                        };
 
-                            boolean _is_perfect_frame = (Math.signum(dst[0]) != Math.signum(dst[1])) ||
-                                    (Math.signum(dst[1]) != Math.signum(dst[2]));
+                        boolean _is_perfect_frame = (Math.signum(dst[0]) != Math.signum(dst[1])) ||
+                                (Math.signum(dst[1]) != Math.signum(dst[2]));
 
-                            // decide the return position
-                            pic.shotBounds.getCenter(_ball_target);
-                            _ball_target.add(0.5f * pic.inputFrame.movement.x * pic.shotBounds.width,
-                                             0.5f * pic.inputFrame.movement.y * pic.shotBounds.height);
+                        // decide the return position
+                        pic.shotBounds.getCenter(_ball_target);
+                        _ball_target.add(0.5f * pic.inputFrame.movement.x * pic.shotBounds.width,
+                                0.5f * pic.inputFrame.movement.y * pic.shotBounds.height);
 
-                            // craft the new path.
-                            ballComponent.path = new StraightBallPath(ballMovement.position, Constants.HIT_HEIGHT, _ball_target, time); // FIXME new usage in game loop
-                            ballComponent.currentBounce = 0;
-                            ballComponent.currentVolley += 1;
-                            ballComponent.lastHitByEID = entity.getId();
-                            ServingRobotSystem.spawnBounceMarkers(engine, pic.ball);
+                        // craft the new path.
+                        // FIXME ctor usage in game loop
+                        ballComponent.path = StraightBallPath.fromMaxHeightTarget(ballMovement.position, Constants.HIT_HEIGHT, _ball_target, time);
+                        ballComponent.currentBounce = 0;
+                        ballComponent.currentVolley += 1;
+                        ballComponent.lastHitByEID = entity.getId();
+                        ServingRobotSystem.spawnBounceMarkers(engine, pic.ball);
 
-                            // that's all she wrote
-                            pic.isHitting = false;
-                        }
-                    } else {
-                        if (pic.inputFrame.swing && !pic.lastInputFrame.swing) {
-                            // wind up to hit the ball
-                            pic.timeToHit = Constants.PLAYER_BALL_SWING_DURATION;
-                            swingDetector.start();
-                        }
+                        // that's all she wrote
+                        pic.isHitting = false;
                     }
                 }
             }

@@ -26,9 +26,9 @@ public class StraightBallPath implements BallPath {
 
     /**
      * Creates a path based on hitting a certain bounce target from a certain position
-     * know the highest Z point achieved during flight.
+     * knowing the highest Z point achieved during flight.
      */
-    public StraightBallPath(Vector3 position, float zHigh, Vector2 bounceTarget, float timeBase)
+    public static StraightBallPath fromMaxHeightTarget(Vector3 position, float zHigh, Vector2 bounceTarget, float timeBase)
     {
         // System.out.println("pos=" + position + "   zHigh=" + zHigh + "   bounceTarget=" + bounceTarget);
         zHigh = Math.max(zHigh, position.z);
@@ -41,15 +41,17 @@ public class StraightBallPath implements BallPath {
         _velocity.y /= t_end;
         _velocity.z = Constants.G * t_apex;
 
-        setup(position, _velocity, timeBase);
+        return new StraightBallPath(position, _velocity, timeBase);
     }
+
+    public static StraightBallPath fromLaunchSpeedTarget(Vector3 position, float initialSpeed, Vector2 bounceTarget, float timeBase)
+    {
+        // TODO
+        return null;
+    }
+
 
     public StraightBallPath(Vector3 position, Vector3 velocity, float timeBase)
-    {
-        setup(position, velocity, timeBase);
-    }
-
-    protected void setup(Vector3 position, Vector3 velocity, float timeBase)
     {
         float _t, dt;
         this.origin = new BallFrame(position, velocity, velocity, timeBase, 0);
