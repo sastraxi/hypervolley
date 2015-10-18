@@ -8,6 +8,7 @@ import com.badlogic.ashley.systems.IteratingSystem;
 import com.badlogic.gdx.math.*;
 import com.sastraxi.playground.tennis.components.*;
 import com.sastraxi.playground.tennis.game.Constants;
+import com.sastraxi.playground.tennis.game.HitType;
 import com.sastraxi.playground.tennis.game.StraightBallPath;
 import com.sastraxi.playground.tennis.game.SwingDetector;
 
@@ -195,12 +196,12 @@ public class PlayerMovementSystem extends IteratingSystem {
                     // given max. speed up/slow down from current speed on the same trajectory
                     float currentSpeed = movement.velocity.len();
                     float maxTheoreticalSpeed = pic.state == CharacterComponent.DashState.DASHING ? Constants.DASH_SPEED : Constants.PLAYER_SPEED;
-                    float maxSpeed = Math.min(currentSpeed + Constants.PLAYER_BALL_MAX_SPEEDUP_UNITS, maxTheoreticalSpeed);
-                    float minSpeed = Math.max(currentSpeed - Constants.PLAYER_BALL_MAX_SLOWDOWN_UNITS, 0f);
+                    float maxSpeed = Math.min(currentSpeed + Constants.PLAYER_MAX_SWING_SPEEDUP, maxTheoreticalSpeed);
+                    float minSpeed = Math.max(currentSpeed - Constants.PLAYER_MAX_SWING_SLOWDOWN, 0f);
 
                     // extents of our search area (y component)
-                    float d_min = Constants.PLAYER_BALL_MIN_REACH;
-                    float d_max = Constants.PLAYER_BALL_MAX_REACH + maxSpeed * Constants.PLAYER_BALL_LOCK_LOOKAHEAD_SEC;
+                    float d_min = Constants.PLAYER_MIN_REACH;
+                    float d_max = Constants.PLAYER_MAX_REACH + maxSpeed * Constants.PLAYER_BALL_LOCK_LOOKAHEAD_SEC;
                     float t_max = d_max / maxSpeed;
 
                     // time/distance at which we don't need to speed up or slow down
@@ -211,7 +212,7 @@ public class PlayerMovementSystem extends IteratingSystem {
                     // the further away we get from the player in y, the further in the future we are considering
                     float x = movement.position.x + cosHeading * d_min;
                     float y = movement.position.y + sinHeading * d_min;
-                    _right.set(cosRight * Constants.PLAYER_BALL_HALF_SIDESTEP, sinRight * Constants.PLAYER_BALL_HALF_SIDESTEP);
+                    _right.set(cosRight * Constants.PLAYER_HALF_SIDESTEP, sinRight * Constants.PLAYER_HALF_SIDESTEP);
                     _heading.set(cosHeading * (d_max - d_min), sinHeading * (d_max - d_min));
                     float x_neutral = x + cosHeading * d_neutral;
                     float y_neutral = y + sinHeading * d_neutral;
@@ -228,7 +229,7 @@ public class PlayerMovementSystem extends IteratingSystem {
 
                     // test ball start
                     _isect_tmp.set(ballMovement.position.x, ballMovement.position.y).sub(x, y);
-                    float p_x = _isect_pt.set(_right).nor().dot(_isect_tmp) / (Constants.PLAYER_BALL_HALF_SIDESTEP);
+                    float p_x = _isect_pt.set(_right).nor().dot(_isect_tmp) / (Constants.PLAYER_HALF_SIDESTEP);
                     float p_y = _isect_pt.set(_heading).nor().dot(_isect_tmp) / (d_max - d_min);
                     if (-1f <= p_x && p_x <= 1f && 0f <= p_y && p_y <= 1f)
                     { // x in [-1..1], y in [0..1]
@@ -238,7 +239,7 @@ public class PlayerMovementSystem extends IteratingSystem {
 
                     // test ball end
                     _isect_tmp.set(ball_end_x, ball_end_y).sub(x, y);
-                    p_x = _isect_pt.set(_right).nor().dot(_isect_tmp) / (Constants.PLAYER_BALL_HALF_SIDESTEP);
+                    p_x = _isect_pt.set(_right).nor().dot(_isect_tmp) / (Constants.PLAYER_HALF_SIDESTEP);
                     p_y = _isect_pt.set(_heading).nor().dot(_isect_tmp) / (d_max - d_min);
                     if (-1f <= p_x && p_x <= 1f && 0f <= p_y && p_y <= 1f)
                     { // x in [-1..1], y in [0..1]
@@ -330,6 +331,8 @@ public class PlayerMovementSystem extends IteratingSystem {
                             float d = t / t_max;
                             float speed = minSpeed + d * (maxSpeed - minSpeed);
                             pic.isHitting = true;
+                            pic.chosenHitType = null;
+                            pic.hitFrame = 0L;
                             pic.timeToHit = t;
                             movement.velocity.set(cosHeading * speed, sinHeading * speed, 0f);
                             System.out.println(pic.timeToHit);
@@ -338,24 +341,39 @@ public class PlayerMovementSystem extends IteratingSystem {
 
                 } else {
 
+                    // let the player choose the hit type.
+                    if (pic.hitFrame == 0) {
+                        if (pic.inputFrame.swing && !pic.lastInputFrame.swing) {
+                            pic.chosenHitType = HitType.NORMAL;
+                            pic.hitFrame = gameState.getTick();
+
+                        } else if (pic.inputFrame.lob && !pic.lastInputFrame.lob) {
+                            pic.chosenHitType = HitType.LOB;
+                            pic.hitFrame = gameState.getTick();
+
+                        } else if (pic.inputFrame.curve && !pic.lastInputFrame.curve) {
+                            pic.chosenHitType = HitType.CURVE;
+                            pic.hitFrame = gameState.getTick();
+                        }
+                    }
+
                     // ball-hitting
                     pic.timeToHit -= deltaTime;
                     if (pic.timeToHit <= 0f) {
 
-                        // determine where the ball is +/- 1 frame
-                        // between which two are we closest to the
-                        ballComponent.path.getPosition(time - Constants.FRAME_TIME_SEC, _ball_prev);
-                        ballComponent.path.getPosition(time + Constants.FRAME_TIME_SEC, _ball_next);
-                        _avg_movement.set(_ball_next).sub(_ball_prev).nor();
-                        _perfect_frame.set(movement.position, _avg_movement);
-                        float dst[] = new float[]{
-                                _perfect_frame.distance(_ball_prev),
-                                _perfect_frame.distance(ballMovement.position),
-                                _perfect_frame.distance(_ball_next)
-                        };
+                        // normal hits by default
+                        if (pic.chosenHitType == null) {
+                            pic.chosenHitType = HitType.NORMAL;
+                        }
 
-                        boolean _is_perfect_frame = (Math.signum(dst[0]) != Math.signum(dst[1])) ||
-                                (Math.signum(dst[1]) != Math.signum(dst[2]));
+                        // perfect frame calculation
+                        int framesAway = (int) (gameState.getTick() - pic.hitFrame);
+                        if (framesAway < Constants.PERFECT_HIT_FRAMES) {
+                            ballComponent.colour = HitType.POWER.getColour();
+                        } else {
+                            ballComponent.colour = pic.chosenHitType.getColour();
+                            System.out.println("Frames away: " + framesAway + " :(");
+                        }
 
                         // decide the return position
                         pic.shotBounds.getCenter(_ball_target);
@@ -364,7 +382,11 @@ public class PlayerMovementSystem extends IteratingSystem {
 
                         // craft the new path.
                         // FIXME ctor usage in game loop
-                        ballComponent.path = StraightBallPath.fromMaxHeightTarget(ballMovement.position, Constants.HIT_HEIGHT, _ball_target, time);
+                        if (pic.chosenHitType == HitType.LOB) {
+                            ballComponent.path = StraightBallPath.fromAngleTarget(ballMovement.position, Constants.LOB_ANGLE, _ball_target, time);
+                        } else {
+                            ballComponent.path = StraightBallPath.fromMaxHeightTarget(ballMovement.position, Constants.HIT_HEIGHT, _ball_target, time);
+                        }
                         ballComponent.currentBounce = 0;
                         ballComponent.currentVolley += 1;
                         ballComponent.lastHitByEID = entity.getId();

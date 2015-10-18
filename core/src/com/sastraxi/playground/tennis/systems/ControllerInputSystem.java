@@ -53,6 +53,8 @@ public class ControllerInputSystem extends IteratingSystem {
         // figure out new input state
         pic.inputFrame.movement.set(axes.lx, axes.ly);
         pic.inputFrame.swing = buttons.a;
+        pic.inputFrame.curve = buttons.b;
+        pic.inputFrame.lob = buttons.x;
 
         boolean isLeftBumperPressed = Math.abs(axes.lt) > 0.5f;
         boolean isRightBumperPressed = Math.abs(axes.rt) > 0.5f;

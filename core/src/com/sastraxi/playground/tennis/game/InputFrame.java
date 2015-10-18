@@ -7,7 +7,7 @@ import com.badlogic.gdx.math.Vector2;
  */
 public class InputFrame {
 
-    public boolean swing;
+    public boolean swing, lob, curve;
     public Vector2 movement = new Vector2();
     public boolean dash;
 
@@ -18,6 +18,8 @@ public class InputFrame {
         this.movement = other.movement;
         this.dash = other.dash;
         this.swing = other.swing;
+        this.lob = other.lob;
+        this.curve = other.curve;
         this.changeCamera = other.changeCamera;
     }
 

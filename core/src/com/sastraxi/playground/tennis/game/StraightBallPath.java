@@ -25,6 +25,36 @@ public class StraightBallPath implements BallPath {
     private static Vector3 _velocity = new Vector3();
 
     /**
+     *
+     * @param position
+     * @param zAngle radians
+     * @param bounceTarget
+     * @param timeBase
+     * @return
+     */
+    public static StraightBallPath fromAngleTarget(Vector3 position, float zAngle, Vector2 bounceTarget, float timeBase)
+    {
+        // System.out.println("pos=" + position + "   zAngle=" + zAngle + "   bounceTarget=" + bounceTarget);
+
+        _velocity.set(bounceTarget, 0f).sub(position.x, position.y, 0f);
+        float xyAngle = (float) Math.atan2(_velocity.y, _velocity.x);
+
+        // solve for initial speed (v0)
+        float d = _velocity.len();
+        float numerator = 0.5f * Constants.G * d * d;
+        float denom = d * (float) Math.tan(zAngle) + position.z;
+        float v0 = (float) ((1.0 / Math.cos(zAngle)) * Math.sqrt(numerator / denom));
+
+        _velocity.set(
+                (float) (Math.cos(zAngle) * Math.cos(xyAngle)),
+                (float) (Math.cos(zAngle) * Math.sin(xyAngle)),
+                (float) Math.sin(zAngle)
+        ).scl(v0);
+
+        return new StraightBallPath(position, _velocity, timeBase);
+    }
+
+    /**
      * Creates a path based on hitting a certain bounce target from a certain position
      * knowing the highest Z point achieved during flight.
      */

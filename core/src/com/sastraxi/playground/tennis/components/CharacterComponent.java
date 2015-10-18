@@ -5,10 +5,7 @@ import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
-import com.sastraxi.playground.tennis.game.Constants;
-import com.sastraxi.playground.tennis.game.InputFrame;
-import com.sastraxi.playground.tennis.game.PlayerType;
-import com.sastraxi.playground.tennis.game.SwingDetector;
+import com.sastraxi.playground.tennis.game.*;
 
 /**
  * Created by sastr on 2015-06-30.
@@ -38,12 +35,16 @@ public class CharacterComponent extends Component {
     public final Rectangle shotBounds;
     public final Rectangle bounds;
 
-    // state
+    // movement state
     public DashState state = DashState.NONE;
     public float timeSinceStateChange = 0f;
-    public float timeToHit = 0f;
     public float dashMeter = Constants.DASH_MAX_METER;
+
+    // hitting
+    public float timeToHit = 0f;
     public boolean isHitting = false;
+    public HitType chosenHitType;
+    public Long hitFrame;
 
     // input
     public InputFrame inputFrame = new InputFrame();

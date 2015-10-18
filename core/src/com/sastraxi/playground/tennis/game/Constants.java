@@ -20,7 +20,7 @@ public class Constants {
     public static final double FRAME_TIME_SEC_DBL = 1f / (double) FRAME_RATE;
 
     // N.B. game scale: 1f ~ 0.1m
-    public static final float G = 98.1f;
+    public static final float G = 160f; // 98.1f;
 
     public static final float LEVEL_HALF_WIDTH = 300f;
     public static final float LEVEL_HALF_DEPTH = 150f;
@@ -105,15 +105,19 @@ public class Constants {
             COURT_HALF_DEPTH * 2f);
 
     public static final float BALL_RADIUS = 4f;
-    public static final float JUICY_BALL_SHEAR = 0.002f;                 // exaggerate ball movement
-    public static final float JUICY_BALL_SHEAR_LERP_TOP = 10f;           // "splat" ball back to a sphere
-    public static final float JUICY_BALL_SHEAR_LERP_BOTTOM = 0f;         // when we're close to the tennis court
+    public static final Color BALL_COLOUR = new Color(0.8f, 0.2f, 0.8f, 1.0f);
+    public static final Color BALL_COLOUR_CURVE = new Color(0.7f, 0.7f, 0.7f, 1.0f);
+    public static final Color BALL_COLOUR_POWER = new Color(1.0f, 0.6f, 0.3f, 1.0f);
+    public static final Color BALL_COLOUR_LOB = new Color(0.5f, 0.8f, 0.42f, 1.0f);
+    public static final float BALL_SHEAR = 0.0012f;                // exaggerate ball movement
+    public static final float BALL_SHEAR_LERP_TOP = 10f;           // "splat" ball back to a sphere
+    public static final float BALL_SHEAR_LERP_BOTTOM = 0f;         // when we're close to the tennis court
 
-    public static final float PLAYER_BALL_MIN_REACH = 0.6f * PLAYER_RADIUS;       // units
-    public static final float PLAYER_BALL_MAX_REACH = 2f*PLAYER_RADIUS;           // units
-    public static final float PLAYER_BALL_MAX_SPEEDUP_UNITS = Constants.PLAYER_SPEED * 0.3f;
-    public static final float PLAYER_BALL_MAX_SLOWDOWN_UNITS = Constants.PLAYER_SPEED * 0.3f;
-    public static final float PLAYER_BALL_HALF_SIDESTEP = Constants.PLAYER_RADIUS; // units
+    public static final float PLAYER_MIN_REACH = 1.4f * PLAYER_RADIUS;       // units
+    public static final float PLAYER_MAX_REACH = 2.5f * PLAYER_RADIUS;       // units
+    public static final float PLAYER_MAX_SWING_SPEEDUP = Constants.PLAYER_SPEED * 0.3f; // units
+    public static final float PLAYER_MAX_SWING_SLOWDOWN = Constants.PLAYER_SPEED * 0.3f; // units
+    public static final float PLAYER_HALF_SIDESTEP = Constants.PLAYER_RADIUS; // units
     public static final float PLAYER_BALL_SWING_DURATION = Constants.FRAME_TIME_SEC * 4; // 4 frames
     public static final float PLAYER_BALL_STRIKE_LEEWAY = BALL_RADIUS * 10f; // how far away from perfect can we be and still hit the ball?
 
@@ -148,4 +152,7 @@ public class Constants {
 
     // how high balls should be
     public static final float HIT_HEIGHT = PLAYER_HEIGHT * 0.6f;
+    public static final int PERFECT_HIT_FRAMES = 3;
+
+    public static final float LOB_ANGLE = (float) (0.2 * Math.PI);
 }

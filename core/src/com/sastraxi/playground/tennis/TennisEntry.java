@@ -20,6 +20,7 @@ import com.ivan.xinput.exceptions.XInputNotLoadedException;
 import com.sastraxi.playground.gdx.ShadowLightR32F;
 import com.sastraxi.playground.tennis.components.*;
 import com.sastraxi.playground.tennis.game.Constants;
+import com.sastraxi.playground.tennis.game.Materials;
 import com.sastraxi.playground.tennis.game.PlayerType;
 import com.sastraxi.playground.tennis.graphics.CustomShaderProvider;
 import com.sastraxi.playground.tennis.models.PlayerModel;
@@ -73,6 +74,8 @@ public class TennisEntry extends ApplicationAdapter {
     @Override
 	public void create()
 	{
+        Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
+
         // determine game type based on # of controllers
         XInputDevice[] controllers = null;
         try
@@ -323,11 +326,11 @@ public class TennisEntry extends ApplicationAdapter {
             MovementComponent mc = mcm.get(entity);
             RenderableComponent rc = rcm.get(entity);
 
-            float axisScale = mc.velocity.len() * Constants.JUICY_BALL_SHEAR;
+            float axisScale = mc.velocity.len() * Constants.BALL_SHEAR;
             float distanceFromFloor = mc.position.z;
             float lerpConstant = MathUtils.clamp(
-                    (distanceFromFloor - Constants.JUICY_BALL_SHEAR_LERP_BOTTOM) /
-                            (Constants.JUICY_BALL_SHEAR_LERP_TOP - Constants.JUICY_BALL_SHEAR_LERP_BOTTOM),
+                    (distanceFromFloor - Constants.BALL_SHEAR_LERP_BOTTOM) /
+                            (Constants.BALL_SHEAR_LERP_TOP - Constants.BALL_SHEAR_LERP_BOTTOM),
                     0f, 1f);
             axisScale = 1f + MathUtils.lerp(0f, axisScale, lerpConstant);
 
@@ -435,7 +438,10 @@ public class TennisEntry extends ApplicationAdapter {
         // batch.render(tennisCourtFloor, environment);
         for (Entity entity: ballEntities)
         {
+            BallComponent bc = bcm.get(entity);
             RenderableComponent rc = rcm.get(entity);
+            ColorAttribute colour = (ColorAttribute) rc.modelInstance.getMaterial(Materials.ID_BALL).get(ColorAttribute.Diffuse);
+            colour.color.set(bc.colour);
             batch.render(rc.modelInstance, environment);
         }
 

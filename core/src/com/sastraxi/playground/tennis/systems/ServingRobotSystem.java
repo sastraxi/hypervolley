@@ -16,6 +16,7 @@ import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.RandomXS128;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.collision.Ray;
+import com.sastraxi.playground.tennis.game.Materials;
 import com.sastraxi.playground.tennis.components.*;
 import com.sastraxi.playground.tennis.game.BallFrame;
 import com.sastraxi.playground.tennis.game.Constants;
@@ -54,7 +55,7 @@ public class ServingRobotSystem extends IteratingSystem {
         ModelBuilder builder = new ModelBuilder();
 
         // tennis ball model
-        Material material = new Material(ColorAttribute.createDiffuse(new Color(0.8f, 0.2f, 0.8f, 1.0f)));
+        Material material = new Material(Materials.ID_BALL, ColorAttribute.createDiffuse(Constants.BALL_COLOUR));
         builder.begin();
         builder.node();
         builder.part("ball", GL20.GL_TRIANGLES, vertexAttributes, material)
@@ -102,7 +103,7 @@ public class ServingRobotSystem extends IteratingSystem {
         {
             // create a ball and add it to the engine
             // the ball is coming from the right-hand side of the court
-            // and is coming it a random direction, velocity, and spin
+            // and is coming it a random direction/velocity
             lastSpawnedBall = new Entity();
             MovementComponent mc = new MovementComponent();
 
@@ -122,8 +123,12 @@ public class ServingRobotSystem extends IteratingSystem {
 
             lastSpawnedBall.add(mc);
 
+            // ball properties
             BallComponent ball = new BallComponent(new StraightBallPath(mc.position, mc.velocity, time));
+            ball.colour.set(Constants.BALL_COLOUR);
             lastSpawnedBall.add(ball);
+
+            // graphics
             RenderableComponent rc = new RenderableComponent(new ModelInstance(ballModel));
             lastSpawnedBall.add(rc);
             ShadowComponent sc = new ShadowComponent(new ModelInstance(shadowModel));
