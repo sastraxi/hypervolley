@@ -474,6 +474,7 @@ public class TennisEntry extends ApplicationAdapter {
         //if (gameState.getTick() < 900) saveScreenshot();
 
         //stage.draw();
+        Thread.yield();
     }
 
     Vector3 __xformed = new Vector3();

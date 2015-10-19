@@ -113,11 +113,11 @@ public class Constants {
     public static final float BALL_SHEAR_LERP_TOP = 10f;           // "splat" ball back to a sphere
     public static final float BALL_SHEAR_LERP_BOTTOM = 0f;         // when we're close to the tennis court
 
-    public static final float PLAYER_MIN_REACH = 1.4f * PLAYER_RADIUS;       // units
+    public static final float PLAYER_MIN_REACH = 1.8f * PLAYER_RADIUS;       // units
     public static final float PLAYER_MAX_REACH = 2.5f * PLAYER_RADIUS;       // units
     public static final float PLAYER_MAX_SWING_SPEEDUP = Constants.PLAYER_SPEED * 0.3f; // units
-    public static final float PLAYER_MAX_SWING_SLOWDOWN = Constants.PLAYER_SPEED * 0.3f; // units
-    public static final float PLAYER_HALF_SIDESTEP = Constants.PLAYER_RADIUS; // units
+    public static final float PLAYER_MAX_SWING_SLOWDOWN = Constants.PLAYER_SPEED * 0.6f; // units
+    public static final float PLAYER_HALF_SIDESTEP = Constants.PLAYER_RADIUS * 2f; // units
     public static final float PLAYER_BALL_SWING_DURATION = Constants.FRAME_TIME_SEC * 4; // 4 frames
     public static final float PLAYER_BALL_STRIKE_LEEWAY = BALL_RADIUS * 10f; // how far away from perfect can we be and still hit the ball?
 

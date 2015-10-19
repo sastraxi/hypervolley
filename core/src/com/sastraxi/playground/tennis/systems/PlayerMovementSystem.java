@@ -217,11 +217,14 @@ public class PlayerMovementSystem extends IteratingSystem {
                     float x_neutral = x + cosHeading * d_neutral;
                     float y_neutral = y + sinHeading * d_neutral;
 
+
+                    // TODO doesn't work around wall bounces.
+                    // TODO if the next bounce is within our time window, try both line segments (pre- and post-bounce)
+                    // TODO and choose the intersection point closest to the neutral point.
+
                     // the ball's trajectory is constant in all of our intersections
                     float ball_end_x = ballMovement.position.x + ballMovement.velocity.x * t_max;
                     float ball_end_y = ballMovement.position.y + ballMovement.velocity.y * t_max;
-
-                    // System.out.println("x: ball=" + ballMovement.position.x + "   @t_max=" + ball_end_x + "   player=" + movement.position.x);
 
                     // determine if either ball start/end is inside the rect
                     // here we use _isect_pt as a temp variable as well
@@ -325,24 +328,32 @@ public class PlayerMovementSystem extends IteratingSystem {
                         }
 
                         // start hittin' the ball
+                        float distToPlayer = _isect_pt.dst(movement.position.x, movement.position.y);
                         float distToBall = _isect_pt.dst(ballMovement.position.x, ballMovement.position.y);
-                        float t = distToBall / ballMovement.velocity.len();
-                        if (t <= t_max) {
-                            float d = t / t_max;
-                            float speed = minSpeed + d * (maxSpeed - minSpeed);
-                            pic.isHitting = true;
-                            pic.chosenHitType = null;
-                            pic.hitFrame = 0L;
-                            pic.timeToHit = t;
-                            movement.velocity.set(cosHeading * speed, sinHeading * speed, 0f);
-                            System.out.println(pic.timeToHit);
+                        float tBall = distToBall / ballMovement.velocity.len();
+                        float tPlayer = (distToPlayer - d_min) / (d_max - d_min);
+                        if (tBall <= t_max) {
+                            float reach = Constants.PLAYER_MIN_REACH + (tPlayer / t_max) * (Constants.PLAYER_MAX_REACH - Constants.PLAYER_MIN_REACH);
+                            float speed = (distToPlayer - reach) / tBall;
+                            if (minSpeed <= speed && speed <= maxSpeed)
+                            {
+                                pic.isHitting = true;
+                                pic.chosenHitType = null;
+                                pic.hitFrame = null;
+                                pic.timeToHit = tBall;
+                                movement.velocity.set(cosHeading * speed, sinHeading * speed, 0f);
+                            }
+                            else if (minSpeed <= speed)
+                            {
+                                System.out.println("can't hit as " + minSpeed + " <= " + speed + " <= " + maxSpeed + " is false");
+                            }
                         }
                     }
 
                 } else {
 
                     // let the player choose the hit type.
-                    if (pic.hitFrame == 0) {
+                    if (pic.hitFrame == null) {
                         if (pic.inputFrame.swing && !pic.lastInputFrame.swing) {
                             pic.chosenHitType = HitType.NORMAL;
                             pic.hitFrame = gameState.getTick();
@@ -357,6 +368,8 @@ public class PlayerMovementSystem extends IteratingSystem {
                         }
                     }
 
+                    // TODO instead of integrating velocity, directly set position while isHitting
+
                     // ball-hitting
                     pic.timeToHit -= deltaTime;
                     if (pic.timeToHit <= 0f) {
@@ -367,12 +380,14 @@ public class PlayerMovementSystem extends IteratingSystem {
                         }
 
                         // perfect frame calculation
-                        int framesAway = (int) (gameState.getTick() - pic.hitFrame);
-                        if (framesAway < Constants.PERFECT_HIT_FRAMES) {
-                            ballComponent.colour = HitType.POWER.getColour();
-                        } else {
-                            ballComponent.colour = pic.chosenHitType.getColour();
-                            System.out.println("Frames away: " + framesAway + " :(");
+                        ballComponent.colour = pic.chosenHitType.getColour();
+                        if (pic.hitFrame != null) {
+                            int framesAway = (int) (gameState.getTick() - pic.hitFrame);
+                            if (framesAway < Constants.PERFECT_HIT_FRAMES) {
+                                ballComponent.colour = HitType.POWER.getColour();
+                            } else {
+                                System.out.println("missed by " + (framesAway - Constants.PERFECT_HIT_FRAMES + 1)  + " :(");
+                            }
                         }
 
                         // decide the return position
