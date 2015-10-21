@@ -5,10 +5,13 @@ import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Graphics;
 import com.ivan.xinput.XInputAxes;
 import com.ivan.xinput.XInputButtons;
 import com.ivan.xinput.XInputDevice;
 import com.sastraxi.playground.tennis.components.*;
+import org.lwjgl.opengl.DisplayMode;
 
 public class ControllerInputSystem extends IteratingSystem {
 
@@ -69,6 +72,16 @@ public class ControllerInputSystem extends IteratingSystem {
         {
             CameraManagementComponent viewpoint = ccm.get(gameStateEntity);
             viewpoint.cycle();
+        }
+
+        pic.inputFrame.toggleFullscreen = buttons.start;
+        if (pic.inputFrame.toggleFullscreen && !pic.lastInputFrame.toggleFullscreen)
+        {
+            if (Gdx.graphics.isFullscreen()) {
+                Gdx.graphics.setDisplayMode(1280, 720, false);
+            } else {
+                Gdx.graphics.setDisplayMode(1920, 1080, true);
+            }
         }
     }
 

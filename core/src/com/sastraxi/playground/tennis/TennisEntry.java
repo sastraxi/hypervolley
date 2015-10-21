@@ -471,7 +471,7 @@ public class TennisEntry extends ApplicationAdapter {
         }
 
         // then ffmpeg webm -> gfycat
-        //if (gameState.getTick() < 900) saveScreenshot();
+        // if (gameState.getTick() < 900) saveScreenshot();
 
         //stage.draw();
         Thread.yield();

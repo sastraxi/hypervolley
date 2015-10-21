@@ -13,6 +13,7 @@ public class InputFrame {
 
     // FIXME debug stuff only
     public boolean changeCamera;
+    public boolean toggleFullscreen;
 
     public void set(InputFrame other) {
         this.movement = other.movement;
@@ -21,6 +22,7 @@ public class InputFrame {
         this.lob = other.lob;
         this.curve = other.curve;
         this.changeCamera = other.changeCamera;
+        this.toggleFullscreen = other.toggleFullscreen;
     }
 
 }
