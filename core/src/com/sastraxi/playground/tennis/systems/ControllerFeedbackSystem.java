@@ -53,11 +53,11 @@ public class ControllerFeedbackSystem extends IteratingSystem {
         float combinedVibration = 0;
 
         if (pic.state == CharacterComponent.DashState.DASHING) impulse(0.2f);
-        if (pic.isHitting)                                     combinedVibration += 0.15f;
-        if (cic.wasHitting && !pic.isHitting)                  impulse(0.7f); // state transition out; see
+        if (pic.isHitting)                                     combinedVibration += 0.10f;
+        if (cic.wasHitting && !pic.isHitting)                  impulse(0.4f); // state transition out; see
                                                                               // also ControllerInputSystem
 
-        //
+        // a subtle vibration every time the ball bounces off of something.
         for (Entity ballEntity : ballEntities) {
             BallComponent ball = bcm.get(ballEntity);
             MovementComponent ballpos = mcm.get(ballEntity);

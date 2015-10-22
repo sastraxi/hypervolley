@@ -330,7 +330,7 @@ public class TennisEntry extends ApplicationAdapter {
             float distanceFromFloor = mc.position.z;
             float lerpConstant = MathUtils.clamp(
                     (distanceFromFloor - Constants.BALL_SHEAR_LERP_BOTTOM) /
-                            (Constants.BALL_SHEAR_LERP_TOP - Constants.BALL_SHEAR_LERP_BOTTOM),
+                    (Constants.BALL_SHEAR_LERP_TOP - Constants.BALL_SHEAR_LERP_BOTTOM),
                     0f, 1f);
             axisScale = 1f + MathUtils.lerp(0f, axisScale, lerpConstant);
 
@@ -360,7 +360,7 @@ public class TennisEntry extends ApplicationAdapter {
             _neg_position.set(mc.position).scl(-1f);
             _R.set(_U, _V, _shear_nor, Vector3.Zero);
             _R_T.set(_R).tra();
-            _D.setToScaling(1f / axisScale, 1f / axisScale, axisScale);
+            _D.setToScaling(1f - Constants.BALL_THINNING * axisScale, 1f - Constants.BALL_THINNING * axisScale, axisScale);
 
             /*
              Then Y = R^T*(X-P), where R^T is the transpose of R and X'-P = R*D*R^T*(X-P).

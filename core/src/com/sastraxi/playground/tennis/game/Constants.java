@@ -104,14 +104,15 @@ public class Constants {
             0.6f * COURT_HALF_WIDTH,
             COURT_HALF_DEPTH * 2f);
 
-    public static final float BALL_RADIUS = 4f;
+    public static final float BALL_RADIUS = 3.4f;
     public static final Color BALL_COLOUR = new Color(0.8f, 0.2f, 0.8f, 1.0f);
     public static final Color BALL_COLOUR_CURVE = new Color(0.7f, 0.7f, 0.7f, 1.0f);
     public static final Color BALL_COLOUR_POWER = new Color(1.0f, 0.6f, 0.3f, 1.0f);
     public static final Color BALL_COLOUR_LOB = new Color(0.5f, 0.8f, 0.42f, 1.0f);
-    public static final float BALL_SHEAR = 0.0012f;                // exaggerate ball movement
+    public static final float BALL_SHEAR = 0.002f;                // exaggerate ball movement
     public static final float BALL_SHEAR_LERP_TOP = 10f;           // "splat" ball back to a sphere
     public static final float BALL_SHEAR_LERP_BOTTOM = 0f;         // when we're close to the tennis court
+    public static final float BALL_THINNING = 0.07f;
 
     public static final float PLAYER_MIN_REACH = 1.8f * PLAYER_RADIUS;       // units
     public static final float PLAYER_MAX_REACH = 2.5f * PLAYER_RADIUS;       // units
