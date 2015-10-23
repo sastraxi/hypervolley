@@ -101,7 +101,7 @@ public class Constants {
             0.6f * COURT_HALF_WIDTH,
             COURT_HALF_DEPTH * 2f);
 
-    public static final float BALL_RADIUS = 3.2f;
+    public static final float BALL_RADIUS = 3.4f;
     public static final Color BALL_COLOUR = new Color(0.8f, 0.2f, 0.8f, 1.0f);
     public static final Color BALL_COLOUR_CURVE = new Color(0.7f, 0.7f, 0.7f, 1.0f);
     public static final Color BALL_COLOUR_POWER = new Color(1.0f, 0.6f, 0.3f, 1.0f);
