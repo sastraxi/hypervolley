@@ -16,6 +16,4 @@ public class ControllerInputComponent extends Component {
         this.controller = controller;
     }
 
-    public boolean wasHitting;
-
 }

@@ -36,8 +36,6 @@ public class Constants {
     public static final float PLAYER_HEIGHT = 52f;
     public static final float PLAYER_RADIUS = 8f;
     public static final float PLAYER_SIZE = 2f * PLAYER_RADIUS;
-    public static final float PLAYER_WALK_MULTIPLIER = 0.4f;
-    public static final float PLAYER_SPEED = 140f;
 
     public static final Color PLAYER_ONE_COLOUR = new Color(0.2f, 0.5f, 0.8f, 1.0f);
     public static final Color PLAYER_TWO_COLOUR = new Color(0.8f, 0.3f, 0.2f, 1.0f);
@@ -51,13 +49,12 @@ public class Constants {
     public static final float CONTROLLER_VIBRATION_BOUNCE_POWER = 2f;
     public static final float CONTROLLER_FINE_LEFT_MOTOR = 0.4f; // positional effects need finer left motor control (in 360 controllers, it's the bigger one).
 
-    public static final float DASH_SPEED = 600f;
+    public static final float DASH_SPEED = 450f;
     public static final float DASH_ACCEL = 0.04f; // seconds to get up to speed
-    public static final float DASH_DECEL = 0.04f; // seconds to slow down to regular speed
-    public static final float DASH_MAX_METER = 0.5f; // how many seconds it takes to recharge
+    public static final float DASH_DECEL = 0.09f; // seconds to slow down to regular speed
+    public static final float DASH_MAX_METER = 0.8f; // how many seconds it takes to recharge
     public static final float DASH_METER_DEPLETION_RATE = 4f; // how many times faster it depletes
-    public static final float DASH_MIN_METER = 0.5f; // this much of the meter must be full to dash
-    public static final float DASH_BALL_SPEED_MODIFIER = 1.7f;
+    public static final float DASH_MIN_METER = 0.8f; // this much of the meter must be full to dash
 
     public static final Plane LEVEL_GROUND_PLANE = new Plane(Constants.UP_VECTOR, 0f);
     public static final Plane LEVEL_FAR_PLANE = new Plane(new Vector3(0f, 1f, 0f), LEVEL_HALF_DEPTH);
@@ -104,7 +101,7 @@ public class Constants {
             0.6f * COURT_HALF_WIDTH,
             COURT_HALF_DEPTH * 2f);
 
-    public static final float BALL_RADIUS = 3.4f;
+    public static final float BALL_RADIUS = 3.2f;
     public static final Color BALL_COLOUR = new Color(0.8f, 0.2f, 0.8f, 1.0f);
     public static final Color BALL_COLOUR_CURVE = new Color(0.7f, 0.7f, 0.7f, 1.0f);
     public static final Color BALL_COLOUR_POWER = new Color(1.0f, 0.6f, 0.3f, 1.0f);
@@ -114,27 +111,25 @@ public class Constants {
     public static final float BALL_SHEAR_LERP_BOTTOM = 0f;         // when we're close to the tennis court
     public static final float BALL_THINNING = 0.07f;
 
+    public static final float PLAYER_SPEED = 140f;
+    public static final float PLAYER_SWING_SPEED_CAP = 160f;
     public static final float PLAYER_MIN_REACH = 1.8f * PLAYER_RADIUS;       // units
     public static final float PLAYER_MAX_REACH = 2.5f * PLAYER_RADIUS;       // units
     public static final float PLAYER_MAX_SWING_SPEEDUP = Constants.PLAYER_SPEED * 0.3f; // units
     public static final float PLAYER_MAX_SWING_SLOWDOWN = Constants.PLAYER_SPEED * 0.6f; // units
     public static final float PLAYER_HALF_SIDESTEP = Constants.PLAYER_RADIUS * 2f; // units
     public static final float PLAYER_BALL_SWING_DURATION = Constants.FRAME_TIME_SEC * 4; // 4 frames
-    public static final float PLAYER_BALL_STRIKE_LEEWAY = BALL_RADIUS * 10f; // how far away from perfect can we be and still hit the ball?
+    public static final float PLAYER_BALL_STRIKE_LEEWAY = Constants.PLAYER_RADIUS * 4f; // how far away from perfect can we be and still hit the ball?
 
     // when we're set to a collision course (anywhere in the "strike zone") this many seconds in the future,
     // put the player's movement on auto-pilot and use input instead to aim/take the shot (w/perfect frame detection)
-    public static final float PLAYER_BALL_LOCK_LOOKAHEAD_SEC = 0.25f;
-
-    public static final float PERFECT_HIT_VELOCITY_SCALE = 1.3f;
-    public static final float VOLLEY_VELOCITY_SCALE = 1.1f;
+    public static final float PLAYER_BALL_LOCK_LOOKAHEAD_SEC = 0.3f;
 
     public static final int DETAIL_LEVEL_SPHERE = 32;
     public static final int DETAIL_LEVEL_CIRCLE = 64;
 
     public static final float BALL_SPAWN_COURT_COVERAGE = 0.6f;
     public static final float BALL_TARGET_COURT_COVERAGE = 6f;
-    public static final float PLAYER_BALL_SUBTRACT_SCALE = Constants.PLAYER_RADIUS * 2f;
 
     public static final float BOUNCE_MARKER_RADIUS = 5f;
     public static final float JUICY_ANIMATION_LENGTH = 0.2f;            // used for bounce marker

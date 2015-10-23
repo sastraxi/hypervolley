@@ -385,7 +385,7 @@ public class TennisEntry extends ApplicationAdapter {
                     .setToTranslation(mc.position)
                     .rotate(mc.orientation);
 
-            if (character.isHitting) {
+            if (character.state == CharacterComponent.PlayerState.HITTING) {
                 AlertedComponent ac = acm.get(players[i]);
                 ac.modelInstance.transform
                         .setToTranslation(mc.position)
@@ -421,7 +421,7 @@ public class TennisEntry extends ApplicationAdapter {
             if (character.type != PlayerType.HUMAN) break; // only render non-computer characters right now
 
             MovementComponent mc = mcm.get(players[i]);
-            if (character.isHitting) {
+            if (character.state == CharacterComponent.PlayerState.HITTING) {
                 AlertedComponent ac = acm.get(players[i]);
                 shadowBatch.render(ac.modelInstance, environment);
             }
@@ -451,7 +451,7 @@ public class TennisEntry extends ApplicationAdapter {
             if (character.type != PlayerType.HUMAN) break; // only render non-computer characters right now
 
             MovementComponent mc = mcm.get(players[i]);
-            if (character.isHitting) {
+            if (character.state == CharacterComponent.PlayerState.HITTING) {
                 AlertedComponent ac = acm.get(players[i]);
                 batch.render(ac.modelInstance, environment);
             }

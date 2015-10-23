@@ -52,10 +52,11 @@ public class ControllerFeedbackSystem extends IteratingSystem {
         XInputDevice controller = cic.controller;
         float combinedVibration = 0;
 
-        if (pic.state == CharacterComponent.DashState.DASHING) impulse(0.2f);
-        if (pic.isHitting)                                     combinedVibration += 0.10f;
-        if (cic.wasHitting && !pic.isHitting)                  impulse(0.4f); // state transition out; see
-                                                                              // also ControllerInputSystem
+        if (pic.state == CharacterComponent.PlayerState.DASHING)         impulse(0.2f);
+        if (pic.state == CharacterComponent.PlayerState.HITTING)         combinedVibration += 0.10f;
+        if (pic.lastState == CharacterComponent.PlayerState.HITTING
+            && pic.state != CharacterComponent.PlayerState.HITTING)      impulse(0.4f); // state transition out; see
+                                                                                        // also ControllerInputSystem
 
         // a subtle vibration every time the ball bounces off of something.
         for (Entity ballEntity : ballEntities) {

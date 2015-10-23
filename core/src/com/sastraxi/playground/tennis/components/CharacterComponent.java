@@ -14,10 +14,12 @@ public class CharacterComponent extends Component {
 
     public final PlayerType type;
 
-    public enum DashState {
+    public enum PlayerState {
         NONE,
         DASHING,
-        ENDING
+        DASH_ENDING,
+        HITTING,
+        HIT_ENDING
     }
 
     public CharacterComponent(PlayerType type, Rectangle bounds, Rectangle shotBounds) {
@@ -36,13 +38,18 @@ public class CharacterComponent extends Component {
     public final Rectangle bounds;
 
     // movement state
-    public DashState state = DashState.NONE;
+    public PlayerState state = PlayerState.NONE;
+    public PlayerState lastState = PlayerState.NONE;
     public float timeSinceStateChange = 0f;
     public float dashMeter = Constants.DASH_MAX_METER;
 
     // hitting
-    public float timeToHit = 0f;
-    public boolean isHitting = false;
+    public float tHitActual = 0f;
+    public float speedDelta = 0f;
+    public float originalSpeed = 0f;
+    public Vector3 originalPosition = new Vector3();
+    public Vector3 originalTrajectory = new Vector3();
+    public float tHit;
     public HitType chosenHitType;
     public Long hitFrame;
 

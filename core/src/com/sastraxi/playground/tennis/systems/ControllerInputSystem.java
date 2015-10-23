@@ -63,9 +63,6 @@ public class ControllerInputSystem extends IteratingSystem {
         boolean isRightBumperPressed = Math.abs(axes.rt) > 0.5f;
         pic.inputFrame.dash = isLeftBumperPressed | isRightBumperPressed;
 
-        // see also ControllerFeedbackSystem
-        cic.wasHitting = pic.isHitting;
-
         // hacky public gamestate stuff
         pic.inputFrame.changeCamera = buttons.back;
         if (pic.inputFrame.changeCamera && !pic.lastInputFrame.changeCamera)

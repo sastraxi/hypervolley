@@ -10,7 +10,6 @@ import com.sastraxi.playground.tennis.components.*;
 import com.sastraxi.playground.tennis.game.Constants;
 import com.sastraxi.playground.tennis.game.HitType;
 import com.sastraxi.playground.tennis.game.StraightBallPath;
-import com.sastraxi.playground.tennis.game.SwingDetector;
 
 public class PlayerMovementSystem extends IteratingSystem {
 
@@ -30,9 +29,7 @@ public class PlayerMovementSystem extends IteratingSystem {
 
     Vector3 _tmp = new Vector3(),
             _tmp_player_focal = new Vector3(),
-            _ball_prev = new Vector3(),
-            _ball_next = new Vector3(),
-            _avg_movement = new Vector3();
+            _velocity = new Vector3();
 
     Vector2 _ball_target = new Vector2(),
             _isect_tmp = new Vector2(),
@@ -61,52 +58,52 @@ public class PlayerMovementSystem extends IteratingSystem {
 
         MovementComponent movement = mc.get(entity);
         CharacterComponent pic = picm.get(entity);
-        SwingDetector swingDetector = sdcm.get(entity).swingDetector;
 
+        pic.lastState = pic.state;
         pic.timeSinceStateChange += deltaTime;
 
         // set _tmp to the left control stick
         _tmp.set(pic.inputFrame.movement, 0f);
 
+        // get original orientation (only Z component) in radians
+        float _rot = movement.orientation.getRollRad();
+
         // dash state changes; only allow when resting or we've done our animations
         if (pic.inputFrame.dash && !pic.lastInputFrame.dash
-                && (pic.state == CharacterComponent.DashState.NONE
+                && (pic.state == CharacterComponent.PlayerState.NONE
                 || pic.timeSinceStateChange > Constants.DASH_ACCEL)) // FIXME when accel > decel there is dead time after ending dash when we cannot dash again
         {
-            if (pic.state == CharacterComponent.DashState.DASHING) {
+            if (pic.state == CharacterComponent.PlayerState.DASHING) {
                 // cancel dash
-                pic.state = CharacterComponent.DashState.ENDING;
+                pic.state = CharacterComponent.PlayerState.DASH_ENDING;
                 pic.timeSinceStateChange = 0f;
-            } else if (pic.state == CharacterComponent.DashState.NONE && pic.dashMeter >= Constants.DASH_MIN_METER) {
+            } else if (pic.state == CharacterComponent.PlayerState.NONE && pic.dashMeter >= Constants.DASH_MIN_METER) {
                 // begin dash
-                pic.state = CharacterComponent.DashState.DASHING;
+                pic.state = CharacterComponent.PlayerState.DASHING;
                 pic.timeSinceStateChange = 0f;
             }
         }
 
         // dash meter
-        if (pic.state == CharacterComponent.DashState.DASHING) {
+        if (pic.state == CharacterComponent.PlayerState.DASHING) {
             pic.dashMeter -= Constants.DASH_METER_DEPLETION_RATE * deltaTime;
             if (pic.dashMeter <= 0f) {
                 pic.dashMeter = 0f;
-                pic.state = CharacterComponent.DashState.ENDING;
+                pic.state = CharacterComponent.PlayerState.DASH_ENDING;
                 pic.timeSinceStateChange = 0f;
             }
-        } else if (pic.state == CharacterComponent.DashState.NONE) {
+        } else if (pic.state == CharacterComponent.PlayerState.NONE) {
             pic.dashMeter = Math.min(pic.dashMeter + deltaTime, Constants.DASH_MAX_METER);
         }
 
-        // get original orientation (only Z component) in radians
-        float _rot = movement.orientation.getRollRad();
-
         // decide on our velocity
-        if (pic.state == CharacterComponent.DashState.ENDING)
+        if (pic.state == CharacterComponent.PlayerState.DASH_ENDING)
         {
             // decelerate dash
             float pct = (pic.timeSinceStateChange / Constants.DASH_DECEL);
             if (pct > 1.0) {
                 pct = 1.0f;
-                pic.state = CharacterComponent.DashState.NONE;
+                pic.state = CharacterComponent.PlayerState.NONE;
             }
             float speed = MathUtils.lerp(Constants.DASH_SPEED, Constants.PLAYER_SPEED, pct);
             movement.velocity.set(
@@ -114,7 +111,7 @@ public class PlayerMovementSystem extends IteratingSystem {
                     MathUtils.sin(_rot) * speed,
                     0f);
         }
-        else if (pic.state == CharacterComponent.DashState.DASHING)
+        else if (pic.state == CharacterComponent.PlayerState.DASHING)
         {
             // accelerate dash
             float pct = (pic.timeSinceStateChange / Constants.DASH_ACCEL);
@@ -128,7 +125,7 @@ public class PlayerMovementSystem extends IteratingSystem {
                     MathUtils.sin(_rot) * speed,
                     0f);
         }
-        else if (pic.timeToHit <= 0f) // don't allow change from left controller stick when we're winding up
+        else if (pic.state != CharacterComponent.PlayerState.HITTING) // don't allow change from left controller stick when we're winding up
         {
             // regular movement logic
             // treat all input below a certain threshold as 0,
@@ -136,46 +133,48 @@ public class PlayerMovementSystem extends IteratingSystem {
 
                 movement.velocity.set(_tmp).nor();
                 movement.velocity.scl(Constants.PLAYER_SPEED);
+                _rot = (float) Math.atan2(_tmp.y, _tmp.x);
 
                 // all input below a second threshold as ramping from 0->1
+                float _heading;
                 if (_tmp.len() < Constants.CONTROLLER_RUN_MAGNITUDE) {
                     movement.velocity.scl((_tmp.len() - Constants.CONTROLLER_WALK_MAGNITUDE) /
                             (Constants.CONTROLLER_RUN_MAGNITUDE - Constants.CONTROLLER_WALK_MAGNITUDE));
                     _tmp_player_focal.set(pic.focalPoint).sub(movement.position);
-                    _rot = (float) Math.atan2(_tmp_player_focal.y, _tmp_player_focal.x);
+                    _heading = (float) Math.atan2(_tmp_player_focal.y, _tmp_player_focal.x);
                 } else {
-                    _rot = (float) Math.atan2(_tmp.y, _tmp.x);
+                    _heading = _rot;
                 }
-                movement.orientation.set(Constants.UP_VECTOR, MathUtils.radiansToDegrees * _rot);
+                movement.orientation.set(Constants.UP_VECTOR, MathUtils.radiansToDegrees * _heading);
 
             } else {
                 movement.velocity.set(0f, 0f, 0f);
             }
-        }
-        else
-        {
-            // use left stick input to decide on direction of the ball
-            if (swingDetector.isRunning()) {
-                swingDetector.sample(pic.inputFrame.movement, deltaTime);
+
+            // if we're recovering from a hit, gradually cede control back to the user
+            if (pic.state == CharacterComponent.PlayerState.HIT_ENDING)
+            {
+                float factor = 1f - (pic.tHit / pic.tHitActual);
+                _velocity.set(pic.originalTrajectory)
+                         .scl(pic.originalSpeed);
+                movement.velocity.lerp(_velocity, factor);
+
+                // make the character point the correct direction
+                float _heading = (float) Math.atan2(movement.velocity.y, movement.velocity.x);
+                movement.orientation.set(Constants.UP_VECTOR, MathUtils.radiansToDegrees * _heading);
+
+                pic.tHit += deltaTime;
+                if (pic.tHit >= pic.tHitActual) {
+                    pic.state = CharacterComponent.PlayerState.NONE;
+                }
             }
         }
 
         // integrate velocity -> position
         // _tmp = movement vector
-        _tmp.set(movement.velocity).scl(deltaTime);
-        movement.position.add(_tmp);
-
-        // slide along walls if we hit the boundary
-        if (!pic.bounds.contains(movement.position.x, movement.position.y)) {
-            if (pic.state == CharacterComponent.DashState.DASHING) {
-                // cancel dash
-                pic.state = CharacterComponent.DashState.ENDING;
-                pic.timeSinceStateChange = 0f;
-            }
-            movement.position.x = Math.max(movement.position.x, pic.bounds.x);
-            movement.position.x = Math.min(movement.position.x, pic.bounds.x + pic.bounds.width);
-            movement.position.y = Math.max(movement.position.y, pic.bounds.y);
-            movement.position.y = Math.min(movement.position.y, pic.bounds.y + pic.bounds.height);
+        if (pic.state != CharacterComponent.PlayerState.HITTING) {
+            _tmp.set(movement.velocity).scl(deltaTime);
+            movement.position.add(_tmp);
         }
 
         // the player's interactions with the game ball.
@@ -185,7 +184,7 @@ public class PlayerMovementSystem extends IteratingSystem {
 
             // don't allow the ball to be hit in succession by the same player.
             if (ballComponent.lastHitByEID == null || ballComponent.lastHitByEID != entity.getId()) {
-                if (!pic.isHitting) {
+                if (pic.state != CharacterComponent.PlayerState.HITTING) {
 
                     float cosHeading = (float) Math.cos(_rot);
                     float sinHeading = (float) Math.sin(_rot);
@@ -195,7 +194,7 @@ public class PlayerMovementSystem extends IteratingSystem {
                     // determine t_min and t_max, the time frame in which we can hit the ball
                     // given max. speed up/slow down from current speed on the same trajectory
                     float currentSpeed = movement.velocity.len();
-                    float maxTheoreticalSpeed = pic.state == CharacterComponent.DashState.DASHING ? Constants.DASH_SPEED : Constants.PLAYER_SPEED;
+                    float maxTheoreticalSpeed = pic.state == CharacterComponent.PlayerState.DASHING ? Constants.DASH_SPEED : Constants.PLAYER_SPEED;
                     float maxSpeed = Math.min(currentSpeed + Constants.PLAYER_MAX_SWING_SPEEDUP, maxTheoreticalSpeed);
                     float minSpeed = Math.max(currentSpeed - Constants.PLAYER_MAX_SWING_SLOWDOWN, 0f);
 
@@ -217,8 +216,7 @@ public class PlayerMovementSystem extends IteratingSystem {
                     float x_neutral = x + cosHeading * d_neutral;
                     float y_neutral = y + sinHeading * d_neutral;
 
-
-                    // TODO doesn't work around wall bounces.
+                    // FIXME doesn't work around wall bounces.
                     // TODO if the next bounce is within our time window, try both line segments (pre- and post-bounce)
                     // TODO and choose the intersection point closest to the neutral point.
 
@@ -337,11 +335,16 @@ public class PlayerMovementSystem extends IteratingSystem {
                             float speed = (distToPlayer - reach) / tBall;
                             if (minSpeed <= speed && speed <= maxSpeed)
                             {
-                                pic.isHitting = true;
+                                pic.state = CharacterComponent.PlayerState.HITTING;
                                 pic.chosenHitType = null;
                                 pic.hitFrame = null;
-                                pic.timeToHit = tBall;
-                                movement.velocity.set(cosHeading * speed, sinHeading * speed, 0f);
+                                pic.tHitActual = tBall;
+                                pic.originalSpeed = currentSpeed;
+                                pic.originalTrajectory.set(movement.velocity).nor();
+                                pic.originalPosition.set(movement.position);
+                                pic.speedDelta = speed - currentSpeed;
+                                pic.tHit = 0f;
+                                System.out.println("orig=" + pic.originalSpeed + "   delta=" + pic.speedDelta + "   traj=" + pic.originalTrajectory);
                             }
                             else if (minSpeed <= speed)
                             {
@@ -368,11 +371,22 @@ public class PlayerMovementSystem extends IteratingSystem {
                         }
                     }
 
-                    // TODO instead of integrating velocity, directly set position while isHitting
+                    // when hitting, lock the player to the planned route.
+                    pic.tHit += deltaTime;
+                    float t = MathUtils.clamp(pic.tHit, 0f, pic.tHitActual);
+
+                    movement.velocity
+                            .set(pic.originalTrajectory)
+                            .scl(pic.originalSpeed + 2f * pic.speedDelta * t / pic.tHitActual);
+
+                    float _speed = pic.originalSpeed * t + pic.speedDelta * t * t / pic.tHitActual;
+                    movement.position
+                            .set(pic.originalTrajectory)
+                            .scl(_speed)
+                            .add(pic.originalPosition);
 
                     // ball-hitting
-                    pic.timeToHit -= deltaTime;
-                    if (pic.timeToHit <= 0f) {
+                    if (pic.tHit >= pic.tHitActual) {
 
                         // normal hits by default
                         if (pic.chosenHitType == null) {
@@ -407,12 +421,28 @@ public class PlayerMovementSystem extends IteratingSystem {
                         ballComponent.lastHitByEID = entity.getId();
                         ServingRobotSystem.spawnBounceMarkers(engine, pic.ball);
 
-                        // that's all she wrote
-                        pic.isHitting = false;
+                        // that's all she wrote. start recovery
+                        pic.state = CharacterComponent.PlayerState.HIT_ENDING;
+                        if (pic.originalSpeed > Constants.PLAYER_SPEED) pic.originalSpeed = Constants.PLAYER_SPEED;
+                        pic.tHit -= pic.tHitActual; // re-use timer variables
                     }
                 }
             }
         }
+
+        // slide along walls if we hit the boundary
+        if (!pic.bounds.contains(movement.position.x, movement.position.y)) {
+            if (pic.state == CharacterComponent.PlayerState.DASHING) {
+                // cancel dash
+                pic.state = CharacterComponent.PlayerState.DASH_ENDING;
+                pic.timeSinceStateChange = 0f;
+            }
+            movement.position.x = Math.max(movement.position.x, pic.bounds.x);
+            movement.position.x = Math.min(movement.position.x, pic.bounds.x + pic.bounds.width);
+            movement.position.y = Math.max(movement.position.y, pic.bounds.y);
+            movement.position.y = Math.min(movement.position.y, pic.bounds.y + pic.bounds.height);
+        }
+
     }
 
 }
