@@ -147,7 +147,7 @@ public class TennisEntry extends ApplicationAdapter {
             engine.addEntity(players[i]);
         }
 
-        // allow players to move
+        // allow players to move, shoot, serve, etc.
         engine.addSystem(new PlayerMovementSystem());
 
         // entity families
@@ -213,7 +213,8 @@ public class TennisEntry extends ApplicationAdapter {
         gameStateEntity.add(gameState);
         engine.addEntity(gameStateEntity);
 
-        // general game logic that needs to happen after everything else
+        // general game logic that needs to happen around everything else
+        engine.addSystem(new GlobalBeforeSystem());
         engine.addSystem(new GlobalAfterSystem());
 
         // add a system to respond to player input (and rumble controllers)
@@ -222,7 +223,6 @@ public class TennisEntry extends ApplicationAdapter {
 
         // ball mechanics
         engine.addSystem(new BallMovementSystem());
-        engine.addSystem(new ServingRobotSystem());
         engine.addSystem(new BounceMarkerUpdateSystem());
 
         // we draw graphics locally, so we need to register
@@ -319,9 +319,14 @@ public class TennisEntry extends ApplicationAdapter {
         // TODO update transformation matrices; move this somewhere?
         for (Entity entity: ballEntities)
         {
-            BallComponent bc = bcm.get(entity);
             MovementComponent mc = mcm.get(entity);
             RenderableComponent rc = rcm.get(entity);
+
+            // negligable shear early-out
+            if (mc.velocity.len() < Constants.EPSILON) {
+                rc.modelInstance.transform.idt().translate(mc.position);
+                continue;
+            }
 
             float axisScale = mc.velocity.len() * Constants.BALL_SHEAR;
             float distanceFromFloor = mc.position.z;
@@ -341,7 +346,12 @@ public class TennisEntry extends ApplicationAdapter {
             _shear_nor.set(mc.velocity).nor();
             _U.set(_shear_nor);
             _V.set(_shear_nor);
-            _U.crs(Constants.UP_VECTOR).nor(); // right of ball
+            if (!_U.isOnLine(Constants.UP_VECTOR)) {
+                _U.crs(Constants.UP_VECTOR).nor(); // right of ball
+            } else {
+                _U.crs(Vector3.X).nor(); // straight-up, must use different "up" vector
+            }
+
             _V.crs(_U).nor();
 
             /*
@@ -441,7 +451,6 @@ public class TennisEntry extends ApplicationAdapter {
             colour.color.set(bc.colour);
             batch.render(rc.modelInstance, environment);
         }
-
         for (int i = 0; i < players.length; ++i)
         {
             CharacterComponent character = picm.get(players[i]);

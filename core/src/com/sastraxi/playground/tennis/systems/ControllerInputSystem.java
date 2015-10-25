@@ -15,7 +15,7 @@ import org.lwjgl.opengl.DisplayMode;
 
 public class ControllerInputSystem extends IteratingSystem {
 
-    private static final int PRIORITY = 0; // before everything
+    private static final int PRIORITY = 1; // after global-before
 
     private static final Family GAME_STATE_FAMILY = Family.all(GameStateComponent.class, CameraManagementComponent.class).get();
 

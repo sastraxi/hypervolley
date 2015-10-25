@@ -5,7 +5,8 @@ import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
-import com.sastraxi.playground.tennis.components.CameraManagementComponent;
+import com.sastraxi.playground.tennis.components.BallComponent;
+import com.sastraxi.playground.tennis.components.CharacterComponent;
 import com.sastraxi.playground.tennis.components.GameStateComponent;
 import com.sastraxi.playground.tennis.game.Constants;
 
@@ -14,9 +15,10 @@ public class GlobalAfterSystem extends IteratingSystem {
     private static final int PRIORITY = 999; // after everything
 
     private static final Family GAME_STATE_FAMILY = Family.all(GameStateComponent.class).get();
+    private static final Family BALL_COMPONENT_FAMILY = Family.all(BallComponent.class).get();
+    private static final Family CHARACTER_COMPONENT_FAMILY = Family.all(CharacterComponent.class).get();
 
     private ComponentMapper<GameStateComponent> gscm = ComponentMapper.getFor(GameStateComponent.class);
-    private ComponentMapper<CameraManagementComponent> ccm = ComponentMapper.getFor(CameraManagementComponent.class);
 
     private Engine engine;
 
@@ -30,10 +32,8 @@ public class GlobalAfterSystem extends IteratingSystem {
         this.engine = engine;
     }
 
-    @Override
-    protected void processEntity(Entity entity, float deltaTime)
+    public void __debug(Entity entity, GameStateComponent gameState)
     {
-        GameStateComponent gameState = gscm.get(entity);
         if (gameState.lastTime == null)
         {
             gameState.lastTime = System.nanoTime();
@@ -57,6 +57,13 @@ public class GlobalAfterSystem extends IteratingSystem {
                 gameState.totalJitter = 0.0;
             }
         }
+    }
+
+    @Override
+    protected void processEntity(Entity entity, float deltaTime)
+    {
+        GameStateComponent gameState = gscm.get(entity);
+        __debug(entity, gameState);
     }
 
 }

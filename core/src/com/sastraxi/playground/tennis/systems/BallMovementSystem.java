@@ -12,7 +12,7 @@ import com.sastraxi.playground.tennis.game.Constants;
 
 public class BallMovementSystem extends IteratingSystem {
 
-    private static final int PRIORITY = 2; // after player movement system
+    private static final int PRIORITY = 2; // before player movement system
 
     private static final Family GAME_STATE_FAMILY = Family.one(GameStateComponent.class).get();
     private ComponentMapper<GameStateComponent> gscm = ComponentMapper.getFor(GameStateComponent.class);
@@ -43,17 +43,18 @@ public class BallMovementSystem extends IteratingSystem {
         MovementComponent movement = mcm.get(entity);
         BallComponent ball = bcm.get(entity);
 
+        assert(ball.path) != null;
+
         ball.path.getPosition(time, movement.position);
         ball.path.getVelocity(time, movement.velocity);
-        ball.shear.set(movement.velocity);
 
         // create a "just bounced" flag
         int previousBounce = ball.currentBounce;
         ball.currentBounce = ball.path.getNumBounces(time);
         ball.justBounced = (previousBounce != ball.currentBounce);
 
-
         if (!ball.path.isAlive(time)) {
+            System.out.println("ball dead");
             for (Entity trackingCameraEntity: engine.getEntitiesFor(TRACKING_CAMERA_FAMILY)) {
                 CameraComponent camera = ccm.get(trackingCameraEntity);
                 camera.entities.remove(entity.getId());
@@ -61,8 +62,5 @@ public class BallMovementSystem extends IteratingSystem {
             engine.removeEntity(entity);
         }
     }
-
-    private static Vector3 _finish = new Vector3(), _isect = new Vector3(), _reflect = new Vector3();
-    private static Plane _workingPlane = new Plane();
 
 }

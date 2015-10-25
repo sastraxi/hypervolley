@@ -7,14 +7,12 @@ import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
 import com.badlogic.gdx.math.*;
 import com.sastraxi.playground.tennis.components.*;
-import com.sastraxi.playground.tennis.game.Constants;
-import com.sastraxi.playground.tennis.game.HitType;
-import com.sastraxi.playground.tennis.game.StraightBallPath;
+import com.sastraxi.playground.tennis.game.*;
 
 public class PlayerMovementSystem extends IteratingSystem {
 
     private static final Family BALL_FAMILY = Family.one(BallComponent.class).get();
-    private static final int PRIORITY = 3; // before ball movement system
+    private static final int PRIORITY = 3; // after ball movement system
 
     private ComponentMapper<CameraManagementComponent> vpmc = ComponentMapper.getFor(CameraManagementComponent.class);
     private ComponentMapper<BallComponent> bcm = ComponentMapper.getFor(BallComponent.class);
@@ -27,7 +25,8 @@ public class PlayerMovementSystem extends IteratingSystem {
 
     private Engine engine;
 
-    Vector3 _tmp = new Vector3(),
+    Vector3 _left_stick = new Vector3(),
+            _tmp = new Vector3(),
             _tmp_player_focal = new Vector3(),
             _velocity = new Vector3();
 
@@ -54,16 +53,167 @@ public class PlayerMovementSystem extends IteratingSystem {
     protected void processEntity(Entity entity, float deltaTime)
     {
         GameStateComponent gameState = gscm.get(engine.getEntitiesFor(GAME_STATE_FAMILY).get(0));
-        float time = gameState.getPreciseTime();
-
-        MovementComponent movement = mc.get(entity);
         CharacterComponent pic = picm.get(entity);
 
         pic.lastState = pic.state;
         pic.timeSinceStateChange += deltaTime;
 
-        // set _tmp to the left control stick
-        _tmp.set(pic.inputFrame.movement, 0f);
+        _left_stick.set(pic.inputFrame.movement, 0f);
+
+        if (pic.state == CharacterComponent.PlayerState.SERVING ||
+            pic.state == CharacterComponent.PlayerState.SERVE_SETUP)
+        {
+            servingMovement(entity, gameState, deltaTime);
+        }
+        else
+        {
+            regularMovement(entity, gameState, deltaTime);
+        }
+    }
+
+    //////////////////////////////////////////////////////////////////
+
+    protected void servingMovement(Entity entity, GameStateComponent gameState, float deltaTime)
+    {
+        float time = gameState.getPreciseTime();
+        CharacterComponent pic = picm.get(entity);
+        MovementComponent movement = mc.get(entity);
+
+        // get/spawn the ball
+        boolean isNewBall = false;
+        Entity ballEntity = pic.getBall(engine);
+        if (ballEntity == null)
+        {
+            // FIXME ctor calls in game loop!!
+            BallPath path = new StaticBallPath(Vector3.Zero);
+            ballEntity = BallFactory.createAndAddBall(engine, path, gameState.getPreciseTime(), false);
+            isNewBall = true;
+        }
+        MovementComponent ballMovement = mc.get(ballEntity);
+        BallComponent ball = bcm.get(ballEntity);
+
+        boolean isHitFrame = (pic.inputFrame.swing && !pic.lastInputFrame.swing) ||
+                             (pic.inputFrame.curve && !pic.lastInputFrame.curve) ||
+                             (pic.inputFrame.lob && !pic.lastInputFrame.lob);
+
+        if (pic.state == CharacterComponent.PlayerState.SERVE_SETUP)
+        {
+            float _heading = 0f;
+
+            // regular movement logic, but constrain to one x value
+            // treat all input below a certain threshold as 0,
+            _left_stick.x = 0f;
+            if (_left_stick.len() >= Constants.CONTROLLER_WALK_MAGNITUDE)
+            {
+                movement.velocity.set(_left_stick).nor();
+                movement.velocity.scl(Constants.PLAYER_SPEED);
+            }
+            else
+            {
+                // dead-zone
+                movement.velocity.set(0f, 0f, 0f);
+            }
+
+            // all input below a second threshold as ramping from 0->1
+            if (isHitFrame || _left_stick.len() < Constants.CONTROLLER_RUN_MAGNITUDE)
+            {
+                // checking isHitFrame makes sure we're aiming the right
+                // direction if we're about to start the actual serve
+                // look towards opposite court
+                movement.velocity.scl((_left_stick.len() - Constants.CONTROLLER_WALK_MAGNITUDE) /
+                        (Constants.CONTROLLER_RUN_MAGNITUDE - Constants.CONTROLLER_WALK_MAGNITUDE));
+                _tmp_player_focal.set(pic.focalPoint).sub(movement.position);
+                _heading = (float) Math.atan2(_tmp_player_focal.y, _tmp_player_focal.x);
+            }
+            else
+            {
+                // look in direction of motion
+                _heading = (float) Math.atan2(_left_stick.y, _left_stick.x);
+            }
+            movement.orientation.set(Constants.UP_VECTOR, MathUtils.radiansToDegrees * _heading);
+
+            // integrate velocity -> position
+            // _left_stick = movement vector
+            _tmp.set(movement.velocity).scl(deltaTime);
+            movement.position.x = (pic.focalPoint.x > 0) ? -Constants.COURT_HALF_WIDTH : Constants.COURT_HALF_WIDTH;
+            movement.position.y = MathUtils.clamp(movement.position.y + _tmp.y, -Constants.COURT_HALF_DEPTH, Constants.COURT_HALF_DEPTH);
+
+            // set ball position based on offset from player
+            // if we got a fresh ball, give it a path we can mess with programmatically
+            StaticBallPath path = (StaticBallPath) ball.path;
+            _tmp.set(Constants.SERVING_BALL_START).add(movement.position); // new path position
+            if (isNewBall) {
+                path.position.set(_tmp);
+                path.velocity.set(0f, 0f, 0f);
+                // FIXME as player movement system is after ball movement system, the ball we create here doesn't get updated before it is rendered.
+                // FIXME so do the ball movement system's job for it, but only on the first frame of its existence
+                path.getPosition(time, ballMovement.position);
+                path.getVelocity(time, ballMovement.velocity);
+            } else {
+                path.velocity.set(path.position).sub(_tmp).scl(deltaTime); // TODO better velocity estimation (lagged, 1st order)
+                path.position.set(_tmp);
+            }
+
+            // if we hit
+            if (isHitFrame)
+            {
+                // FIXME ctor call in game loop
+                _ball_target.set(_tmp.x, _tmp.y);
+                ball.path = StraightBallPath.fromMaxHeightTarget(_tmp, Constants.SERVING_APEX, _ball_target, time);
+                ball.colour = Constants.BALL_COLOUR;
+                ball.lastHitByPlayerEID = entity.getId();
+                ball.currentBounce = 0;
+                pic.state = CharacterComponent.PlayerState.SERVING;
+
+                // determine when the ball will attain that optimal height (quadratic eqn.)
+                // only process a hit if we're on the positive side (falling motion)
+                ball.path.getVelocity(time, _tmp);
+                float z0 = _tmp.z;
+                float c = Constants.SERVING_IDEAL_HEIGHT - Constants.SERVING_BALL_START.z;
+                float negative_b = z0;
+                float t_optimal = negative_b + (float) Math.sqrt(negative_b * negative_b - 2f*Constants.G*c);
+                t_optimal /= Constants.G;
+
+                System.out.println("Hit in " + t_optimal);
+
+                // best time to hit
+                pic.hitFrame = gameState.getTick() + (long) Math.floor(t_optimal * Constants.FRAME_RATE);
+            }
+
+        }
+        else if (pic.state == CharacterComponent.PlayerState.SERVING)
+        {
+            // if we hit the ball, make it fly!
+            if (isHitFrame)
+            {
+                // set up the ball hit
+                if (pic.inputFrame.swing)       pic.chosenHitType = HitType.NORMAL;
+                else if (pic.inputFrame.curve)  pic.chosenHitType = HitType.CURVE;
+                else if (pic.inputFrame.lob)    pic.chosenHitType = HitType.LOB;
+                performHit(entity.getId(), pic, ball, ballMovement, gameState);
+
+                // use transition HIT_ENDING state to smoothly give character control
+                pic.state = CharacterComponent.PlayerState.HIT_ENDING;
+                pic.originalSpeed = 0f;
+                pic.tHit = 0f;
+                pic.tHitActual = Constants.SERVING_RECOVERY_TIME;
+            }
+            // if we caught the ball instead of hitting it, return to serve setup
+            else if (ballMovement.velocity.z < 0 && ballMovement.position.z <= Constants.SERVING_BALL_START.z)
+            {
+                pic.state = CharacterComponent.PlayerState.SERVE_SETUP;
+                ball.path = new StaticBallPath(ballMovement.position, ballMovement.velocity);
+                ball.currentBounce = 0;
+            }
+
+        }
+    }
+
+    protected void regularMovement(Entity entity, GameStateComponent gameState, float deltaTime)
+    {
+        float time = gameState.getPreciseTime();
+        CharacterComponent pic = picm.get(entity);
+        MovementComponent movement = mc.get(entity);
 
         // get original orientation (only Z component) in radians
         float _rot = movement.orientation.getRollRad();
@@ -129,16 +279,16 @@ public class PlayerMovementSystem extends IteratingSystem {
         {
             // regular movement logic
             // treat all input below a certain threshold as 0,
-            if (_tmp.len() >= Constants.CONTROLLER_WALK_MAGNITUDE) {
+            if (_left_stick.len() >= Constants.CONTROLLER_WALK_MAGNITUDE) {
 
-                movement.velocity.set(_tmp).nor();
+                movement.velocity.set(_left_stick).nor();
                 movement.velocity.scl(Constants.PLAYER_SPEED);
-                _rot = (float) Math.atan2(_tmp.y, _tmp.x);
+                _rot = (float) Math.atan2(_left_stick.y, _left_stick.x);
 
                 // all input below a second threshold as ramping from 0->1
                 float _heading;
-                if (_tmp.len() < Constants.CONTROLLER_RUN_MAGNITUDE) {
-                    movement.velocity.scl((_tmp.len() - Constants.CONTROLLER_WALK_MAGNITUDE) /
+                if (_left_stick.len() < Constants.CONTROLLER_RUN_MAGNITUDE) {
+                    movement.velocity.scl((_left_stick.len() - Constants.CONTROLLER_WALK_MAGNITUDE) /
                             (Constants.CONTROLLER_RUN_MAGNITUDE - Constants.CONTROLLER_WALK_MAGNITUDE));
                     _tmp_player_focal.set(pic.focalPoint).sub(movement.position);
                     _heading = (float) Math.atan2(_tmp_player_focal.y, _tmp_player_focal.x);
@@ -171,19 +321,20 @@ public class PlayerMovementSystem extends IteratingSystem {
         }
 
         // integrate velocity -> position
-        // _tmp = movement vector
+        // _left_stick = movement vector
         if (pic.state != CharacterComponent.PlayerState.HITTING) {
             _tmp.set(movement.velocity).scl(deltaTime);
             movement.position.add(_tmp);
         }
 
         // the player's interactions with the game ball.
-        if (pic.ball != null) {
-            MovementComponent ballMovement = mc.get(pic.ball);
-            BallComponent ballComponent = bcm.get(pic.ball);
+        Entity ball = pic.getBall(engine);
+        if (ball != null) {
+            MovementComponent ballMovement = mc.get(ball);
+            BallComponent ballComponent = bcm.get(ball);
 
             // don't allow the ball to be hit in succession by the same player.
-            if (ballComponent.lastHitByEID == null || ballComponent.lastHitByEID != entity.getId()) {
+            if (ballComponent.lastHitByPlayerEID == null || ballComponent.lastHitByPlayerEID != entity.getId()) {
                 if (pic.state != CharacterComponent.PlayerState.HITTING) {
 
                     float cosHeading = (float) Math.cos(_rot);
@@ -387,44 +538,7 @@ public class PlayerMovementSystem extends IteratingSystem {
 
                     // ball-hitting
                     if (pic.tHit >= pic.tHitActual) {
-
-                        // normal hits by default
-                        if (pic.chosenHitType == null) {
-                            pic.chosenHitType = HitType.NORMAL;
-                        }
-
-                        // perfect frame calculation
-                        ballComponent.colour = pic.chosenHitType.getColour();
-                        if (pic.hitFrame != null) {
-                            int framesAway = (int) (gameState.getTick() - pic.hitFrame);
-                            if (framesAway < Constants.PERFECT_HIT_FRAMES) {
-                                ballComponent.colour = HitType.POWER.getColour();
-                            } else {
-                                System.out.println("missed by " + (framesAway - Constants.PERFECT_HIT_FRAMES + 1)  + " :(");
-                            }
-                        }
-
-                        // decide the return position
-                        pic.shotBounds.getCenter(_ball_target);
-                        _ball_target.add(0.5f * pic.inputFrame.movement.x * pic.shotBounds.width,
-                                0.5f * pic.inputFrame.movement.y * pic.shotBounds.height);
-
-                        // craft the new path.
-                        // FIXME ctor usage in game loop
-                        if (pic.chosenHitType == HitType.LOB) {
-                            ballComponent.path = StraightBallPath.fromAngleTarget(ballMovement.position, Constants.LOB_ANGLE, _ball_target, time);
-                        } else {
-                            ballComponent.path = StraightBallPath.fromMaxHeightTarget(ballMovement.position, Constants.HIT_HEIGHT, _ball_target, time);
-                        }
-                        ballComponent.currentBounce = 0;
-                        ballComponent.currentVolley += 1;
-                        ballComponent.lastHitByEID = entity.getId();
-                        ServingRobotSystem.spawnBounceMarkers(engine, pic.ball);
-
-                        // that's all she wrote. start recovery
-                        pic.state = CharacterComponent.PlayerState.HIT_ENDING;
-                        if (pic.originalSpeed > Constants.PLAYER_SPEED) pic.originalSpeed = Constants.PLAYER_SPEED;
-                        pic.tHit -= pic.tHitActual; // re-use timer variables
+                        performHit(entity.getId(), pic, ballComponent, ballMovement, gameState);
                     }
                 }
             }
@@ -445,4 +559,54 @@ public class PlayerMovementSystem extends IteratingSystem {
 
     }
 
+    /**
+     * Performs a hit. Configure pic/ball movement before call!
+     * Sets pic's state to HIT_ENDING.
+     *
+     * @param thisEID input
+     * @param pic input/ouput
+     * @param ball output
+     * @param ballMovement input
+     * @param gameState input
+     */
+    protected void performHit(long thisEID, CharacterComponent pic, BallComponent ball, MovementComponent ballMovement, GameStateComponent gameState)
+    {
+        // normal hits by default
+        if (pic.chosenHitType == null) {
+            pic.chosenHitType = HitType.NORMAL;
+        }
+
+        // perfect frame calculation
+        ball.colour = pic.chosenHitType.getColour();
+        if (pic.hitFrame != null) {
+            int framesAway = (int) Math.abs(gameState.getTick() - pic.hitFrame);
+            if (framesAway < Constants.PERFECT_HIT_FRAMES) {
+                ball.colour = HitType.POWER.getColour();
+            } else {
+                System.out.println("missed by " + (framesAway - Constants.PERFECT_HIT_FRAMES + 1)  + " :(");
+            }
+        }
+
+        // decide the return position
+        pic.shotBounds.getCenter(_ball_target);
+        _ball_target.add(0.5f * _left_stick.x * pic.shotBounds.width,
+                0.5f * _left_stick.y * pic.shotBounds.height);
+
+        // craft the new path.
+        // FIXME ctor usage in game loop
+        if (pic.chosenHitType == HitType.LOB) {
+            ball.path = StraightBallPath.fromAngleTarget(ballMovement.position, Constants.LOB_ANGLE, _ball_target, gameState.getPreciseTime());
+        } else {
+            ball.path = StraightBallPath.fromMaxHeightTarget(ballMovement.position, Constants.HIT_HEIGHT, _ball_target, gameState.getPreciseTime());
+        }
+        ball.currentBounce = 0;
+        ball.currentVolley += 1;
+        ball.lastHitByPlayerEID = thisEID;
+        BallFactory.addBounceMarkers(engine, pic.getBall(engine));
+
+        // that's all she wrote. start recovery
+        pic.state = CharacterComponent.PlayerState.HIT_ENDING;
+        if (pic.originalSpeed > Constants.PLAYER_SPEED) pic.originalSpeed = Constants.PLAYER_SPEED;
+        pic.tHit -= pic.tHitActual; // re-use timer variables
+    }
 }

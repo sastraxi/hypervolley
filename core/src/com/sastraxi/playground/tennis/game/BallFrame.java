@@ -35,4 +35,14 @@ public class BallFrame implements Comparable<BallFrame> {
         return new Ray(position, velocity);
     }
 
+    @Override
+    public String toString() {
+        return "BallFrame{" +
+                "planeNormal=" + planeNormal +
+                ", position=" + position +
+                ", velocity=" + velocity +
+                ", bounceNumber=" + bounceNumber +
+                ", time=" + time +
+                '}';
+    }
 }

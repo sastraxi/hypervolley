@@ -1,6 +1,7 @@
 package com.sastraxi.playground.tennis.components;
 
 import com.badlogic.ashley.core.Component;
+import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
@@ -16,10 +17,10 @@ public class CharacterComponent extends Component {
 
     public enum PlayerState {
         NONE,
-        DASHING,
-        DASH_ENDING,
-        HITTING,
-        HIT_ENDING
+        DASHING, DASH_ENDING,
+        HITTING, HIT_ENDING,
+        SERVE_SETUP /* moving vertically */,
+        SERVING /* serve equiv. of HITTING */
     }
 
     public CharacterComponent(PlayerType type, Rectangle bounds, Rectangle shotBounds) {
@@ -31,11 +32,15 @@ public class CharacterComponent extends Component {
         focalPoint.set(focalPoint2D, 0f);
     }
 
-    // ball set by ServingRobotSystem
-    public Entity ball = null; // FIXME this should be an entity ID and a getter
+    // ball set by GameRoundSystem
+    public Long ballEID = null;
     public final Vector3 focalPoint = new Vector3(); // a place to look at on the other side of the court
     public final Rectangle shotBounds;
     public final Rectangle bounds;
+
+    public Entity getBall(Engine engine) {
+        return ballEID == null ? null : engine.getEntity(ballEID);
+    }
 
     // movement state
     public PlayerState state = PlayerState.NONE;

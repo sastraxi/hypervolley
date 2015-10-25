@@ -12,10 +12,9 @@ import com.sastraxi.playground.tennis.game.Constants;
 public class BallComponent extends Component {
 
     public Color colour;
-    public Vector3 shear;
     public int currentBounce, currentVolley;
     public BallPath path;
-    public Long lastHitByEID = null;
+    public Long lastHitByPlayerEID = null;
     public boolean justBounced;
 
     // getPosition(t) / getVelocity(t) through path
@@ -26,7 +25,6 @@ public class BallComponent extends Component {
         this.currentBounce = 0;
         this.currentVolley = 0;
         this.path = path;
-        shear = new Vector3(0f, 0f, 0f);
     }
 
 }

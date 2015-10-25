@@ -15,8 +15,7 @@ import java.util.TreeSet;
  */
 public class StraightBallPath implements BallPath {
 
-    private static final int NUM_BOUNCES = 1;
-    public static final int MAX_BOUNCES = 50; // FIXME if there are more bounces, the ball (path) will ignore them!
+    public static final int MAX_BOUNCES = 2; // FIXME if there are more bounces, the ball (path) will ignore them!
 
     private BallFrame origin;
     private NavigableSet<BallFrame> bounces = new TreeSet<>();
@@ -67,8 +66,14 @@ public class StraightBallPath implements BallPath {
         float t_end = t_apex + (float) Math.sqrt(t_apex * t_apex + (2 * position.z / Constants.G));
 
         _velocity.set(bounceTarget, 0f).sub(position.x, position.y, 0f);
-        _velocity.x /= t_end;
-        _velocity.y /= t_end;
+        if (_velocity.len() < Constants.EPSILON) {
+            // straight up
+            _velocity.x = 0f;
+            _velocity.y = 0f;
+        } else {
+            _velocity.x /= t_end;
+            _velocity.y /= t_end;
+        }
         _velocity.z = Constants.G * t_apex;
 
         return new StraightBallPath(position, _velocity, timeBase);
@@ -92,7 +97,7 @@ public class StraightBallPath implements BallPath {
         // collide with either side wall or the floor, until we leave the court.
         int numFloorBounces = 0, numBounces = 1;
         BallFrame lastFrame = this.origin;
-        while (numBounces <= MAX_BOUNCES && bounces.isEmpty() || Math.abs(bounces.last().position.x) < Constants.LEVEL_HALF_WIDTH)
+        while (numBounces <= MAX_BOUNCES && (bounces.isEmpty() || Math.abs(bounces.last().position.x) < Constants.LEVEL_HALF_WIDTH))
         {
             // try colliding with the floor.
             BallFrame floorBounce = new BallFrame();
@@ -131,10 +136,20 @@ public class StraightBallPath implements BallPath {
         }
 
         // drop last bounce (post-death) and figure out death time (x movement is constant)
-        if (!bounces.isEmpty()) bounces.pollLast();
-        deathTime = timeBase + (velocity.x > 0
-                ? (Constants.LEVEL_HALF_WIDTH - position.x) / velocity.x
-                : (position.x + Constants.LEVEL_HALF_WIDTH) / -velocity.x);
+        if (!bounces.isEmpty()) {
+            // death time is, by default, when the "max bounce" was reached
+            deathTime = bounces.pollLast().time;
+        }
+        if (!velocity.isOnLine(Vector3.Z)) {
+            // it might also be when it leaves the arena on the x-axis
+            float candidateTime = timeBase + (velocity.x > 0
+                    ? (Constants.LEVEL_HALF_WIDTH - position.x) / velocity.x
+                    : (position.x + Constants.LEVEL_HALF_WIDTH) / -velocity.x);
+            if (candidateTime < deathTime) {
+                deathTime = candidateTime;
+            }
+        }
+
     }
 
     private static Vector2 _dist = new Vector2(), _velo_2d = new Vector2();
