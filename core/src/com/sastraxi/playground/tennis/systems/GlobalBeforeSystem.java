@@ -49,6 +49,7 @@ public class GlobalBeforeSystem extends IteratingSystem {
             // set the first character to be our server
             for (Entity e: engine.getEntitiesFor(CHARACTER_COMPONENT_FAMILY))
             {
+                ccm.get(e).lastState = ccm.get(e).state;
                 ccm.get(e).state = CharacterComponent.PlayerState.SERVE_SETUP;
                 break;
             }

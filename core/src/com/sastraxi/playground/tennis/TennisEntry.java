@@ -299,12 +299,13 @@ public class TennisEntry extends ApplicationAdapter {
         */
 
         // process all systems
-        gameState.tick();
         engine.update(Constants.FRAME_TIME_SEC);
         // camController.update();
 
         // render
         renderImpl();
+
+        gameState.tick();
 	}
 
     private Vector3 _shear_nor  = new Vector3();

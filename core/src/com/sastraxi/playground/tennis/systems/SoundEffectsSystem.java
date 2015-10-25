@@ -24,7 +24,7 @@ public class SoundEffectsSystem extends EntitySystem {
     private GameStateComponent gameState;
     private ImmutableArray<Entity> ballEntities, playerEntities;
 
-    private final Sound bounceSound, hitSound;
+    private final Sound bounceSound, hitSound, beginServeSound, serveThrowSound, cancelServeSound;
 
     private final Vector3 _velo = new Vector3();
 
@@ -32,6 +32,9 @@ public class SoundEffectsSystem extends EntitySystem {
         super(PRIORITY);
         bounceSound = Gdx.audio.newSound(Gdx.files.internal("sounds/bounce.wav"));
         hitSound = Gdx.audio.newSound(Gdx.files.internal("sounds/hit.wav"));
+        beginServeSound = Gdx.audio.newSound(Gdx.files.internal("sounds/serve-begin.wav"));
+        serveThrowSound = Gdx.audio.newSound(Gdx.files.internal("sounds/serve-throw.wav"));
+        cancelServeSound = Gdx.audio.newSound(Gdx.files.internal("sounds/serve-cancel.wav"));
     }
 
     @Override
@@ -53,25 +56,47 @@ public class SoundEffectsSystem extends EntitySystem {
             MovementComponent ballpos = mcm.get(ballEntity);
             if (ball.justBounced) {
                 // use x axis of ball position for directional sound.
-                float pos = (ballpos.position.x / Constants.LEVEL_HALF_WIDTH);
-                bounceSound.play(Constants.SOUND_BOUNCE_VOLUME, 1f, pos);
+                float pan = (ballpos.position.x / Constants.LEVEL_HALF_WIDTH);
+                bounceSound.play(Constants.SOUND_BOUNCE_VOLUME, 1f, pan);
             }
         }
 
-        // hit sounds
+        // player sounds
         for (Entity playerEntity: playerEntities)
         {
             CharacterComponent pic = picm.get(playerEntity);
             MovementComponent movement = mcm.get(playerEntity);
+            float pan = (movement.position.x / Constants.LEVEL_HALF_WIDTH); // use x axis of player position for directional sound.
+
             if (pic.justHitOrServed())
             {
                 MovementComponent ballMovement = mcm.get(pic.getBall(engine));
-                float pos = (movement.position.x / Constants.LEVEL_HALF_WIDTH); // use x axis of player position for directional sound.
                 float lerp = MathUtils.clamp(ballMovement.velocity.len() / Constants.SOUND_HIT_MAX_VELOCITY, 0f, 1f);
-                System.out.println("hit volume: " + lerp);
-                hitSound.play(Constants.SOUND_HIT_MAX_VOLUME * lerp, 1f, pos);
+                play(pic, hitSound, Constants.SOUND_HIT_MAX_VOLUME * lerp, 1f, pan);
+            }
+            else if (pic.justBeganServing(gameState.getTick()))
+            {
+                System.out.println("serve begin");
+                play(pic, beginServeSound, Constants.SOUND_SERVE_VOLUME, 1f, pan);
+            }
+            else if (pic.justThrewServe())
+            {
+                play(pic, serveThrowSound, Constants.SOUND_SERVE_VOLUME, 1f, pan);
+            }
+            else if (pic.justCancelledServe())
+            {
+                play(pic, cancelServeSound, Constants.SOUND_SERVE_VOLUME, 1f, pan);
             }
         }
 
+    }
+
+    private void play(CharacterComponent pic, Sound sound, float volume, float pitch, float pan)
+    {
+        if (pic.currentSound != null) {
+            pic.currentSound.stop(pic.currentSoundId);
+        }
+        pic.currentSound = sound;
+        pic.currentSoundId = sound.play(volume, pitch, pan);
     }
 }

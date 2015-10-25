@@ -85,6 +85,7 @@ public class PlayerMovementSystem extends IteratingSystem {
         if (ballEntity == null)
         {
             // FIXME ctor calls in game loop!!
+            pic.lastState = CharacterComponent.PlayerState.NONE;
             BallPath path = new StaticBallPath(Vector3.Zero);
             ballEntity = BallFactory.createAndAddBall(engine, path, gameState.getPreciseTime(), false);
             isNewBall = true;

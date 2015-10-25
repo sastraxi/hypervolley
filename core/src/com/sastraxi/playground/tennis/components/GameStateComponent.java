@@ -11,7 +11,7 @@ public class GameStateComponent extends Component {
     public Long firstFrameTime, lastSampleTime, lastTime;
     public double totalJitter;
 
-    private long frames;
+    private long frames = 0;
 
     public void tick() {
         frames += 1;

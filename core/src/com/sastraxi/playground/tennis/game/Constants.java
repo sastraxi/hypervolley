@@ -156,8 +156,8 @@ public class Constants {
     public static final float HIT_HEIGHT = PLAYER_HEIGHT * 0.6f;
     public static final int PERFECT_HIT_FRAMES = 3;
 
-    public static final float SOUND_HIT_MAX_VOLUME = 0.6f;
+    public static final float SOUND_HIT_MAX_VOLUME = 0.9f;
     public static final float SOUND_HIT_MAX_VELOCITY = 400f; // anything >= this is max. volume
-    public static final float SOUND_BOUNCE_VOLUME = 0.4f;
-
+    public static final float SOUND_BOUNCE_VOLUME = 0.7f;
+    public static final float SOUND_SERVE_VOLUME = 0.65f;
 }
