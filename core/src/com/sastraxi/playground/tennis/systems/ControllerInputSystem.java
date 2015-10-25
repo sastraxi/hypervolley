@@ -58,19 +58,17 @@ public class ControllerInputSystem extends IteratingSystem {
         pic.inputFrame.swing = buttons.a;
         pic.inputFrame.curve = buttons.b;
         pic.inputFrame.lob = buttons.x;
-
         boolean isLeftBumperPressed = Math.abs(axes.lt) > 0.5f;
         boolean isRightBumperPressed = Math.abs(axes.rt) > 0.5f;
         pic.inputFrame.dash = isLeftBumperPressed | isRightBumperPressed;
 
-        // hacky public gamestate stuff
+        // FIXME hacky public gamestate stuff
         pic.inputFrame.changeCamera = buttons.back;
         if (pic.inputFrame.changeCamera && !pic.lastInputFrame.changeCamera)
         {
             CameraManagementComponent viewpoint = ccm.get(gameStateEntity);
             viewpoint.cycle();
         }
-
         pic.inputFrame.toggleFullscreen = buttons.start;
         if (pic.inputFrame.toggleFullscreen && !pic.lastInputFrame.toggleFullscreen)
         {

@@ -113,11 +113,11 @@ public class Constants {
     public static final float BALL_THINNING = 0.07f;
 
     public static final float PLAYER_SPEED = 140f;
-    public static final float PLAYER_SWING_SPEED_CAP = 160f; // TODO maybe allow a bit of speed-up on shots even if already @ player speed?
     public static final float PLAYER_MIN_REACH = 1.8f * PLAYER_RADIUS;       // units
     public static final float PLAYER_MAX_REACH = 2.5f * PLAYER_RADIUS;       // units
     public static final float PLAYER_MAX_SWING_SPEEDUP = Constants.PLAYER_SPEED * 0.3f; // units
     public static final float PLAYER_MAX_SWING_SLOWDOWN = Constants.PLAYER_SPEED * 0.6f; // units
+    public static final float PLAYER_SWING_SPEED_CAP = 180f; // allow a bit of speed-up on shots even if already @ player speed?
     public static final float PLAYER_HALF_SIDESTEP = Constants.PLAYER_RADIUS * 2f; // units
     public static final float PLAYER_BALL_SWING_DURATION = Constants.FRAME_TIME_SEC * 4; // 4 frames
     public static final float PLAYER_BALL_STRIKE_LEEWAY = Constants.PLAYER_RADIUS * 4f; // how far away from perfect can we be and still hit the ball?
@@ -137,9 +137,6 @@ public class Constants {
     public static final int DETAIL_LEVEL_SPHERE = 32;
     public static final int DETAIL_LEVEL_CIRCLE = 64;
 
-    public static final float BALL_SPAWN_COURT_COVERAGE = 0.6f;
-    public static final float BALL_TARGET_COURT_COVERAGE = 6f;
-
     public static final float BOUNCE_MARKER_RADIUS = 5f;
     public static final float JUICY_ANIMATION_LENGTH = 0.2f;            // used for bounce marker
     public static final float JUICY_ROTATIONS_PER_SECOND = 0.2f;
@@ -158,5 +155,9 @@ public class Constants {
     // how high balls should be
     public static final float HIT_HEIGHT = PLAYER_HEIGHT * 0.6f;
     public static final int PERFECT_HIT_FRAMES = 3;
+
+    public static final float SOUND_HIT_MAX_VOLUME = 0.6f;
+    public static final float SOUND_HIT_MAX_VELOCITY = 400f; // anything >= this is max. volume
+    public static final float SOUND_BOUNCE_VOLUME = 0.4f;
 
 }

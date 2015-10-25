@@ -343,7 +343,7 @@ public class PlayerMovementSystem extends IteratingSystem {
                     // determine t_min and t_max, the time frame in which we can hit the ball
                     // given max. speed up/slow down from current speed on the same trajectory
                     float currentSpeed = movement.velocity.len();
-                    float maxTheoreticalSpeed = pic.state == CharacterComponent.PlayerState.DASHING ? Constants.DASH_SPEED : Constants.PLAYER_SPEED;
+                    float maxTheoreticalSpeed = pic.state == CharacterComponent.PlayerState.DASHING ? Constants.DASH_SPEED : Constants.PLAYER_SWING_SPEED_CAP;
                     float maxSpeed = Math.min(currentSpeed + Constants.PLAYER_MAX_SWING_SPEEDUP, maxTheoreticalSpeed);
                     float minSpeed = Math.max(currentSpeed - Constants.PLAYER_MAX_SWING_SLOWDOWN, 0f);
 
@@ -597,6 +597,9 @@ public class PlayerMovementSystem extends IteratingSystem {
         } else {
             ball.path = StraightBallPath.fromMaxHeightTarget(ballMovement.position, Constants.HIT_HEIGHT, _ball_target, gameState.getPreciseTime());
         }
+        // FIXME this is only for lower-priority (i.e. later) systems that look @ ball movement after player changes it, i.e. SoundEffectsSystem
+        ball.path.getPosition(gameState.getPreciseTime(), ballMovement.position);
+        ball.path.getVelocity(gameState.getPreciseTime(), ballMovement.velocity);
         ball.currentBounce = 0;
         ball.currentVolley += 1;
         ball.lastHitByPlayerEID = thisEID;

@@ -42,11 +42,17 @@ public class CharacterComponent extends Component {
         return ballEID == null ? null : engine.getEntity(ballEID);
     }
 
-    // movement state
+    // player state
     public PlayerState state = PlayerState.NONE;
     public PlayerState lastState = PlayerState.NONE;
     public float timeSinceStateChange = 0f;
     public float dashMeter = Constants.DASH_MAX_METER;
+
+    public boolean justHitOrServed()
+    {
+        return (lastState == CharacterComponent.PlayerState.HITTING && state == CharacterComponent.PlayerState.HIT_ENDING) ||
+               (lastState == CharacterComponent.PlayerState.SERVING && state == CharacterComponent.PlayerState.HIT_ENDING);
+    }
 
     // hitting
     public float tHitActual = 0f;

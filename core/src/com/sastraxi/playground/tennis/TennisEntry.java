@@ -221,6 +221,9 @@ public class TennisEntry extends ApplicationAdapter {
         engine.addSystem(new ControllerInputSystem());
         engine.addSystem(new ControllerFeedbackSystem());
 
+        // sound
+        engine.addSystem(new SoundEffectsSystem());
+
         // ball mechanics
         engine.addSystem(new BallMovementSystem());
         engine.addSystem(new BounceMarkerUpdateSystem());
