@@ -126,7 +126,7 @@ public class Constants {
 
     // serving
     public static final float SERVING_RECOVERY_TIME = 0.4f;
-    public static final float SERVING_APEX = PLAYER_HEIGHT * 1.8f;
+    public static final float SERVING_APEX = PLAYER_HEIGHT * 1.5f;
     public static final float SERVING_IDEAL_HEIGHT = PLAYER_HEIGHT * 1.3f; // N.B. must be between apex + ball start z
     public static final Vector3 SERVING_BALL_START = new Vector3(2f * PLAYER_HALF_SIDESTEP, 0f, PLAYER_HEIGHT * 0.5f);
 

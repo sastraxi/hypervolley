@@ -141,7 +141,7 @@ public class PlayerMovementSystem extends IteratingSystem {
             // set ball position based on offset from player
             // if we got a fresh ball, give it a path we can mess with programmatically
             StaticBallPath path = (StaticBallPath) ball.path;
-            _tmp.set(Constants.SERVING_BALL_START).add(movement.position); // new path position
+            _tmp.set(Constants.SERVING_BALL_START).rotate(Vector3.Z, _heading * MathUtils.radiansToDegrees).add(movement.position); // new path position
             if (isNewBall) {
                 path.position.set(_tmp);
                 path.velocity.set(0f, 0f, 0f);
@@ -173,8 +173,6 @@ public class PlayerMovementSystem extends IteratingSystem {
                 float negative_b = z0;
                 float t_optimal = negative_b + (float) Math.sqrt(negative_b * negative_b - 2f*Constants.G*c);
                 t_optimal /= Constants.G;
-
-                System.out.println("Hit in " + t_optimal);
 
                 // best time to hit
                 pic.hitFrame = gameState.getTick() + (long) Math.floor(t_optimal * Constants.FRAME_RATE);
