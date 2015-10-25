@@ -37,11 +37,8 @@ public class TennisEntry extends ApplicationAdapter {
     final ComponentMapper<CharacterComponent> picm = ComponentMapper.getFor(CharacterComponent.class);
     final ComponentMapper<MovementComponent> mcm = ComponentMapper.getFor(MovementComponent.class);
     final ComponentMapper<RenderableComponent> rcm = ComponentMapper.getFor(RenderableComponent.class);
-    final ComponentMapper<ShadowComponent> scm = ComponentMapper.getFor(ShadowComponent.class);
     final ComponentMapper<BallComponent> bcm = ComponentMapper.getFor(BallComponent.class);
     final ComponentMapper<AlertedComponent> acm = ComponentMapper.getFor(AlertedComponent.class);
-
-    long lastUpdateTime;
 
     // entities and game logic
     Engine engine;
@@ -536,7 +533,6 @@ public class TennisEntry extends ApplicationAdapter {
 
     @Override
     public void resume() {
-        lastUpdateTime = System.nanoTime();
     }
 
     private void saveScreenshot() {

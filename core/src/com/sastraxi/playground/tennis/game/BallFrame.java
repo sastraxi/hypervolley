@@ -35,4 +35,4 @@ public class BallFrame implements Comparable<BallFrame> {
         return new Ray(position, velocity);
     }
 
-};
+}

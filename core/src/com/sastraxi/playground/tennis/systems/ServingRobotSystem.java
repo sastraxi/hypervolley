@@ -131,8 +131,6 @@ public class ServingRobotSystem extends IteratingSystem {
             // graphics
             RenderableComponent rc = new RenderableComponent(new ModelInstance(ballModel));
             lastSpawnedBall.add(rc);
-            ShadowComponent sc = new ShadowComponent(new ModelInstance(shadowModel));
-            lastSpawnedBall.add(sc);
 
             engine.addEntity(lastSpawnedBall);
 

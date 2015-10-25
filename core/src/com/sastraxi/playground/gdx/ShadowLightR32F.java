@@ -34,7 +34,6 @@ public class ShadowLightR32F extends DirectionalLight implements ShadowMap, Disp
     protected final Vector3 tmpV = new Vector3();
     protected final TextureDescriptor textureDesc;
 
-    /** @deprecated Experimental, likely to change, do not use! */
     public ShadowLightR32F (int shadowMapWidth, int shadowMapHeight, float shadowViewportWidth, float shadowViewportHeight,
                                    float shadowNear, float shadowFar) {
         fbo = new FrameBufferR32F(shadowMapWidth, shadowMapHeight, true);
