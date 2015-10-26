@@ -53,9 +53,9 @@ public class Constants {
     public static final float DASH_SPEED = 450f;
     public static final float DASH_ACCEL = 0.04f; // seconds to get up to speed
     public static final float DASH_DECEL = 0.09f; // seconds to slow down to regular speed
-    public static final float DASH_MAX_METER = 0.8f; // how many seconds it takes to recharge
-    public static final float DASH_METER_DEPLETION_RATE = 4f; // how many times faster it depletes
-    public static final float DASH_MIN_METER = 0.8f; // this much of the meter must be full to dash
+    public static final float DASH_MAX_METER = 0.4f; // how many seconds it takes to recharge
+    public static final float DASH_METER_DEPLETION_RATE = 3f; // how many times faster it depletes
+    public static final float DASH_MIN_METER = 0.4f; // this much of the meter must be full to dash
 
     public static final Plane LEVEL_GROUND_PLANE = new Plane(Constants.UP_VECTOR, 0f);
     public static final Plane LEVEL_FAR_PLANE = new Plane(new Vector3(0f, 1f, 0f), LEVEL_HALF_DEPTH);
@@ -160,4 +160,5 @@ public class Constants {
     public static final float SOUND_HIT_MAX_VELOCITY = 400f; // anything >= this is max. volume
     public static final float SOUND_BOUNCE_VOLUME = 0.7f;
     public static final float SOUND_SERVE_VOLUME = 0.65f;
+    public static final float SOUND_ACQUIRE_VOLUME = 0.6f;
 }

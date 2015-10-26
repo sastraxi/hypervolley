@@ -69,6 +69,10 @@ public class CharacterComponent extends Component {
         return (lastState != state && lastState == PlayerState.SERVING);
     }
 
+    public boolean justStartedHitting() {
+        return (lastState != state && state == PlayerState.HITTING);
+    }
+
     // hitting the game ball
     public float tHitActual = 0f;
     public float speedDelta = 0f;

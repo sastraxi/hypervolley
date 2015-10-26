@@ -24,7 +24,7 @@ public class SoundEffectsSystem extends EntitySystem {
     private GameStateComponent gameState;
     private ImmutableArray<Entity> ballEntities, playerEntities;
 
-    private final Sound bounceSound, hitSound, beginServeSound, serveThrowSound, cancelServeSound;
+    private final Sound bounceSound, hitSound, beginServeSound, serveThrowSound, cancelServeSound, acquireBallSound;
 
     private final Vector3 _velo = new Vector3();
 
@@ -35,6 +35,7 @@ public class SoundEffectsSystem extends EntitySystem {
         beginServeSound = Gdx.audio.newSound(Gdx.files.internal("sounds/serve-begin.wav"));
         serveThrowSound = Gdx.audio.newSound(Gdx.files.internal("sounds/serve-throw.wav"));
         cancelServeSound = Gdx.audio.newSound(Gdx.files.internal("sounds/serve-cancel.wav"));
+        acquireBallSound = Gdx.audio.newSound(Gdx.files.internal("sounds/acquire-ball.wav"));
     }
 
     @Override
@@ -86,6 +87,10 @@ public class SoundEffectsSystem extends EntitySystem {
             else if (pic.justCancelledServe())
             {
                 play(pic, cancelServeSound, Constants.SOUND_SERVE_VOLUME, 1f, pan);
+            }
+            else if (pic.justStartedHitting())
+            {
+                play(pic, acquireBallSound, Constants.SOUND_ACQUIRE_VOLUME, 1f, pan);
             }
         }
 
