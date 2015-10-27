@@ -9,7 +9,9 @@ import com.badlogic.ashley.utils.ImmutableArray;
 import com.badlogic.gdx.math.MathUtils;
 import com.ivan.xinput.XInputDevice;
 import com.sastraxi.playground.tennis.components.*;
-import com.sastraxi.playground.tennis.game.Constants;
+import com.sastraxi.playground.tennis.Constants;
+import com.sastraxi.playground.tennis.components.character.CharacterComponent;
+import com.sastraxi.playground.tennis.components.character.ControllerInputComponent;
 
 import java.util.ArrayList;
 import java.util.Iterator;

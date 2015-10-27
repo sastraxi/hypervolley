@@ -3,7 +3,7 @@ package com.sastraxi.playground.tennis.components;
 import com.badlogic.ashley.core.Component;
 import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
-import com.sastraxi.playground.tennis.game.Constants;
+import com.sastraxi.playground.tennis.Constants;
 
 /**
  * Created by sastr on 2015-06-29.

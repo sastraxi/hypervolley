@@ -6,6 +6,6 @@ package com.sastraxi.playground.tennis.game;
 public enum PlayerType {
 
     HUMAN,
-    SERVING_ROBOT
+    AI
 
 }

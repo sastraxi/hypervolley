@@ -19,10 +19,10 @@ import com.ivan.xinput.XInputDevice;
 import com.ivan.xinput.exceptions.XInputNotLoadedException;
 import com.sastraxi.playground.gdx.ShadowLightR32F;
 import com.sastraxi.playground.tennis.components.*;
-import com.sastraxi.playground.tennis.game.Constants;
-import com.sastraxi.playground.tennis.game.Materials;
+import com.sastraxi.playground.tennis.components.character.*;
 import com.sastraxi.playground.tennis.game.PlayerType;
 import com.sastraxi.playground.tennis.graphics.CustomShaderProvider;
+import com.sastraxi.playground.tennis.graphics.Materials;
 import com.sastraxi.playground.tennis.models.PlayerModel;
 import com.sastraxi.playground.tennis.systems.*;
 import org.lwjgl.opengl.GL30;
@@ -83,19 +83,21 @@ public class TennisEntry extends ApplicationAdapter {
                 System.exit(1);
             }
 
-            int jj = 0;
+            int numControllers = 0;
             for (XInputDevice controller: controllers) {
-                System.out.println(jj + ": " + controller.getPlayerNum());
-                jj++;
+                if (controller.isConnected()) {
+                    System.out.println("Controller " + controller.getPlayerNum());
+                    numControllers++;
+                }
             }
-            if (controllers.length >= 2) {
+            if (numControllers >= 2) {
                 // player-vs-player
                 playerTypes[0] = PlayerType.HUMAN;
                 playerTypes[1] = PlayerType.HUMAN;
             } else {
                 // player-vs-serving-robot
                 playerTypes[0] = PlayerType.HUMAN;
-                playerTypes[1] = PlayerType.SERVING_ROBOT;
+                playerTypes[1] = PlayerType.AI;
             }
 
         }
@@ -132,13 +134,13 @@ public class TennisEntry extends ApplicationAdapter {
             // the player's input is a controller
             if (playerTypes[i] == PlayerType.HUMAN) {
                 players[i].add(new ControllerInputComponent(controllers[i]));
+            } else if (playerTypes[i] == PlayerType.AI) {
+                players[i].add(new AIStateComponent());
             }
 
             // create the model
             Color playerColour = (i == 0) ? Constants.PLAYER_ONE_COLOUR : Constants.PLAYER_TWO_COLOUR;
-            playerModelInstances[i] = (playerTypes[i] == PlayerType.HUMAN)
-                    ? new ModelInstance(PlayerModel.build(playerColour))
-                    : new ModelInstance(PlayerModel.buildServingRobot(playerColour));
+            playerModelInstances[i] = new ModelInstance(PlayerModel.build(playerColour));
 
             // swing detector
             players[i].add(new SwingDetectorComponent());
@@ -227,6 +229,9 @@ public class TennisEntry extends ApplicationAdapter {
         // ball mechanics
         engine.addSystem(new BallMovementSystem());
         engine.addSystem(new BounceMarkerUpdateSystem());
+
+        // artificial intelligence
+        engine.addSystem(new AIMovementSystem());
 
         // we draw graphics locally, so we need to register
         // these entity collections to iterate over later on
@@ -389,14 +394,13 @@ public class TennisEntry extends ApplicationAdapter {
         for (int i = 0; i < players.length; ++i)
         {
             CharacterComponent character = picm.get(players[i]);
-            if (character.type != PlayerType.HUMAN) break; // only render non-computer characters right now
-
             MovementComponent mc = mcm.get(players[i]);
             playerModelInstances[i].transform
                     .setToTranslation(mc.position)
                     .rotate(mc.orientation);
 
-            if (character.state == CharacterComponent.PlayerState.HITTING) {
+            if (character.state == CharacterComponent.PlayerState.HITTING)
+            {
                 AlertedComponent ac = acm.get(players[i]);
                 ac.modelInstance.transform
                         .setToTranslation(mc.position)
@@ -429,10 +433,10 @@ public class TennisEntry extends ApplicationAdapter {
         for (int i = 0; i < players.length; ++i)
         {
             CharacterComponent character = picm.get(players[i]);
-            if (character.type != PlayerType.HUMAN) break; // only render non-computer characters right now
-
             MovementComponent mc = mcm.get(players[i]);
-            if (character.state == CharacterComponent.PlayerState.HITTING) {
+
+            if (character.state == CharacterComponent.PlayerState.HITTING)
+            {
                 AlertedComponent ac = acm.get(players[i]);
                 shadowBatch.render(ac.modelInstance, environment);
             }
@@ -458,10 +462,10 @@ public class TennisEntry extends ApplicationAdapter {
         for (int i = 0; i < players.length; ++i)
         {
             CharacterComponent character = picm.get(players[i]);
-            if (character.type != PlayerType.HUMAN) break; // only render non-computer characters right now
-
             MovementComponent mc = mcm.get(players[i]);
-            if (character.state == CharacterComponent.PlayerState.HITTING) {
+
+            if (character.state == CharacterComponent.PlayerState.HITTING)
+            {
                 AlertedComponent ac = acm.get(players[i]);
                 batch.render(ac.modelInstance, environment);
             }

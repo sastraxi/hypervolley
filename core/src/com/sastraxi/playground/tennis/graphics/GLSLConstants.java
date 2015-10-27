@@ -1,6 +1,6 @@
 package com.sastraxi.playground.tennis.graphics;
 
-import com.sastraxi.playground.tennis.game.Constants;
+import com.sastraxi.playground.tennis.Constants;
 
 /**
  * Created by sastr on 2015-09-23.

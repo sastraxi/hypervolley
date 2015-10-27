@@ -6,7 +6,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.glutils.ImmediateModeRenderer20;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
-import com.sastraxi.playground.tennis.game.Constants;
+import com.sastraxi.playground.tennis.Constants;
 
 /**
  * Created by sastr on 2015-07-17.

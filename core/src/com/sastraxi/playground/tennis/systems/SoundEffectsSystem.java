@@ -7,7 +7,8 @@ import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.sastraxi.playground.tennis.components.*;
-import com.sastraxi.playground.tennis.game.Constants;
+import com.sastraxi.playground.tennis.Constants;
+import com.sastraxi.playground.tennis.components.character.CharacterComponent;
 
 public class SoundEffectsSystem extends EntitySystem {
 

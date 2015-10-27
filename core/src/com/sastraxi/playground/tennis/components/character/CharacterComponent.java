@@ -1,4 +1,4 @@
-package com.sastraxi.playground.tennis.components;
+package com.sastraxi.playground.tennis.components.character;
 
 import com.badlogic.ashley.core.Component;
 import com.badlogic.ashley.core.Engine;
@@ -7,6 +7,7 @@ import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
+import com.sastraxi.playground.tennis.Constants;
 import com.sastraxi.playground.tennis.game.*;
 
 /**
@@ -32,7 +33,7 @@ public class CharacterComponent extends Component {
     }
 
     // relationship with the game ball
-    public Long ballEID = null;
+    public Long ballEID = null, hitBallEID = null;
     public final Vector3 focalPoint = new Vector3(); // a place to look at on the other side of the court
     public final Rectangle shotBounds;
     public final Rectangle bounds;

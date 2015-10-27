@@ -1,7 +1,7 @@
 package com.sastraxi.playground.tennis.components;
 
 import com.badlogic.ashley.core.Component;
-import com.sastraxi.playground.tennis.game.Constants;
+import com.sastraxi.playground.tennis.Constants;
 
 /**
  * Created by sastr on 2015-07-26.

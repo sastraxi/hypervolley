@@ -2,11 +2,10 @@ package com.sastraxi.playground.tennis.components;
 
 import com.badlogic.ashley.core.Component;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.math.Plane;
 import com.badlogic.gdx.math.Vector3;
-import com.sastraxi.playground.tennis.game.Constants;
+import com.sastraxi.playground.tennis.Constants;
 import com.sastraxi.playground.tennis.systems.CameraMovementSystem;
 import com.sastraxi.playground.tennis.util.FloatSmoother;
 import com.sastraxi.playground.tennis.util.VectorSmoother;

@@ -6,9 +6,9 @@ import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
 import com.sastraxi.playground.tennis.components.BallComponent;
-import com.sastraxi.playground.tennis.components.CharacterComponent;
+import com.sastraxi.playground.tennis.components.character.CharacterComponent;
 import com.sastraxi.playground.tennis.components.GameStateComponent;
-import com.sastraxi.playground.tennis.game.Constants;
+import com.sastraxi.playground.tennis.Constants;
 
 public class GlobalAfterSystem extends IteratingSystem {
 

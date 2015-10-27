@@ -12,7 +12,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.sastraxi.playground.tennis.components.BounceMarkerComponent;
 import com.sastraxi.playground.tennis.components.MovementComponent;
 import com.sastraxi.playground.tennis.components.RenderableComponent;
-import com.sastraxi.playground.tennis.game.Constants;
+import com.sastraxi.playground.tennis.Constants;
 
 /**
  * Created by sastr on 2015-07-26.

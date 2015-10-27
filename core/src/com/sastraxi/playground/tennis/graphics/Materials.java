@@ -1,4 +1,4 @@
-package com.sastraxi.playground.tennis.game;
+package com.sastraxi.playground.tennis.graphics;
 
 /**
  * Created by sastr on 2015-10-18.

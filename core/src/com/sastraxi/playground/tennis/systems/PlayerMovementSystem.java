@@ -6,7 +6,10 @@ import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
 import com.badlogic.gdx.math.*;
+import com.sastraxi.playground.tennis.Constants;
 import com.sastraxi.playground.tennis.components.*;
+import com.sastraxi.playground.tennis.components.character.CharacterComponent;
+import com.sastraxi.playground.tennis.components.character.SwingDetectorComponent;
 import com.sastraxi.playground.tennis.game.*;
 
 public class PlayerMovementSystem extends IteratingSystem {
@@ -156,8 +159,7 @@ public class PlayerMovementSystem extends IteratingSystem {
             }
 
             // if we hit
-            if (isHitFrame)
-            {
+            if (isHitFrame) {
                 // FIXME ctor call in game loop
                 _ball_target.set(_tmp.x, _tmp.y);
                 ball.path = StraightBallPath.fromMaxHeightTarget(_tmp, Constants.SERVING_APEX, _ball_target, time);
@@ -172,7 +174,7 @@ public class PlayerMovementSystem extends IteratingSystem {
                 float z0 = _tmp.z;
                 float c = Constants.SERVING_IDEAL_HEIGHT - Constants.SERVING_BALL_START.z;
                 float negative_b = z0;
-                float t_optimal = negative_b + (float) Math.sqrt(negative_b * negative_b - 2f*Constants.G*c);
+                float t_optimal = negative_b + (float) Math.sqrt(negative_b * negative_b - 2f * Constants.G * c);
                 t_optimal /= Constants.G;
 
                 // best time to hit
@@ -487,6 +489,7 @@ public class PlayerMovementSystem extends IteratingSystem {
                             {
                                 pic.state = CharacterComponent.PlayerState.HITTING;
                                 pic.chosenHitType = null;
+                                pic.hitBallEID = pic.ballEID;
                                 pic.hitFrame = null;
                                 pic.tHitActual = tBall;
                                 pic.originalSpeed = currentSpeed;
@@ -504,6 +507,13 @@ public class PlayerMovementSystem extends IteratingSystem {
                     }
 
                 } else {
+
+                    // reset hit state if we miss the ball (i.e. the ball has changed on us)
+                    if (pic.hitBallEID != pic.ballEID) {
+                        pic.state = CharacterComponent.PlayerState.HIT_ENDING;
+                        if (pic.originalSpeed > Constants.PLAYER_SPEED) pic.originalSpeed = Constants.PLAYER_SPEED;
+                        pic.tHit = 0f; // re-use timer variables
+                    }
 
                     // let the player choose the hit type.
                     if (pic.hitFrame == null) {
@@ -589,7 +599,7 @@ public class PlayerMovementSystem extends IteratingSystem {
         // decide the return position
         pic.shotBounds.getCenter(_ball_target);
         _ball_target.add(0.5f * _left_stick.x * pic.shotBounds.width,
-                0.5f * _left_stick.y * pic.shotBounds.height);
+                         0.5f * _left_stick.y * pic.shotBounds.height);
 
         // craft the new path.
         // FIXME ctor usage in game loop

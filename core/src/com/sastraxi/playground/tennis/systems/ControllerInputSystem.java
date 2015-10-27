@@ -6,12 +6,12 @@ import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Graphics;
 import com.ivan.xinput.XInputAxes;
 import com.ivan.xinput.XInputButtons;
 import com.ivan.xinput.XInputDevice;
 import com.sastraxi.playground.tennis.components.*;
-import org.lwjgl.opengl.DisplayMode;
+import com.sastraxi.playground.tennis.components.character.CharacterComponent;
+import com.sastraxi.playground.tennis.components.character.ControllerInputComponent;
 
 public class ControllerInputSystem extends IteratingSystem {
 

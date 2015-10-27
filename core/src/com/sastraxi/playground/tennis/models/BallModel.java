@@ -8,9 +8,8 @@ import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
 import com.badlogic.gdx.graphics.g3d.model.Node;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
-import com.badlogic.gdx.math.Vector3;
-import com.sastraxi.playground.tennis.game.Constants;
-import com.sastraxi.playground.tennis.game.Materials;
+import com.sastraxi.playground.tennis.Constants;
+import com.sastraxi.playground.tennis.graphics.Materials;
 import com.sastraxi.playground.tennis.graphics.CustomShaderAttribute;
 
 /**

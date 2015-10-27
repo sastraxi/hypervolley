@@ -1,4 +1,4 @@
-package com.sastraxi.playground.tennis.components;
+package com.sastraxi.playground.tennis.components.character;
 
 import com.badlogic.ashley.core.Component;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
