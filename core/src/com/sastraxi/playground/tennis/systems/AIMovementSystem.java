@@ -179,23 +179,21 @@ public class AIMovementSystem  extends IteratingSystem {
             state.ballMode = BallState.NONE;
 
             // the further the player is away from centre, the more we'll "aim" our shot.
-            otherPic.bounds.getCenter(_tmp);
+            otherPic.bounds.getCenter(_mvmt);
             float halfDistSq = 0.25f * otherPic.bounds.width * otherPic.bounds.width +
-                    0.25f * otherPic.bounds.height * otherPic.bounds.height;
+                               0.25f * otherPic.bounds.height * otherPic.bounds.height;
             float precision = _tmp
                     .set(otherPlayer.position.x, otherPlayer.position.y)
-                    .sub(_tmp)
+                    .sub(_mvmt)
                     .len() / (float) Math.sqrt(halfDistSq);
 
-
             // aim the ball where the player isn't: exactly opposite the bounds center.
-            pic.bounds.getCenter(_mvmt);
-            _tmp.scl(-1f).add(_mvmt);
+            _tmp.scl(-1f).add(_mvmt); // _mvmt is still other player bounds centre
 
             // lerp with a random shot, pushed towards the edges
             pic.shotBounds.getCenter(_rand);
-            _rand.add((float) (Math.pow(Math.random(), 0.5f) * Math.signum(Math.random())) * pic.shotBounds.width * 0.5f,
-                    (float) (Math.pow(Math.random(), 0.5f) * Math.signum(Math.random())) * pic.shotBounds.height * 0.5f);
+            _rand.add((float) (Math.pow(Math.random(), 0.3f) * Math.signum(Math.random())) * pic.shotBounds.width * 0.5f,
+                    (float) (Math.pow(Math.random(), 0.3f) * Math.signum(Math.random())) * pic.shotBounds.height * 0.5f);
             _mvmt.set(_rand).lerp(_tmp, precision);
 
             // convert shot position into left stick movement
