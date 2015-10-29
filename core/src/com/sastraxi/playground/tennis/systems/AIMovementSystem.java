@@ -89,42 +89,14 @@ public class AIMovementSystem  extends IteratingSystem {
             state.ballMode == BallState.NONE &&
             ballComponent.lastHitByPlayerEID != null && ballComponent.lastHitByPlayerEID != entity.getId())
         {
-            // determine point of intersection with back, top, and bottom lines of court
-            // no ball is ever going to last for 10 seconds.
-            float ball_end_x = ball.position.x + ball.velocity.x * 10f;
-            float ball_end_y = ball.position.y + ball.velocity.y * 10f;
-
-            // back wall
-            boolean intersects = Intersector.intersectSegments(
-                    // line of rect
-                    back_x, pic.bounds.y,
-                    back_x, pic.bounds.y + pic.bounds.height,
-                    // ball's current + predicted position
+            // determine closest point to our player
+            boolean intersects = Intersector.intersectLines(
                     ball.position.x, ball.position.y,
-                    ball_end_x, ball_end_y,
-                    _isct);
-
-            // top wall
-            if (!intersects)
-                intersects = Intersector.intersectSegments(
-                    // line of rect
-                    front_x, pic.bounds.y,
-                    back_x, pic.bounds.y,
-                    // ball's current + predicted position
-                    ball.position.x, ball.position.y,
-                    ball_end_x, ball_end_y,
-                    _isct);
-
-            // bottom wall
-            if (!intersects)
-                intersects = Intersector.intersectSegments(
-                    // line of rect
-                    front_x, pic.bounds.y + pic.bounds.height,
-                    back_x, pic.bounds.y + pic.bounds.height,
-                    // ball's current + predicted position
-                    ball.position.x, ball.position.y,
-                    ball_end_x, ball_end_y,
-                    _isct);
+                    ball.position.x + ball.velocity.x * 10f, ball.position.y + ball.velocity.y * 10f,
+                    player.position.x, player.position.y,
+                    player.position.x - ball.velocity.y * 10f, player.position.y + ball.velocity.x * 10f,
+                    _isct
+            );
 
             // seek the estimated point
             // if it didn't intersect, maybe the ball's static or something, don't worry about it
@@ -142,22 +114,16 @@ public class AIMovementSystem  extends IteratingSystem {
                 // N.B. _tmp is still the vector from our position to the est. intersection point
                 if (ball_time >= player_time) {
 
-                    float path_lerp = MathUtils.clamp(player_time / ball_time, 0f, 1f);
-                    // path_lerp *= 0.8f; // go a little past
-                    _isct.sub(ball.position.x, ball.position.y)
-                         .scl(path_lerp)
-                         .add(ball.position.x, ball.position.y);
-
                     // make _tmp the vector from our position tot he scaled-back intersection point
                     _tmp.set(_isct).sub(player.position.x, player.position.y);
 
                     // we can get to the ball regularly
-                    float speed = path_lerp;
+                    float speed = player_time / ball_time;
                     state.ballMode = BallState.WILL_HIT;
                     state.ballMovement.set(_tmp).nor().scl(speed);
                     state.ballTime = ball_time;
 
-                    System.out.println("*** WILL_HIT");
+                    System.out.println("*** WILL_HIT player_time=" + player_time + "   ball_time=" + ball_time);
 
                 } else {
                     // we need to dash at some point. or maybe we don't get there at all?

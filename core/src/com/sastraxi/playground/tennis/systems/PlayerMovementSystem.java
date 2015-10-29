@@ -170,8 +170,9 @@ public class PlayerMovementSystem extends IteratingSystem {
 
                 // determine when the ball will attain that optimal height (quadratic eqn.)
                 // only process a hit if we're on the positive side (falling motion)
-                ball.path.getVelocity(time, _tmp);
-                float z0 = _tmp.z;
+                ball.path.getPosition(time, ballMovement.position);
+                ball.path.getVelocity(time, ballMovement.velocity);
+                float z0 = ballMovement.velocity.z;
                 float c = Constants.SERVING_IDEAL_HEIGHT - Constants.SERVING_BALL_START.z;
                 float negative_b = z0;
                 float t_optimal = negative_b + (float) Math.sqrt(negative_b * negative_b - 2f * Constants.G * c);
