@@ -7,7 +7,7 @@ import com.sastraxi.playground.tennis.TennisEntry;
 public class DesktopLauncher {
 	public static void main (String[] arg) {
 		LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
-		config.vSyncEnabled = false;
+		config.vSyncEnabled = true;
 
 		config.width = 1280; config.height = 720; config.samples = 8;
 		// config.width = 1920; config.height = 1080; config.samples = 16;

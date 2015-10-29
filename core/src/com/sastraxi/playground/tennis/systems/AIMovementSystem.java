@@ -56,7 +56,7 @@ public class AIMovementSystem  extends IteratingSystem {
     @Override
     protected void processEntity(Entity entity, float deltaTime)
     {
-        MovementComponent current = mcm.get(entity);
+        MovementComponent player = mcm.get(entity);
         CharacterComponent pic = picm.get(entity);
         AIStateComponent state = aicm.get(entity);
 
@@ -132,18 +132,32 @@ public class AIMovementSystem  extends IteratingSystem {
 
                 // estimate where we should be based on player time/ball time differential @ intersectionpt.
                 _tmp.set(_isct).sub(ball.position.x, ball.position.y);
-                float ball_time = 1.3f * _tmp.len() / ball.velocity.len(); // act as if ball gets there faster, so we can get our player there in time
-                _tmp.set(_isct).sub(current.position.x, current.position.y);
+                float ball_time = _tmp.len() / ball.velocity.len(); // act as if ball gets there faster, so we can get our player there in time
+
+                _tmp.set(_isct).sub(player.position.x, player.position.y);
+                _tmp.scl(1f -  (Constants.PLAYER_MAX_REACH /_tmp.len())); // factor in the reach of the player
                 float player_time = _tmp.len() / Constants.PLAYER_SPEED;
                 float playerDistance = _tmp.len();
 
                 // N.B. _tmp is still the vector from our position to the est. intersection point
                 if (ball_time >= player_time) {
+
+                    float path_lerp = MathUtils.clamp(player_time / ball_time, 0f, 1f);
+                    // path_lerp *= 0.8f; // go a little past
+                    _isct.sub(ball.position.x, ball.position.y)
+                         .scl(path_lerp)
+                         .add(ball.position.x, ball.position.y);
+
+                    // make _tmp the vector from our position tot he scaled-back intersection point
+                    _tmp.set(_isct).sub(player.position.x, player.position.y);
+
                     // we can get to the ball regularly
-                    float speed_lerp = MathUtils.clamp(player_time / ball_time, 0f, 1f);
+                    float speed = path_lerp;
                     state.ballMode = BallState.WILL_HIT;
-                    state.ballMovement.set(_tmp).nor().scl(speed_lerp);
+                    state.ballMovement.set(_tmp).nor().scl(speed);
                     state.ballTime = ball_time;
+
+                    System.out.println("*** WILL_HIT");
 
                 } else {
                     // we need to dash at some point. or maybe we don't get there at all?
@@ -158,14 +172,15 @@ public class AIMovementSystem  extends IteratingSystem {
                         state.ballTime = totalTime;
                         state.dashAtTime = totalTime - dashTime;
                         state.ballMovement.set(_tmp).nor();
+                        System.out.println("*** WILL_HIT_WITH_DASH");
                     }
                     else
                     {
                         // if we can't make it, do a sharply decelarating movement towards it.
-                        System.out.println("Dash doesn't get us there :(");
                         state.ballMode = BallState.MISSED;
-                        state.ballTime = 0.2f; // just some constant: how pathetic we want to be
+                        state.ballTime = 1.0f; // just some constant: how pathetic we want to be
                         state.ballMovement.set(_tmp).nor();
+                        System.out.println("*** MISSED");
                     }
                 }
                 state.initialBallTime = state.ballTime;
@@ -192,8 +207,8 @@ public class AIMovementSystem  extends IteratingSystem {
 
             // lerp with a random shot, pushed towards the edges
             pic.shotBounds.getCenter(_rand);
-            _rand.add((float) (Math.pow(Math.random(), 0.3f) * Math.signum(Math.random())) * pic.shotBounds.width * 0.5f,
-                    (float) (Math.pow(Math.random(), 0.3f) * Math.signum(Math.random())) * pic.shotBounds.height * 0.5f);
+            _rand.add((float) (Math.pow(Math.random(), 0.3f) * Math.signum(Math.random() - 0.5f)) * pic.shotBounds.width * 0.5f,
+                      (float) (Math.pow(Math.random(), 0.3f) * Math.signum(Math.random() - 0.5f)) * pic.shotBounds.height * 0.5f);
             _mvmt.set(_rand).lerp(_tmp, precision);
 
             // convert shot position into left stick movement
@@ -247,9 +262,9 @@ public class AIMovementSystem  extends IteratingSystem {
             }
 
             // move towards the sought point, if we're far enough away
-            if (state.sought.dst(current.position.x, current.position.y) > 3f)
+            if (state.sought.dst(player.position.x, player.position.y) > 3f)
             {
-                _mvmt.set(state.sought).sub(current.position.x, current.position.y);
+                _mvmt.set(state.sought).sub(player.position.x, player.position.y);
                 float distance = _mvmt.len();
                 _mvmt.nor().scl(MathUtils.clamp(distance / Constants.PLAYER_SPEED, 0.3f, 1f));
             }

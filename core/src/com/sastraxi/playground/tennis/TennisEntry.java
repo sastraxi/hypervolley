@@ -71,8 +71,6 @@ public class TennisEntry extends ApplicationAdapter {
     @Override
 	public void create()
 	{
-        Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
-
         // determine game type based on # of controllers
         XInputDevice[] controllers = null;
         try
