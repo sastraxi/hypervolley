@@ -115,7 +115,7 @@ public class Constants {
     public static final float PLAYER_MIN_REACH = 1.8f * PLAYER_RADIUS;       // units
     public static final float PLAYER_MAX_REACH = 2.5f * PLAYER_RADIUS;       // units
     public static final float PLAYER_MAX_SWING_SPEEDUP = Constants.PLAYER_SPEED * 0.3f; // units
-    public static final float PLAYER_MAX_SWING_SLOWDOWN = Constants.PLAYER_SPEED * 0.6f; // units
+    public static final float PLAYER_MAX_SWING_SLOWDOWN = Constants.PLAYER_SPEED; // units
     public static final float PLAYER_SWING_SPEED_CAP = 180f; // allow a bit of speed-up on shots even if already @ player speed?
     public static final float PLAYER_HALF_SIDESTEP = Constants.PLAYER_RADIUS * 2f; // units
     public static final float PLAYER_BALL_SWING_DURATION = Constants.FRAME_TIME_SEC * 4; // 4 frames
@@ -160,4 +160,11 @@ public class Constants {
     public static final float SOUND_BOUNCE_VOLUME = 0.7f;
     public static final float SOUND_SERVE_VOLUME = 0.65f;
     public static final float SOUND_ACQUIRE_VOLUME = 0.6f;
+
+    // debug strike zone visualisation
+    public static final Color STRIKE_ZONE_COLOUR = new Color(0.3f, 0.3f, 0.3f, 0.7f);
+    public static final Color STRIKE_BALL_TRAJECTORY_COLOUR = new Color(1.0f, 0.8f, 0.0f, 1.0f);
+    public static final Color STRIKE_BALL_HIT_COLOUR = new Color(0.6f, 1.0f, 0.6f, 1.0f);
+    public static final float STRIKE_ZONE_LINE_THICKNESS = Constants.BALL_RADIUS;
+    public static final float STRIKE_ZONE_BALL_RADIUS = Constants.BALL_RADIUS;
 }

@@ -14,6 +14,7 @@ import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.utils.DepthShaderProvider;
 import com.badlogic.gdx.graphics.g3d.utils.ShaderProvider;
+import com.badlogic.gdx.graphics.glutils.ImmediateModeRenderer20;
 import com.badlogic.gdx.math.*;
 import com.ivan.xinput.XInputDevice;
 import com.ivan.xinput.exceptions.XInputNotLoadedException;
@@ -24,6 +25,7 @@ import com.sastraxi.playground.tennis.game.PlayerType;
 import com.sastraxi.playground.tennis.graphics.CustomShaderProvider;
 import com.sastraxi.playground.tennis.graphics.Materials;
 import com.sastraxi.playground.tennis.models.PlayerModel;
+import com.sastraxi.playground.tennis.models.RenderUtils;
 import com.sastraxi.playground.tennis.systems.*;
 import org.lwjgl.opengl.GL30;
 
@@ -39,6 +41,7 @@ public class TennisEntry extends ApplicationAdapter {
     final ComponentMapper<RenderableComponent> rcm = ComponentMapper.getFor(RenderableComponent.class);
     final ComponentMapper<BallComponent> bcm = ComponentMapper.getFor(BallComponent.class);
     final ComponentMapper<AlertedComponent> acm = ComponentMapper.getFor(AlertedComponent.class);
+    final ComponentMapper<StrikeZoneDebugComponent> szcm = ComponentMapper.getFor(StrikeZoneDebugComponent.class);
 
     // entities and game logic
     Engine engine;
@@ -60,6 +63,7 @@ public class TennisEntry extends ApplicationAdapter {
     DirectionalLight sunLight;
     ModelBatch shadowBatch;
     Shader tennisCourtShader;
+    ImmediateModeRenderer20 strikeZoneRenderer;
 
     // things to draw
     ModelInstance tennisCourt;
@@ -143,6 +147,9 @@ public class TennisEntry extends ApplicationAdapter {
             // swing detector
             players[i].add(new SwingDetectorComponent());
 
+            // strike zone vis.
+            players[i].add(new StrikeZoneDebugComponent());
+
             // actual player
             engine.addEntity(players[i]);
         }
@@ -156,6 +163,7 @@ public class TennisEntry extends ApplicationAdapter {
         //////////////////////////////////////////////////////////////////////////////////////
 
         // libgdx
+        strikeZoneRenderer = new ImmediateModeRenderer20(Constants.DETAIL_LEVEL_CIRCLE + 1 + 4 + 4, false, true, 0);
         shaderProvider = new CustomShaderProvider();
         shadowBatch = new ModelBatch(new DepthShaderProvider(
                 Gdx.files.internal("shaders/depth.vertex.glsl").readString(),
@@ -448,7 +456,15 @@ public class TennisEntry extends ApplicationAdapter {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
         batch.begin(cameraManagementComponent.getCamera());
         batch.render(tennisCourt, environment);
-        // batch.render(tennisCourtFloor, environment);
+        batch.end();
+        for (Entity entity: players)
+        {
+            StrikeZoneDebugComponent strikeZone = szcm.get(entity);
+            if (strikeZone != null) {
+                drawStrikeZone(cameraManagementComponent.getCamera(), strikeZone);
+            }
+        }
+        batch.begin(cameraManagementComponent.getCamera());
         for (Entity entity: ballEntities)
         {
             BallComponent bc = bcm.get(entity);
@@ -487,6 +503,41 @@ public class TennisEntry extends ApplicationAdapter {
 
         //stage.draw();
         Thread.yield();
+    }
+
+    /**
+     * Debug strike zone visualiation.
+     * @param strikeZone
+     */
+    private void drawStrikeZone(Camera camera, StrikeZoneDebugComponent strikeZone)
+    {
+        if (!strikeZone.enabled) return;
+
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+
+        // draw the strike zone
+        RenderUtils.drawRect(strikeZoneRenderer, camera.combined,
+                Constants.STRIKE_ZONE_COLOUR,
+                strikeZone.start, strikeZone.axis1, strikeZone.axis2, 0.05f);
+
+        if (strikeZone.points == 0) return;
+        if (strikeZone.points == 1) {
+            System.out.println("Only 1 point??");
+            return;
+        }
+
+        // draw the ball trajectory
+        RenderUtils.drawLine(strikeZoneRenderer, camera.combined,
+                Constants.STRIKE_BALL_TRAJECTORY_COLOUR,
+                strikeZone.a, strikeZone.b, Constants.STRIKE_ZONE_LINE_THICKNESS, 0.08f);
+
+        // draw the hit point
+        RenderUtils.drawCircle(strikeZoneRenderer, camera.combined,
+                Constants.STRIKE_BALL_HIT_COLOUR,
+                strikeZone.hit, Constants.STRIKE_ZONE_BALL_RADIUS, 0.11f);
+
+        strikeZoneRenderer.flush();
+        Gdx.gl.glDisable(GL20.GL_BLEND);
     }
 
     Vector3 __xformed = new Vector3();

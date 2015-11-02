@@ -9,6 +9,7 @@ import com.badlogic.gdx.math.*;
 import com.sastraxi.playground.tennis.Constants;
 import com.sastraxi.playground.tennis.components.*;
 import com.sastraxi.playground.tennis.components.character.CharacterComponent;
+import com.sastraxi.playground.tennis.components.character.StrikeZoneDebugComponent;
 import com.sastraxi.playground.tennis.components.character.SwingDetectorComponent;
 import com.sastraxi.playground.tennis.game.*;
 
@@ -22,6 +23,7 @@ public class PlayerMovementSystem extends IteratingSystem {
     private ComponentMapper<MovementComponent> mc = ComponentMapper.getFor(MovementComponent.class);
     private ComponentMapper<CharacterComponent> picm = ComponentMapper.getFor(CharacterComponent.class);
     private ComponentMapper<SwingDetectorComponent> sdcm = ComponentMapper.getFor(SwingDetectorComponent.class);
+    private ComponentMapper<StrikeZoneDebugComponent> szcm = ComponentMapper.getFor(StrikeZoneDebugComponent.class);
 
     private static final Family GAME_STATE_FAMILY = Family.one(GameStateComponent.class).get();
     private ComponentMapper<GameStateComponent> gscm = ComponentMapper.getFor(GameStateComponent.class);
@@ -332,9 +334,9 @@ public class PlayerMovementSystem extends IteratingSystem {
         // the player's interactions with the game ball.
         Entity ball = pic.getBall(engine);
         if (ball != null) {
+            StrikeZoneDebugComponent strikeZone = szcm.get(entity);
             MovementComponent ballMovement = mc.get(ball);
             BallComponent ballComponent = bcm.get(ball);
-
             // don't allow the ball to be hit in succession by the same player.
             if (ballComponent.lastHitByPlayerEID == null || ballComponent.lastHitByPlayerEID != entity.getId()) {
                 if (pic.state != CharacterComponent.PlayerState.HITTING) {
@@ -368,10 +370,6 @@ public class PlayerMovementSystem extends IteratingSystem {
                     _heading.set(cosHeading * (d_max - d_min), sinHeading * (d_max - d_min));
                     float x_neutral = x + cosHeading * d_neutral;
                     float y_neutral = y + sinHeading * d_neutral;
-
-                    // FIXME doesn't work around wall bounces.
-                    // TODO if the next bounce is within our time window, try both line segments (pre- and post-bounce)
-                    // TODO and choose the intersection point closest to the neutral point.
 
                     // the ball's trajectory is constant in all of our intersections
                     float ball_end_x = ballMovement.position.x + ballMovement.velocity.x * t_max;
@@ -460,6 +458,18 @@ public class PlayerMovementSystem extends IteratingSystem {
                         }
                     }
 
+                    // strike zone visualisation
+                    if (strikeZone != null)
+                    {
+                        strikeZone.enabled = true;
+                        strikeZone.points = points;
+                        strikeZone.a.set(_a);
+                        strikeZone.b.set(_b);
+                        strikeZone.start.set(x, y).sub(_right);
+                        strikeZone.axis1.set(_right).scl(2f);
+                        strikeZone.axis2.set(_heading);
+                    }
+
                     // if we have 2 points (either in the rect or on its perimeter), we can hit the ball
                     // at some t in [0, t_max] in the future. calculate that hit now.
                     if (points == 2)
@@ -476,6 +486,12 @@ public class PlayerMovementSystem extends IteratingSystem {
                             _isect_pt.set(_b);
                         } else {
                             _isect_pt.set(_b).sub(_a).scl(p).add(_a);
+                        }
+
+                        // strike zone visualisation
+                        if (strikeZone != null)
+                        {
+                            strikeZone.hit.set(_isect_pt);
                         }
 
                         // start hittin' the ball
