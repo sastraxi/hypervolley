@@ -96,9 +96,13 @@ public class TennisEntry extends ApplicationAdapter {
                 // player-vs-player
                 playerTypes[0] = PlayerType.HUMAN;
                 playerTypes[1] = PlayerType.HUMAN;
-            } else {
+            } else if (numControllers == 1) {
                 // player-vs-serving-robot
                 playerTypes[0] = PlayerType.HUMAN;
+                playerTypes[1] = PlayerType.AI;
+            } else {
+                // bot fight!
+                playerTypes[0] = PlayerType.AI;
                 playerTypes[1] = PlayerType.AI;
             }
 
