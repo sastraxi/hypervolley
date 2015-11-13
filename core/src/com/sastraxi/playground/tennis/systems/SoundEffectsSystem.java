@@ -54,6 +54,8 @@ public class SoundEffectsSystem extends EntitySystem {
     @Override
     public void update(float deltaTime)
     {
+        if (gameState.isPaused()) return;
+
         // bounce sounds
         for (Entity ballEntity: ballEntities) {
             BallComponent ball = bcm.get(ballEntity);

@@ -60,8 +60,9 @@ public class PlayerMovementSystem extends IteratingSystem {
     protected void processEntity(Entity entity, float deltaTime)
     {
         GameStateComponent gameState = gscm.get(engine.getEntitiesFor(GAME_STATE_FAMILY).get(0));
-        CharacterComponent pic = picm.get(entity);
+        if (gameState.isPaused()) return;
 
+        CharacterComponent pic = picm.get(entity);
         pic.lastState = pic.state;
         pic.timeSinceStateChange += deltaTime;
 

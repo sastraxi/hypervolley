@@ -9,8 +9,9 @@ import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Plane;
 import com.badlogic.gdx.math.Vector3;
-import com.sastraxi.playground.tennis.components.*;
 import com.sastraxi.playground.tennis.Constants;
+import com.sastraxi.playground.tennis.components.CameraComponent;
+import com.sastraxi.playground.tennis.components.MovementComponent;
 import com.sastraxi.playground.tennis.components.global.GameStateComponent;
 
 import java.util.ArrayList;
@@ -60,7 +61,7 @@ public class CameraMovementSystem extends IteratingSystem {
     protected void processEntity(Entity entity, float deltaTime)
     {
         GameStateComponent gameState = gscm.get(engine.getEntitiesFor(GAME_STATE_FAMILY).get(0));
-        float time = gameState.getPreciseTime();
+        if (gameState.isPaused()) return;
 
         CameraComponent camera = ccm.get(entity);
 

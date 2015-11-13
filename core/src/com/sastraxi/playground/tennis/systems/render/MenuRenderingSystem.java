@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
+import com.badlogic.gdx.math.MathUtils;
 import com.sastraxi.playground.shaders.PostProcessShaderProgram;
 import com.sastraxi.playground.tennis.Constants;
 import com.sastraxi.playground.tennis.components.global.CameraManagementComponent;
@@ -73,14 +74,10 @@ public class MenuRenderingSystem extends EntitySystem {
     public void update(float deltaTime)
     {
         // render our post-processing
-        float factor = (gameState.getPreciseTime() * 0.1f) % 1.0f;
-        if (factor < 0.5f) {
-            factor = 2f * factor;
-        } else {
-            factor = 2f * (1f - factor);
+        if (menuState.shouldBePaused()) {
+            drawPostProcessing(menuState.lerp);
         }
-        drawPostProcessing(factor);
-        renderUI();
+        // renderUI();
     }
 
     /**

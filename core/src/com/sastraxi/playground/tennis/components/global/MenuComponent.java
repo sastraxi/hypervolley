@@ -7,8 +7,12 @@ import com.badlogic.ashley.core.Component;
  */
 public class MenuComponent extends Component {
 
-    public boolean showing = true;
-    public float lerp = 1f; // 1f = menu totally showing
+    public boolean showing = false;
+    public float lerp = 0f; // 1f = menu totally showing
     public int choice = 0;
+
+    public boolean shouldBePaused() {
+        return lerp > 0f;
+    }
 
 }

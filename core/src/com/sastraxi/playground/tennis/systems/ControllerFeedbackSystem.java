@@ -29,6 +29,7 @@ public class ControllerFeedbackSystem extends IteratingSystem {
     private ComponentMapper<MovementComponent> mcm = ComponentMapper.getFor(MovementComponent.class);
     private ComponentMapper<CharacterComponent> picm = ComponentMapper.getFor(CharacterComponent.class);
     private ComponentMapper<ControllerInputComponent> cicm = ComponentMapper.getFor(ControllerInputComponent.class);
+    private ComponentMapper<GameStateComponent> gscm = ComponentMapper.getFor(GameStateComponent.class);
 
     private Engine engine;
     private Entity gameStateEntity;
@@ -51,6 +52,9 @@ public class ControllerFeedbackSystem extends IteratingSystem {
     @Override
     protected void processEntity(Entity entity, float deltaTime)
     {
+        GameStateComponent gameState = gscm.get(engine.getEntitiesFor(GAME_STATE_FAMILY).get(0));
+        if (gameState.isPaused()) return;
+
         CharacterComponent pic = picm.get(entity);
         ControllerInputComponent cic = cicm.get(entity);
         XInputDevice controller = cic.controller;

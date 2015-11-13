@@ -175,6 +175,9 @@ public class TennisEntry extends ApplicationAdapter {
         // rendering
         gameRenderingSystem = new GameRenderingSystem();
         engine.addSystem(gameRenderingSystem);
+
+        // menu system
+        engine.addSystem(new MenuUpdateSystem());
         engine.addSystem(new MenuRenderingSystem());
 
         // general game logic that needs to happen around everything else

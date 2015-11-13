@@ -37,6 +37,7 @@ public class BallMovementSystem extends IteratingSystem {
     {
         GameStateComponent gameState = gscm.get(engine.getEntitiesFor(GAME_STATE_FAMILY).get(0));
         float time = gameState.getPreciseTime();
+        if (gameState.isPaused()) return;
 
         MovementComponent movement = mcm.get(entity);
         BallComponent ball = bcm.get(entity);

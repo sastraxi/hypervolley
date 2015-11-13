@@ -9,15 +9,13 @@ import com.sastraxi.playground.tennis.components.BallComponent;
 import com.sastraxi.playground.tennis.components.character.CharacterComponent;
 import com.sastraxi.playground.tennis.components.global.GameStateComponent;
 import com.sastraxi.playground.tennis.Constants;
+import com.sastraxi.playground.tennis.components.global.MenuComponent;
 
 public class GlobalAfterSystem extends IteratingSystem {
 
-    private static final int PRIORITY = 999; // after everything
+    private static final int PRIORITY = 9999; // after everything
 
     private static final Family GAME_STATE_FAMILY = Family.all(GameStateComponent.class).get();
-    private static final Family BALL_COMPONENT_FAMILY = Family.all(BallComponent.class).get();
-    private static final Family CHARACTER_COMPONENT_FAMILY = Family.all(CharacterComponent.class).get();
-
     private ComponentMapper<GameStateComponent> gscm = ComponentMapper.getFor(GameStateComponent.class);
 
     private Engine engine;

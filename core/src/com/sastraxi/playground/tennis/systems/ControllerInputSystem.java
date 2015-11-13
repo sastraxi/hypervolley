@@ -12,6 +12,7 @@ import com.sastraxi.playground.tennis.components.character.CharacterComponent;
 import com.sastraxi.playground.tennis.components.character.ControllerInputComponent;
 import com.sastraxi.playground.tennis.components.global.CameraManagementComponent;
 import com.sastraxi.playground.tennis.components.global.GameStateComponent;
+import com.sastraxi.playground.tennis.components.global.MenuComponent;
 
 public class ControllerInputSystem extends IteratingSystem {
 
@@ -23,6 +24,7 @@ public class ControllerInputSystem extends IteratingSystem {
     private ComponentMapper<ControllerInputComponent> cicm = ComponentMapper.getFor(ControllerInputComponent.class);
     private ComponentMapper<CameraManagementComponent> ccm = ComponentMapper.getFor(CameraManagementComponent.class);
     private ComponentMapper<GameStateComponent> gscm = ComponentMapper.getFor(GameStateComponent.class);
+    private ComponentMapper<MenuComponent> mscm = ComponentMapper.getFor(MenuComponent.class);
 
     private Engine engine;
     private Entity gameStateEntity;
@@ -73,8 +75,8 @@ public class ControllerInputSystem extends IteratingSystem {
         pic.inputFrame.toggleMenu = buttons.start;
         if (pic.inputFrame.toggleMenu && !pic.lastInputFrame.toggleMenu)
         {
-            GameStateComponent gameState = gscm.get(entity);
-            // TODO trigger menu blur + menu camera (zoomed out) + menu UI showing
+            MenuComponent menuState = mscm.get(gameStateEntity);
+            menuState.showing = !menuState.showing;
         }
     }
 

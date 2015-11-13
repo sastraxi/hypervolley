@@ -172,4 +172,6 @@ public class Constants {
     public static final int SYSTEM_PRIORITY_MATRIX = 1000;
     public static final int SYSTEM_PRIORITY_RENDER = 1001;
 
+    // in-game menu
+    public static final float MENU_SHOW_TIME = 0.5f; // seconds
 }

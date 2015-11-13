@@ -186,7 +186,9 @@ public class GameRenderingSystem extends EntitySystem {
         shadowLight.end();
 
         // we'll render off-screen to aid post-processing
-        renderState.fbPing.begin();
+        if (menuState.shouldBePaused()) {
+            renderState.fbPing.begin();
+        }
 
         // render our regular view
         Gdx.gl.glClearColor(0f, 0.2f, 0.3f, 1f);
@@ -229,7 +231,9 @@ public class GameRenderingSystem extends EntitySystem {
         }
         batch.end();
 
-        renderState.fbPing.end();
+        if (menuState.shouldBePaused()) {
+            renderState.fbPing.end();
+        }
 
         // ffmpeg webm -> gfycat
         // if (gameState.getTick() < 900) saveScreenshot();
