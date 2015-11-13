@@ -80,6 +80,11 @@ public class AIMovementSystem  extends IteratingSystem {
             otherPic = picm.get(otherPlayerEntity);
         }
 
+        // sensible defaults
+        pic.inputFrame.swing = false;
+        pic.inputFrame.curve = false;
+        pic.inputFrame.lob = false;
+
         float back_x = pic.bounds.x < 0 ? pic.bounds.x : pic.bounds.x + pic.bounds.width;
         float front_x = pic.bounds.x > 0 ? pic.bounds.x : pic.bounds.x + pic.bounds.width;
         float back_line_x = pic.bounds.x < 0 ? -Constants.COURT_HALF_WIDTH : Constants.COURT_HALF_WIDTH;
@@ -205,6 +210,26 @@ public class AIMovementSystem  extends IteratingSystem {
             }
             // move towards goal
         }
+        else if (pic.state == CharacterComponent.PlayerState.SERVE_SETUP)
+        {
+            System.out.println("SERVE SETUP");
+            pic.inputFrame.swing = true;
+        }
+        else if (pic.state == CharacterComponent.PlayerState.SERVING)
+        {
+            if (pic.lastInputFrame.swing == false)
+            {
+                System.out.println("SERVE TIME");
+
+                pic.inputFrame.swing = true;
+                pic.shotBounds.getCenter(_rand);
+                _rand.add((float) (Math.pow(Math.random(), 0.3f) * Math.signum(Math.random() - 0.5f)) * pic.shotBounds.width * 0.5f,
+                        (float) (Math.pow(Math.random(), 0.3f) * Math.signum(Math.random() - 0.5f)) * pic.shotBounds.height * 0.5f);
+                _mvmt.set(_rand);
+                pic.shotBounds.getCenter(_tmp);
+                _mvmt.sub(_tmp).nor().scl((float) Math.random());
+            }
+        }
         else
         {
             state.ballMode = BallState.NONE;
@@ -242,9 +267,6 @@ public class AIMovementSystem  extends IteratingSystem {
 
         // figure out new input state
         pic.inputFrame.movement.set(_mvmt);
-        pic.inputFrame.swing = false;
-        pic.inputFrame.curve = false;
-        pic.inputFrame.lob = false;
         lastBallEID = pic.ballEID;
     }
 
