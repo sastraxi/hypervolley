@@ -167,4 +167,9 @@ public class Constants {
     public static final Color STRIKE_BALL_HIT_COLOUR = new Color(0.6f, 1.0f, 0.6f, 1.0f);
     public static final float STRIKE_ZONE_LINE_THICKNESS = Constants.BALL_RADIUS;
     public static final float STRIKE_ZONE_BALL_RADIUS = Constants.BALL_RADIUS;
+
+    // system priorities
+    public static final int SYSTEM_PRIORITY_MATRIX = 1000;
+    public static final int SYSTEM_PRIORITY_RENDER = 1001;
+
 }

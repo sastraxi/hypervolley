@@ -12,6 +12,8 @@ import com.sastraxi.playground.tennis.components.*;
 import com.sastraxi.playground.tennis.Constants;
 import com.sastraxi.playground.tennis.components.character.CharacterComponent;
 import com.sastraxi.playground.tennis.components.character.ControllerInputComponent;
+import com.sastraxi.playground.tennis.components.global.CameraManagementComponent;
+import com.sastraxi.playground.tennis.components.global.GameStateComponent;
 
 import java.util.ArrayList;
 import java.util.Iterator;

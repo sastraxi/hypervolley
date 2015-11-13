@@ -5,13 +5,13 @@ import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
-import com.badlogic.gdx.Gdx;
 import com.ivan.xinput.XInputAxes;
 import com.ivan.xinput.XInputButtons;
 import com.ivan.xinput.XInputDevice;
-import com.sastraxi.playground.tennis.components.*;
 import com.sastraxi.playground.tennis.components.character.CharacterComponent;
 import com.sastraxi.playground.tennis.components.character.ControllerInputComponent;
+import com.sastraxi.playground.tennis.components.global.CameraManagementComponent;
+import com.sastraxi.playground.tennis.components.global.GameStateComponent;
 
 public class ControllerInputSystem extends IteratingSystem {
 
@@ -22,6 +22,7 @@ public class ControllerInputSystem extends IteratingSystem {
     private ComponentMapper<CharacterComponent> picm = ComponentMapper.getFor(CharacterComponent.class);
     private ComponentMapper<ControllerInputComponent> cicm = ComponentMapper.getFor(ControllerInputComponent.class);
     private ComponentMapper<CameraManagementComponent> ccm = ComponentMapper.getFor(CameraManagementComponent.class);
+    private ComponentMapper<GameStateComponent> gscm = ComponentMapper.getFor(GameStateComponent.class);
 
     private Engine engine;
     private Entity gameStateEntity;
@@ -69,14 +70,11 @@ public class ControllerInputSystem extends IteratingSystem {
             CameraManagementComponent viewpoint = ccm.get(gameStateEntity);
             viewpoint.cycle();
         }
-        pic.inputFrame.toggleFullscreen = buttons.start;
-        if (pic.inputFrame.toggleFullscreen && !pic.lastInputFrame.toggleFullscreen)
+        pic.inputFrame.toggleMenu = buttons.start;
+        if (pic.inputFrame.toggleMenu && !pic.lastInputFrame.toggleMenu)
         {
-            if (Gdx.graphics.isFullscreen()) {
-                Gdx.graphics.setDisplayMode(1280, 720, false);
-            } else {
-                Gdx.graphics.setDisplayMode(1920, 1080, true);
-            }
+            GameStateComponent gameState = gscm.get(entity);
+            // TODO trigger menu blur + menu camera (zoomed out) + menu UI showing
         }
     }
 

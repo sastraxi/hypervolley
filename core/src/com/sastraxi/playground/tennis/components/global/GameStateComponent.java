@@ -1,6 +1,7 @@
-package com.sastraxi.playground.tennis.components;
+package com.sastraxi.playground.tennis.components.global;
 
 import com.badlogic.ashley.core.Component;
+import com.badlogic.gdx.ai.fsm.StateMachine;
 import com.sastraxi.playground.tennis.Constants;
 
 /**
@@ -22,5 +23,9 @@ public class GameStateComponent extends Component {
     }
 
     public long getTick() { return frames; }
+
+    ////////////////////////////////////////////////////////////
+
+    public boolean paused = false;
 
 }

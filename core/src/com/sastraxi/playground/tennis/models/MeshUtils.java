@@ -1,6 +1,7 @@
 package com.sastraxi.playground.tennis.models;
 
 import com.badlogic.gdx.graphics.*;
+import com.badlogic.gdx.graphics.VertexAttributes.Usage;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.Shader;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
@@ -14,6 +15,43 @@ import java.nio.FloatBuffer;
  * Created by sastr on 2015-11-01.
  */
 public class MeshUtils {
+
+    public static Mesh createFullScreenQuad()
+    {
+        float[] verts = new float[20];
+        int i = 0;
+
+        verts[i++] = -1; // x1
+        verts[i++] = -1; // y1
+        verts[i++] = 0;
+        verts[i++] = 0f; // u1
+        verts[i++] = 0f; // v1
+
+        verts[i++] = 1f; // x2
+        verts[i++] = -1; // y2
+        verts[i++] = 0;
+        verts[i++] = 1f; // u2
+        verts[i++] = 0f; // v2
+
+        verts[i++] = 1f; // x3
+        verts[i++] = 1f; // y2
+        verts[i++] = 0;
+        verts[i++] = 1f; // u3
+        verts[i++] = 1f; // v3
+
+        verts[i++] = -1; // x4
+        verts[i++] = 1f; // y4
+        verts[i++] = 0;
+        verts[i++] = 0f; // u4
+        verts[i++] = 1f; // v4
+
+        Mesh mesh = new Mesh( true, 4, 0,  // static mesh with 4 vertices and no indices
+                new VertexAttribute( Usage.Position, 3, ShaderProgram.POSITION_ATTRIBUTE ),
+                new VertexAttribute( Usage.TextureCoordinates, 2, ShaderProgram.TEXCOORD_ATTRIBUTE+"0" ) );
+
+        mesh.setVertices( verts );
+        return mesh;
+    }
 
     /**
      * Render with GL20.GL_TRIANGLE_FAN
@@ -39,8 +77,8 @@ public class MeshUtils {
         }
 
         Mesh mesh = new Mesh( false, 4, 0,  // dynamic mesh, 4 vertices and 0 indices
-                new VertexAttribute( VertexAttributes.Usage.Position, 3, ShaderProgram.POSITION_ATTRIBUTE ),
-                new VertexAttribute( VertexAttributes.Usage.ColorUnpacked, 4, ShaderProgram.COLOR_ATTRIBUTE ) );
+                new VertexAttribute( Usage.Position, 3, ShaderProgram.POSITION_ATTRIBUTE ),
+                new VertexAttribute( Usage.ColorUnpacked, 4, ShaderProgram.COLOR_ATTRIBUTE ) );
 
         mesh.setVertices(verts);
 
@@ -119,8 +157,8 @@ public class MeshUtils {
         }
 
         Mesh mesh = new Mesh( false, num, 0,  // dynamic mesh, 4 vertices and 0 indices
-                new VertexAttribute( VertexAttributes.Usage.Position, 3, ShaderProgram.POSITION_ATTRIBUTE ),
-                new VertexAttribute( VertexAttributes.Usage.ColorUnpacked, 4, ShaderProgram.COLOR_ATTRIBUTE ) );
+                new VertexAttribute( Usage.Position, 3, ShaderProgram.POSITION_ATTRIBUTE ),
+                new VertexAttribute( Usage.ColorUnpacked, 4, ShaderProgram.COLOR_ATTRIBUTE ) );
 
         mesh.setVertices(verts);
 

@@ -6,6 +6,7 @@ import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
 import com.sastraxi.playground.tennis.components.*;
+import com.sastraxi.playground.tennis.components.global.GameStateComponent;
 
 public class BallMovementSystem extends IteratingSystem {
 

@@ -7,7 +7,7 @@ import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
 import com.sastraxi.playground.tennis.components.BallComponent;
 import com.sastraxi.playground.tennis.components.character.CharacterComponent;
-import com.sastraxi.playground.tennis.components.GameStateComponent;
+import com.sastraxi.playground.tennis.components.global.GameStateComponent;
 import com.sastraxi.playground.tennis.Constants;
 
 public class GlobalAfterSystem extends IteratingSystem {
@@ -63,6 +63,9 @@ public class GlobalAfterSystem extends IteratingSystem {
     protected void processEntity(Entity entity, float deltaTime)
     {
         GameStateComponent gameState = gscm.get(entity);
+        if (!gameState.paused) {
+            gameState.tick();
+        }
         __debug(entity, gameState);
     }
 

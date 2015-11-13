@@ -8,7 +8,7 @@ import com.badlogic.ashley.systems.IteratingSystem;
 import com.badlogic.ashley.utils.ImmutableArray;
 import com.sastraxi.playground.tennis.components.BallComponent;
 import com.sastraxi.playground.tennis.components.character.CharacterComponent;
-import com.sastraxi.playground.tennis.components.GameStateComponent;
+import com.sastraxi.playground.tennis.components.global.GameStateComponent;
 
 public class GlobalBeforeSystem extends IteratingSystem {
 

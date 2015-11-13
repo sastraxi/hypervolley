@@ -11,6 +11,8 @@ import com.sastraxi.playground.tennis.components.*;
 import com.sastraxi.playground.tennis.components.character.CharacterComponent;
 import com.sastraxi.playground.tennis.components.character.StrikeZoneDebugComponent;
 import com.sastraxi.playground.tennis.components.character.SwingDetectorComponent;
+import com.sastraxi.playground.tennis.components.global.CameraManagementComponent;
+import com.sastraxi.playground.tennis.components.global.GameStateComponent;
 import com.sastraxi.playground.tennis.game.*;
 
 public class PlayerMovementSystem extends IteratingSystem {
