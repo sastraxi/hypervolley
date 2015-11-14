@@ -280,7 +280,7 @@ public class GameRenderingSystem extends EntitySystem {
         if (renderState.fbPong != null) renderState.fbPong.dispose();
 
         // framebuffers for effects
-        renderState.fbPing = new FrameBufferMSAA(width, height, false);
+        renderState.fbPing = new FrameBufferMSAA(width, height, true);
         renderState.fbPong = new FrameBufferMSAA(width, height, false);
 
         // full-screen rect
