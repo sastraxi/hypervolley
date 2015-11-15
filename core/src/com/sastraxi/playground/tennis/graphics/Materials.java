@@ -6,4 +6,6 @@ package com.sastraxi.playground.tennis.graphics;
 public class Materials {
 
     public static final String ID_BALL = "ball";
+    public static final String ID_MARKER_COLOUR = "markerColour";
+
 }

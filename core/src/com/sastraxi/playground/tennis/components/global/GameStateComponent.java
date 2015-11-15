@@ -31,4 +31,5 @@ public class GameStateComponent extends Component {
     public boolean isPaused() {
         return paused;
     }
+
 }

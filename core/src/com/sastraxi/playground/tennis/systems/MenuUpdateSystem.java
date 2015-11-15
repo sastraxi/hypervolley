@@ -40,6 +40,6 @@ public class MenuUpdateSystem extends IteratingSystem {
         }
 
         GameStateComponent gameState = gscm.get(entity);
-        gameState.paused = menuState.shouldBePaused();
+        gameState.paused = menuState.isActive();
     }
 }

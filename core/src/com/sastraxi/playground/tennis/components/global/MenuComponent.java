@@ -11,7 +11,7 @@ public class MenuComponent extends Component {
     public float lerp = 0f; // 1f = menu totally showing
     public int choice = 0;
 
-    public boolean shouldBePaused() {
+    public boolean isActive() {
         return lerp > 0f;
     }
 

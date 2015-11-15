@@ -17,7 +17,6 @@ import com.sastraxi.playground.tennis.graphics.CustomShaderAttribute;
  */
 public class BallModel {
 
-
     public static final String NODE_BASE = "base";
     public static final String NODE_TORSO = "torso";
     public static final String NODE_HEAD = "head";
@@ -52,11 +51,11 @@ public class BallModel {
                 new BlendingAttribute(true, 0f));
         return builder.createRect(
                 -2f * scale, -2f * scale, 0f,
-                2f * scale, -2f * scale, 0f,
-                2f * scale, 2f * scale, 0f,
-                -2f * scale, 2f * scale, 0f,
-                0f, 0f, 1f,
-                material, vertexAttributes | VertexAttributes.Usage.TextureCoordinates);
+                 2f * scale, -2f * scale, 0f,
+                 2f * scale,  2f * scale, 0f,
+                -2f * scale,  2f * scale, 0f,
+                 0f, 0f, 1f,
+                 material, vertexAttributes | VertexAttributes.Usage.TextureCoordinates);
     }
 
 }

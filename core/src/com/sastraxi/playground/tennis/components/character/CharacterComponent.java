@@ -74,6 +74,12 @@ public class CharacterComponent extends Component {
         return (lastState != state && state == PlayerState.HITTING);
     }
 
+    // player stats
+    public int wins = 0;
+    public void resetStats() {
+        this.wins = 0;
+    }
+
     // hitting the game ball
     public float tHitActual = 0f;
     public float speedDelta = 0f;
@@ -87,7 +93,7 @@ public class CharacterComponent extends Component {
     // low-level
     public InputFrame inputFrame = new InputFrame();
     public InputFrame lastInputFrame = new InputFrame();
-    public Long currentSoundId = null; // TODO player can be responsible for 1 sound at a time
+    public Long currentSoundId = null;
     public Sound currentSound = null;
 
 }

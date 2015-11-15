@@ -22,7 +22,7 @@ import com.sastraxi.playground.tennis.game.PlayerType;
 import com.sastraxi.playground.tennis.models.PlayerModel;
 import com.sastraxi.playground.tennis.systems.*;
 import com.sastraxi.playground.tennis.systems.render.GameRenderingSystem;
-import com.sastraxi.playground.tennis.systems.render.MenuRenderingSystem;
+import com.sastraxi.playground.tennis.systems.render.OverlayRenderingSystem;
 import com.sastraxi.playground.tennis.systems.update.BallMatrixSystem;
 import com.sastraxi.playground.tennis.systems.update.BounceMarkerMatrixSystem;
 import com.sastraxi.playground.tennis.systems.update.PlayerMatrixSystem;
@@ -178,7 +178,7 @@ public class TennisEntry extends ApplicationAdapter {
 
         // menu system
         engine.addSystem(new MenuUpdateSystem());
-        engine.addSystem(new MenuRenderingSystem());
+        engine.addSystem(new OverlayRenderingSystem());
 
         // general game logic that needs to happen around everything else
         engine.addSystem(new GlobalBeforeSystem());

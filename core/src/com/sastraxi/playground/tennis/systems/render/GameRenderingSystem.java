@@ -44,9 +44,9 @@ public class GameRenderingSystem extends EntitySystem {
 
     private static final int PRIORITY = Constants.SYSTEM_PRIORITY_RENDER;
 
-    static final Family BALL_ENTITIES = Family.all(BallComponent.class).get();
-    static final Family BOUNCE_MARKER_ENTITIES = Family.all(BounceMarkerComponent.class, MovementComponent.class).get();
-    static final Family PLAYER_ENTITIES = Family.all(CharacterComponent.class).get();
+    private static final Family BALL_ENTITIES = Family.all(BallComponent.class).get();
+    private static final Family BOUNCE_MARKER_ENTITIES = Family.all(BounceMarkerComponent.class, MovementComponent.class).get();
+    private static final Family PLAYER_ENTITIES = Family.all(CharacterComponent.class).get();
     private static final Family GAME_STATE_FAMILY = Family.one(GameStateComponent.class).get();
 
     private final ComponentMapper<BallComponent> bcm = ComponentMapper.getFor(BallComponent.class);
@@ -159,9 +159,9 @@ public class GameRenderingSystem extends EntitySystem {
         Gdx.gl.glViewport(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
         // render the shadow map
+        shadowLight.begin(Vector3.Zero, cameraManagementComponent.getCamera().direction);
         Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
-        shadowLight.begin(Vector3.Zero, cameraManagementComponent.getCamera().direction);
         shadowBatch.begin(shadowLight.getCamera());
         shadowBatch.render(tennisCourt, environment);
         for (Entity entity: ballEntities)
@@ -186,7 +186,7 @@ public class GameRenderingSystem extends EntitySystem {
         shadowLight.end();
 
         // we'll render off-screen to aid post-processing
-        if (menuState.shouldBePaused()) {
+        if (menuState.isActive()) {
             renderState.fbPing.begin();
         }
 
@@ -231,7 +231,7 @@ public class GameRenderingSystem extends EntitySystem {
         }
         batch.end();
 
-        if (menuState.shouldBePaused()) {
+        if (menuState.isActive()) {
             renderState.fbPing.end();
         }
 

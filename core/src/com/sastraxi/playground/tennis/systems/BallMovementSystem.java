@@ -6,6 +6,7 @@ import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
 import com.sastraxi.playground.tennis.components.*;
+import com.sastraxi.playground.tennis.components.character.CharacterComponent;
 import com.sastraxi.playground.tennis.components.global.GameStateComponent;
 
 public class BallMovementSystem extends IteratingSystem {
@@ -17,7 +18,7 @@ public class BallMovementSystem extends IteratingSystem {
 
     private static final Family TRACKING_CAMERA_FAMILY = Family.one(CameraComponent.class).get();
     private ComponentMapper<CameraComponent> ccm = ComponentMapper.getFor(CameraComponent.class);
-
+    private ComponentMapper<CharacterComponent> picm = ComponentMapper.getFor(CharacterComponent.class);
     private ComponentMapper<MovementComponent> mcm = ComponentMapper.getFor(MovementComponent.class);
     private ComponentMapper<BallComponent> bcm = ComponentMapper.getFor(BallComponent.class);
     private Engine engine = null;
@@ -53,7 +54,15 @@ public class BallMovementSystem extends IteratingSystem {
         ball.justBounced = (previousBounce != ball.currentBounce);
 
         if (!ball.path.isAlive(time)) {
-            System.out.println("ball dead");
+
+            // award a point to the player who hit it
+            // FIXME what if they hit it out of bounds? we'll award the point still...
+            if (ball.lastHitByPlayerEID != null)
+            {
+                CharacterComponent winningPlayer = picm.get(ball.getLastHitByPlayerEntity(engine));
+                winningPlayer.wins += 1;
+            }
+
             for (Entity trackingCameraEntity: engine.getEntitiesFor(TRACKING_CAMERA_FAMILY)) {
                 CameraComponent camera = ccm.get(trackingCameraEntity);
                 camera.entities.remove(entity.getId());

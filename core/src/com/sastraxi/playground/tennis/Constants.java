@@ -173,5 +173,8 @@ public class Constants {
     public static final int SYSTEM_PRIORITY_RENDER = 1001;
 
     // in-game menu
-    public static final float MENU_SHOW_TIME = 0.5f; // seconds
+    public static final float MENU_SHOW_TIME = 0.2f; // seconds
+    public static final float HUD_SHADOW_ALPHA = 0.5f;
+    public static final float HUD_SCORE_MARKER_SIZE = 0.02f; // % of screen
+    public static final float HUD_SCORE_MARKER_GAP = 0.25f * HUD_SCORE_MARKER_SIZE; // % of screen
 }
