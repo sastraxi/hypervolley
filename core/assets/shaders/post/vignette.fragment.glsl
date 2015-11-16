@@ -12,13 +12,13 @@ precision mediump float;
 varying MED vec2 v_UV;
 uniform float u_anim;
 
-#define MAX_VIGNETTE_INTENSITY 0.6
-#define VIGNETTE_RADIUS 0.44
+#define MAX_VIGNETTE_INTENSITY 0.53
+#define VIGNETTE_RADIUS 0.39
 
 void main()
 {
     vec2 tc = v_UV;
-    tc.y += 0.05;
+    tc.y += 0.08;
     if (tc.y < 0.5) tc.y = 0.5; // only do a strong vignette on the top half
     float dst = distance(tc, vec2(0.5, 0.5)) * (1 - u_anim);
 
