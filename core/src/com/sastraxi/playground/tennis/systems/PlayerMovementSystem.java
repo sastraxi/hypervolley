@@ -356,6 +356,12 @@ public class PlayerMovementSystem extends IteratingSystem {
                     float maxSpeed = Math.min(currentSpeed + Constants.PLAYER_MAX_SWING_SPEEDUP, maxTheoreticalSpeed);
                     float minSpeed = Math.max(currentSpeed - Constants.PLAYER_MAX_SWING_SLOWDOWN, 0f);
 
+                    // our slow-down animation adds another constraint:
+                    // we go down to original_speed - 2*speed_delta, so don't let
+                    // speed delta (new_speed - original_speed) go lower than 1/2 of original_speed
+                    // TODO fix our animation instead!!!
+                    if (minSpeed < 0.5f * currentSpeed) minSpeed = 0.5f * currentSpeed;
+
                     // extents of our search area (y component)
                     float d_min = Constants.PLAYER_MIN_REACH;
                     float d_max = Constants.PLAYER_MAX_REACH + maxSpeed * Constants.PLAYER_BALL_LOCK_LOOKAHEAD_SEC;
