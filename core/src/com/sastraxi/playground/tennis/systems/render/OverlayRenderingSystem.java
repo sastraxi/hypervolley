@@ -9,10 +9,8 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
-import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.sastraxi.playground.shaders.PostProcessShaderProgram;
 import com.sastraxi.playground.tennis.Constants;
@@ -21,7 +19,6 @@ import com.sastraxi.playground.tennis.components.global.CameraManagementComponen
 import com.sastraxi.playground.tennis.components.global.GameStateComponent;
 import com.sastraxi.playground.tennis.components.global.MenuComponent;
 import com.sastraxi.playground.tennis.components.global.SharedRenderStateComponent;
-import com.sastraxi.playground.tennis.graphics.Materials;
 import com.sastraxi.playground.tennis.models.HUDModel;
 
 /**
@@ -43,10 +40,15 @@ public class OverlayRenderingSystem extends EntitySystem {
     Engine engine;
     ImmutableArray<Entity> playerEntities;
 
+    // text layouts
+    GlyphLayout winsGlyph = new GlyphLayout(),
+                resetGlyph = new GlyphLayout(),
+                exitGlyph = new GlyphLayout(),
+                switchGlyph = new GlyphLayout();
+
     // 2d graphics
     SpriteBatch spriteBatch;
-    BitmapFont menuFont, shadowFont;
-    GlyphLayout glyphLayout = new GlyphLayout();
+    BitmapFont hudFont, menuFont;
 
     // HUD stuff (technically 3D)
     ModelBatch modelBatch = new ModelBatch();
@@ -55,6 +57,7 @@ public class OverlayRenderingSystem extends EntitySystem {
 
     // post-processing
     ShaderProgram menuShaderA, menuShaderB;
+    ShaderProgram vignetteShader;
 
     // global game state
     Entity gameStateEntity;
@@ -84,26 +87,31 @@ public class OverlayRenderingSystem extends EntitySystem {
 
         // text drawing
         spriteBatch = new SpriteBatch();
-        menuFont = new BitmapFont(Gdx.files.internal("fonts/exo-medium.fnt"));
-        menuFont.getData().setScale(0.5f);
+        hudFont = new BitmapFont(Gdx.files.internal("fonts/exo-bold-32-2.fnt"));
+        menuFont = new BitmapFont(Gdx.files.internal("fonts/exo-bold-32.fnt"));
+        menuFont.setColor(0f, 0f, 0f, 0.5f);
 
-        // FIXME can't do 2 colours on same font!?
-        shadowFont = new BitmapFont(Gdx.files.internal("fonts/exo-medium.fnt"));
-        shadowFont.getData().setScale(0.5f);
+        // cached glyphs
+        winsGlyph.setText(hudFont, "WINS");
+        resetGlyph.setText(menuFont, "Reset Scores");
+        switchGlyph.setText(menuFont, "Switch Serving Player");
+        exitGlyph.setText(menuFont, "Quit to Desktop");
 
         // post-processing shaders
         if (menuShaderA == null) menuShaderA = new PostProcessShaderProgram(Gdx.files.internal("shaders/post/menu-1.fragment.glsl"));
         if (menuShaderB == null) menuShaderB = new PostProcessShaderProgram(Gdx.files.internal("shaders/post/menu-2.fragment.glsl"));
+        if (vignetteShader == null) vignetteShader = new PostProcessShaderProgram(Gdx.files.internal("shaders/post/vignette.fragment.glsl"));
     }
 
     @Override
     public void update(float deltaTime)
     {
-        // render the HUD
+        // render the HUD and vignette
         if (menuState.isActive()) {
             renderState.fbPing.begin();
         }
-        renderHUD(menuState.lerp);
+        drawVignette(menuState.lerp);
+        drawHUD(menuState.lerp);
         if (menuState.isActive()) {
             renderState.fbPing.end();
         }
@@ -111,7 +119,22 @@ public class OverlayRenderingSystem extends EntitySystem {
         // render our post-processing
         if (menuState.isActive()) {
             drawPostProcessing(menuState.lerp);
+            drawMenu(menuState.lerp);
         }
+    }
+
+    /**
+     * A vignette allows our HUD to stand out a little more.
+     */
+    private void drawVignette(float factor)
+    {
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        vignetteShader.begin();
+
+            vignetteShader.setUniformf("u_anim", factor);
+            renderState.fullscreenRect.render(vignetteShader, GL20.GL_TRIANGLE_FAN);
+
+        vignetteShader.end();
     }
 
     /**
@@ -147,27 +170,42 @@ public class OverlayRenderingSystem extends EntitySystem {
     }
 
     /**
-     * @param factor menu lerp. at 0, HUD is fully visible. at 1, it's gone.
+     * @param factor menu lerp. at 0, menu is hidden. at 1, it's fully visible.
      */
-    private void renderHUD(float factor)
+    private void drawMenu(float factor)
     {
-        glyphLayout.setText(shadowFont, "WINS");
-
         spriteBatch.begin();
 
-            shadowFont.setColor(0f, 0f, 0f, Constants.HUD_SHADOW_ALPHA * (1f - factor));
-            shadowFont.draw(spriteBatch, glyphLayout,
-                    0.5f * (Gdx.graphics.getWidth() - glyphLayout.width),
-                    Gdx.graphics.getHeight() - 24f);
+            spriteBatch.enableBlending();
+
+            menuFont.setColor(0f, 0f, 0f, factor);
+            menuFont.draw(spriteBatch, "Reset Scores",
+                    0.5f * (Gdx.graphics.getWidth() - resetGlyph.width),
+                    Gdx.graphics.getHeight() - 300f);
+
+            menuFont.setColor(0f, 0f, 0f, factor);
+            menuFont.draw(spriteBatch, "Switch Serving Player",
+                    0.5f * (Gdx.graphics.getWidth() - switchGlyph.width),
+                    Gdx.graphics.getHeight() - 350f);
+
+            menuFont.setColor(0f, 0f, 0f, factor);
+            menuFont.draw(spriteBatch, "Quit to Desktop",
+                    0.5f * (Gdx.graphics.getWidth() - exitGlyph.width),
+                    Gdx.graphics.getHeight() - 400f);
 
         spriteBatch.end();
+    }
 
-        glyphLayout.setText(menuFont, "WINS");
+
+    /**
+     * @param factor menu lerp. at 0, HUD is fully visible. at 1, it's gone.
+     */
+    private void drawHUD(float factor)
+    {
         spriteBatch.begin();
 
-            menuFont.setColor(1f, 1f, 1f, 1f - factor);
-            menuFont.draw(spriteBatch, glyphLayout,
-                    0.5f * (Gdx.graphics.getWidth() - glyphLayout.width),
+            hudFont.draw(spriteBatch, winsGlyph,
+                    0.5f * (Gdx.graphics.getWidth() - winsGlyph.width),
                     Gdx.graphics.getHeight() - 22f);
 
         spriteBatch.end();
@@ -175,7 +213,7 @@ public class OverlayRenderingSystem extends EntitySystem {
         modelBatch.begin(camera);
 
             CharacterComponent playerOne = picm.get(playerEntities.get(0));
-            float x = -(glyphLayout.width / Gdx.graphics.getWidth());
+            float x = -(winsGlyph.width / Gdx.graphics.getWidth());
             for (int i = 0; i < playerOne.wins; ++i)
             {
                 scoreMarkerOne.transform.setToTranslation(x, 0.45f, 0f);
@@ -186,7 +224,7 @@ public class OverlayRenderingSystem extends EntitySystem {
             }
 
             CharacterComponent playerTwo = picm.get(playerEntities.get(1));
-            x = glyphLayout.width / Gdx.graphics.getWidth();
+            x = winsGlyph.width / Gdx.graphics.getWidth();
             for (int i = 0; i < playerTwo.wins; ++i)
             {
                 scoreMarkerTwo.transform.setToTranslation(x, 0.45f, 0f);
