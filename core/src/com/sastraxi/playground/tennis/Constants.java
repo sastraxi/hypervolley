@@ -19,8 +19,7 @@ public class Constants {
     public static final float FRAME_TIME_SEC = 1f / (float) FRAME_RATE;
     public static final double FRAME_TIME_SEC_DBL = 1f / (double) FRAME_RATE;
 
-    // N.B. game scale: 1f ~ 0.1m
-    public static final float G = 160f; // 98.1f;
+    public static final float G = 200f; // 98.1f;
 
     public static final float LEVEL_HALF_WIDTH = 300f;
     public static final float LEVEL_HALF_DEPTH = 150f;

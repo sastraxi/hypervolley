@@ -7,11 +7,13 @@ import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.BitmapFontCache;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
+import com.badlogic.gdx.utils.Align;
 import com.sastraxi.playground.shaders.PostProcessShaderProgram;
 import com.sastraxi.playground.tennis.Constants;
 import com.sastraxi.playground.tennis.components.character.CharacterComponent;
@@ -41,10 +43,8 @@ public class OverlayRenderingSystem extends EntitySystem {
     ImmutableArray<Entity> playerEntities;
 
     // text layouts
-    GlyphLayout winsGlyph = new GlyphLayout(),
-                resetGlyph = new GlyphLayout(),
-                exitGlyph = new GlyphLayout(),
-                switchGlyph = new GlyphLayout();
+    GlyphLayout winsGlyph, resetGlyph, exitGlyph, switchGlyph;
+    BitmapFontCache winsCache, resetCache, exitCache, switchCache;
 
     // 2d graphics
     SpriteBatch spriteBatch;
@@ -89,18 +89,37 @@ public class OverlayRenderingSystem extends EntitySystem {
         spriteBatch = new SpriteBatch();
         hudFont = new BitmapFont(Gdx.files.internal("fonts/exo-bold-32-2.fnt"));
         menuFont = new BitmapFont(Gdx.files.internal("fonts/exo-bold-32.fnt"));
-        menuFont.setColor(0f, 0f, 0f, 0.5f);
 
-        // cached glyphs
-        winsGlyph.setText(hudFont, "WINS");
-        resetGlyph.setText(menuFont, "Reset Scores");
-        switchGlyph.setText(menuFont, "Switch Serving Player");
-        exitGlyph.setText(menuFont, "Quit to Desktop");
+        // glyphs
+        winsGlyph = new GlyphLayout(hudFont, "WINS");
+        resetGlyph = new GlyphLayout(menuFont, "Reset Scores");
+        switchGlyph = new GlyphLayout(menuFont, "Switch Serving Player");
+        exitGlyph = new GlyphLayout(menuFont, "Quit to Desktop");
 
         // post-processing shaders
         if (menuShaderA == null) menuShaderA = new PostProcessShaderProgram(Gdx.files.internal("shaders/post/menu-1.fragment.glsl"));
         if (menuShaderB == null) menuShaderB = new PostProcessShaderProgram(Gdx.files.internal("shaders/post/menu-2.fragment.glsl"));
         if (vignetteShader == null) vignetteShader = new PostProcessShaderProgram(Gdx.files.internal("shaders/post/vignette.fragment.glsl"));
+
+        resize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+    }
+
+    public void resize(int width, int height)
+    {
+        // hud cache
+        winsCache = new BitmapFontCache(hudFont);
+        winsCache.addText(winsGlyph, 0.5f * width - 0.5f * winsGlyph.width, height - 22f);
+
+        // menu cache
+        resetCache = new BitmapFontCache(menuFont);
+        resetCache.setColor(0f, 0f, 0f, 1f);
+        resetCache.addText(resetGlyph, 0.5f * width - 0.5f * resetGlyph.width, 0.5f * height + 50f);
+        switchCache = new BitmapFontCache(menuFont);
+        switchCache.setColor(0f, 0f, 0f, 1f);
+        switchCache.addText(switchGlyph, 0.5f * width - 0.5f * switchGlyph.width, 0.5f * height);
+        exitCache = new BitmapFontCache(menuFont);
+        exitCache.setColor(0f, 0f, 0f, 1f);
+        exitCache.addText(exitGlyph, 0.5f * width - 0.5f * exitGlyph.width, 0.5f * height - 50f);
     }
 
     @Override
@@ -174,24 +193,23 @@ public class OverlayRenderingSystem extends EntitySystem {
      */
     private void drawMenu(float factor)
     {
+        float scale = 1.1f - 0.1f * factor;
+        spriteBatch.getTransformMatrix()
+                .idt()
+                .translate(0.5f * Gdx.graphics.getWidth(), 0.5f * Gdx.graphics.getHeight(), 0f)
+                .scale(scale, scale, 1f)
+                .translate(-0.5f * Gdx.graphics.getWidth(), -0.5f * Gdx.graphics.getHeight(), 0f);
+
+
         spriteBatch.begin();
 
             spriteBatch.enableBlending();
 
-            menuFont.setColor(0f, 0f, 0f, factor);
-            menuFont.draw(spriteBatch, "Reset Scores",
-                    0.5f * (Gdx.graphics.getWidth() - resetGlyph.width),
-                    Gdx.graphics.getHeight() - 300f);
+            resetCache.setColor(1f, 0f, 0f, 1f);
 
-            menuFont.setColor(0f, 0f, 0f, factor);
-            menuFont.draw(spriteBatch, "Switch Serving Player",
-                    0.5f * (Gdx.graphics.getWidth() - switchGlyph.width),
-                    Gdx.graphics.getHeight() - 350f);
-
-            menuFont.setColor(0f, 0f, 0f, factor);
-            menuFont.draw(spriteBatch, "Quit to Desktop",
-                    0.5f * (Gdx.graphics.getWidth() - exitGlyph.width),
-                    Gdx.graphics.getHeight() - 400f);
+            resetCache.draw(spriteBatch, factor * factor);
+            exitCache.draw(spriteBatch, factor * factor);
+            switchCache.draw(spriteBatch, factor * factor);
 
         spriteBatch.end();
     }
@@ -202,18 +220,17 @@ public class OverlayRenderingSystem extends EntitySystem {
      */
     private void drawHUD(float factor)
     {
+        spriteBatch.getTransformMatrix().idt();
         spriteBatch.begin();
 
-            hudFont.draw(spriteBatch, winsGlyph,
-                    0.5f * (Gdx.graphics.getWidth() - winsGlyph.width),
-                    Gdx.graphics.getHeight() - 22f);
+            winsCache.draw(spriteBatch);
 
         spriteBatch.end();
 
         modelBatch.begin(camera);
 
             CharacterComponent playerOne = picm.get(playerEntities.get(0));
-            float x = -(winsGlyph.width / Gdx.graphics.getWidth());
+            float x = -0.06f;
             for (int i = 0; i < playerOne.wins; ++i)
             {
                 scoreMarkerOne.transform.setToTranslation(x, 0.45f, 0f);
@@ -224,7 +241,7 @@ public class OverlayRenderingSystem extends EntitySystem {
             }
 
             CharacterComponent playerTwo = picm.get(playerEntities.get(1));
-            x = winsGlyph.width / Gdx.graphics.getWidth();
+            x = 0.06f;
             for (int i = 0; i < playerTwo.wins; ++i)
             {
                 scoreMarkerTwo.transform.setToTranslation(x, 0.45f, 0f);

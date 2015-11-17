@@ -33,6 +33,7 @@ public class TennisEntry extends ApplicationAdapter {
     GameStateComponent gameState;
     CameraManagementComponent cameraManagementComponent;
     GameRenderingSystem gameRenderingSystem;
+    OverlayRenderingSystem overlayRenderingSystem;
 
     @Override
 	public void create()
@@ -177,8 +178,9 @@ public class TennisEntry extends ApplicationAdapter {
         engine.addSystem(gameRenderingSystem);
 
         // menu system
+        overlayRenderingSystem = new OverlayRenderingSystem();
         engine.addSystem(new MenuUpdateSystem());
-        engine.addSystem(new OverlayRenderingSystem());
+        engine.addSystem(overlayRenderingSystem);
 
         // general game logic that needs to happen around everything else
         engine.addSystem(new GlobalBeforeSystem());
@@ -244,6 +246,7 @@ public class TennisEntry extends ApplicationAdapter {
         }
 
         gameRenderingSystem.resize(width, height);
+        overlayRenderingSystem.resize(width, height);
     }
 
     @Override
