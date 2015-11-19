@@ -41,9 +41,17 @@ public class ControllerInputSystem extends IteratingSystem {
         // FIXME game state entity can never change after this system is created
     }
 
+    /**
+     * "Euclidean" modulo. e.g. -1 % 3 == 2
+     */
+    static int mod(int a, int n) {
+        return a<0 ? (a%n + n)%n : a%n;
+    }
+
     @Override
     protected void processEntity(Entity entity, float deltaTime)
     {
+        MenuComponent menuState = mscm.get(gameStateEntity);
         CharacterComponent pic = picm.get(entity);
         ControllerInputComponent cic = cicm.get(entity);
         XInputDevice controller = cic.controller;
@@ -64,19 +72,40 @@ public class ControllerInputSystem extends IteratingSystem {
         boolean isLeftBumperPressed = Math.abs(axes.lt) > 0.5f;
         boolean isRightBumperPressed = Math.abs(axes.rt) > 0.5f;
         pic.inputFrame.dash = isLeftBumperPressed | isRightBumperPressed;
+        pic.inputFrame.toggleMenu = buttons.start;
+        pic.inputFrame.up = buttons.up;
+        pic.inputFrame.down = buttons.down;
 
+        // open/close the menu
+        // make sure if the menu is already open ("active") we can only interact with it via. the opening player
+        if (pic.inputFrame.toggleMenu && !pic.lastInputFrame.toggleMenu) {
+            if (!menuState.isActive() || menuState.menuOpenedByPlayerEID == entity.getId())
+            {
+                menuState.showing = !menuState.showing;
+                menuState.menuOpenedByPlayerEID = entity.getId();
+            }
+        }
+
+        // interact with the menu
+        if (menuState.isActive() && menuState.menuOpenedByPlayerEID == entity.getId())
+        {
+            if (pic.inputFrame.up && !pic.lastInputFrame.up) {
+                menuState.choice = mod(menuState.choice - 1, menuState.choices.size());
+            }
+            if (pic.inputFrame.down && !pic.lastInputFrame.down) {
+                menuState.choice = mod(menuState.choice + 1, menuState.choices.size());
+            }
+            if (pic.inputFrame.swing && !pic.lastInputFrame.swing) {
+                menuState.choices.get(menuState.choice).performAction(engine);
+                menuState.showing = false;
+            }
+        }
         // FIXME hacky public gamestate stuff
         pic.inputFrame.changeCamera = buttons.back;
         if (pic.inputFrame.changeCamera && !pic.lastInputFrame.changeCamera)
         {
             CameraManagementComponent viewpoint = ccm.get(gameStateEntity);
             viewpoint.cycle();
-        }
-        pic.inputFrame.toggleMenu = buttons.start;
-        if (pic.inputFrame.toggleMenu && !pic.lastInputFrame.toggleMenu)
-        {
-            MenuComponent menuState = mscm.get(gameStateEntity);
-            menuState.showing = !menuState.showing;
         }
     }
 

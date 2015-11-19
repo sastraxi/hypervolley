@@ -14,13 +14,14 @@ public class BallMovementSystem extends IteratingSystem {
     private static final int PRIORITY = 2; // before player movement system
 
     private static final Family GAME_STATE_FAMILY = Family.one(GameStateComponent.class).get();
-    private ComponentMapper<GameStateComponent> gscm = ComponentMapper.getFor(GameStateComponent.class);
-
     private static final Family TRACKING_CAMERA_FAMILY = Family.one(CameraComponent.class).get();
-    private ComponentMapper<CameraComponent> ccm = ComponentMapper.getFor(CameraComponent.class);
-    private ComponentMapper<CharacterComponent> picm = ComponentMapper.getFor(CharacterComponent.class);
-    private ComponentMapper<MovementComponent> mcm = ComponentMapper.getFor(MovementComponent.class);
-    private ComponentMapper<BallComponent> bcm = ComponentMapper.getFor(BallComponent.class);
+
+    private static ComponentMapper<GameStateComponent> gscm = ComponentMapper.getFor(GameStateComponent.class);
+    private static ComponentMapper<CameraComponent> ccm = ComponentMapper.getFor(CameraComponent.class);
+    private static ComponentMapper<CharacterComponent> picm = ComponentMapper.getFor(CharacterComponent.class);
+    private static ComponentMapper<MovementComponent> mcm = ComponentMapper.getFor(MovementComponent.class);
+    private static ComponentMapper<BallComponent> bcm = ComponentMapper.getFor(BallComponent.class);
+
     private Engine engine = null;
 
     public BallMovementSystem() {
@@ -53,8 +54,8 @@ public class BallMovementSystem extends IteratingSystem {
         ball.currentBounce = ball.path.getNumBounces(time);
         ball.justBounced = (previousBounce != ball.currentBounce);
 
-        if (!ball.path.isAlive(time)) {
-
+        if (!ball.path.isAlive(time))
+        {
             // award a point to the player who hit it
             // FIXME what if they hit it out of bounds? we'll award the point still...
             if (ball.lastHitByPlayerEID != null)
@@ -63,12 +64,17 @@ public class BallMovementSystem extends IteratingSystem {
                 winningPlayer.wins += 1;
             }
 
-            for (Entity trackingCameraEntity: engine.getEntitiesFor(TRACKING_CAMERA_FAMILY)) {
-                CameraComponent camera = ccm.get(trackingCameraEntity);
-                camera.entities.remove(entity.getId());
-            }
-            engine.removeEntity(entity);
+            destroyBall(engine, entity);
         }
+    }
+
+    public static void destroyBall(Engine engine, Entity ballEntity)
+    {
+        for (Entity trackingCameraEntity: engine.getEntitiesFor(TRACKING_CAMERA_FAMILY)) {
+            CameraComponent camera = ccm.get(trackingCameraEntity);
+            camera.entities.remove(ballEntity.getId());
+        }
+        engine.removeEntity(ballEntity);
     }
 
 }

@@ -10,10 +10,10 @@ public class InputFrame {
     public boolean swing, lob, curve;
     public Vector2 movement = new Vector2();
     public boolean dash;
-
-    // FIXME debug stuff only
-    public boolean changeCamera;
     public boolean toggleMenu;
+    public boolean up, down;
+
+    public boolean changeCamera; // FIXME debug
 
     public void set(InputFrame other) {
         this.movement = other.movement;
@@ -23,6 +23,8 @@ public class InputFrame {
         this.curve = other.curve;
         this.changeCamera = other.changeCamera;
         this.toggleMenu = other.toggleMenu;
+        this.up = other.up;
+        this.down = other.down;
     }
 
 }

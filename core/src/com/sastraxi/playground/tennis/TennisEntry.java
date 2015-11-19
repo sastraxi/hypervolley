@@ -1,7 +1,10 @@
 package com.sastraxi.playground.tennis;
 
+import com.badlogic.ashley.core.ComponentMapper;
 import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
+import com.badlogic.ashley.core.Family;
+import com.badlogic.ashley.utils.ImmutableArray;
 import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
@@ -19,6 +22,7 @@ import com.sastraxi.playground.tennis.components.global.GameStateComponent;
 import com.sastraxi.playground.tennis.components.global.MenuComponent;
 import com.sastraxi.playground.tennis.components.global.SharedRenderStateComponent;
 import com.sastraxi.playground.tennis.game.PlayerType;
+import com.sastraxi.playground.tennis.menu.MenuChoice;
 import com.sastraxi.playground.tennis.models.PlayerModel;
 import com.sastraxi.playground.tennis.systems.*;
 import com.sastraxi.playground.tennis.systems.render.GameRenderingSystem;
@@ -28,6 +32,9 @@ import com.sastraxi.playground.tennis.systems.update.BounceMarkerMatrixSystem;
 import com.sastraxi.playground.tennis.systems.update.PlayerMatrixSystem;
 
 public class TennisEntry extends ApplicationAdapter {
+
+    private static final Family PLAYER_ENTITIES = Family.all(CharacterComponent.class).get();
+    private final ComponentMapper<CharacterComponent> picm = ComponentMapper.getFor(CharacterComponent.class);
 
     Engine engine;
     GameStateComponent gameState;
@@ -102,7 +109,7 @@ public class TennisEntry extends ApplicationAdapter {
             mc.position.set(center, 0f);
             if (i == 1) mc.orientation = new Quaternion(Constants.UP_VECTOR, 180f);
             players[i].add(mc);
-            players[i].add(new CharacterComponent(playerTypes[i], bounds, shotBounds));
+            players[i].add(new CharacterComponent(playerTypes[i], bounds, shotBounds, i == 0));
 
             // the player's input is a controller
             if (playerTypes[i] == PlayerType.HUMAN) {
@@ -159,12 +166,49 @@ public class TennisEntry extends ApplicationAdapter {
                 orthographicCamera,
         };
 
+        // in-game menu
+        MenuComponent menuComponent = new MenuComponent();
+        menuComponent.choices.add(new MenuChoice("Reset Scores") {
+            @Override
+            public void performAction(Engine engine) {
+                for (Entity playerEntity: engine.getEntitiesFor(PLAYER_ENTITIES))
+                {
+                    picm.get(playerEntity).wins = 0;
+                }
+            }
+        });
+        menuComponent.choices.add(new MenuChoice("Switch Serving Player") {
+            @Override
+            public void performAction(Engine engine) {
+                for (Entity playerEntity: engine.getEntitiesFor(PLAYER_ENTITIES))
+                {
+                    CharacterComponent character = picm.get(playerEntity);
+                    character.isServingPlayer = !character.isServingPlayer;
+                    if (character.state == CharacterComponent.PlayerState.SERVE_SETUP)
+                    {
+                        // destroy the ball, to trigger the change-over
+                        character.state = CharacterComponent.PlayerState.NONE;
+                        Entity ball = character.getBall(engine);
+                        character.ballEID = null;
+                        BallMovementSystem.destroyBall(engine, ball);
+                    }
+                }
+            }
+        });
+        menuComponent.choices.add(new MenuChoice("Quit to Desktop") {
+            @Override
+            public void performAction(Engine engine) {
+                // TODO perform cleanup before exiting
+                Gdx.app.exit();
+            }
+        });
+
         // game state
         Entity gameStateEntity = new Entity();
         gameState = new GameStateComponent();
         gameStateEntity.add(cameraManagementComponent);
         gameStateEntity.add(gameState);
-        gameStateEntity.add(new MenuComponent());
+        gameStateEntity.add(menuComponent);
         gameStateEntity.add(new SharedRenderStateComponent());
         engine.addEntity(gameStateEntity);
 

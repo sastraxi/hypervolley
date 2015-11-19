@@ -3,9 +3,7 @@ package com.sastraxi.playground.tennis.systems.render;
 import com.badlogic.ashley.core.*;
 import com.badlogic.ashley.utils.ImmutableArray;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.Camera;
-import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.BitmapFontCache;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
@@ -13,7 +11,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
-import com.badlogic.gdx.utils.Align;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.sastraxi.playground.shaders.PostProcessShaderProgram;
 import com.sastraxi.playground.tennis.Constants;
 import com.sastraxi.playground.tennis.components.character.CharacterComponent;
@@ -21,6 +19,7 @@ import com.sastraxi.playground.tennis.components.global.CameraManagementComponen
 import com.sastraxi.playground.tennis.components.global.GameStateComponent;
 import com.sastraxi.playground.tennis.components.global.MenuComponent;
 import com.sastraxi.playground.tennis.components.global.SharedRenderStateComponent;
+import com.sastraxi.playground.tennis.menu.MenuChoice;
 import com.sastraxi.playground.tennis.models.HUDModel;
 
 /**
@@ -43,12 +42,14 @@ public class OverlayRenderingSystem extends EntitySystem {
     ImmutableArray<Entity> playerEntities;
 
     // text layouts
-    GlyphLayout winsGlyph, resetGlyph, exitGlyph, switchGlyph;
-    BitmapFontCache winsCache, resetCache, exitCache, switchCache;
+    GlyphLayout winsGlyph;
+    BitmapFontCache winsCache;
 
     // 2d graphics
+    ShapeRenderer shapeRenderer = new ShapeRenderer();
     SpriteBatch spriteBatch;
     BitmapFont hudFont, menuFont;
+    Color choiceColour = new Color();
 
     // HUD stuff (technically 3D)
     ModelBatch modelBatch = new ModelBatch();
@@ -92,9 +93,6 @@ public class OverlayRenderingSystem extends EntitySystem {
 
         // glyphs
         winsGlyph = new GlyphLayout(hudFont, "WINS");
-        resetGlyph = new GlyphLayout(menuFont, "Reset Scores");
-        switchGlyph = new GlyphLayout(menuFont, "Switch Serving Player");
-        exitGlyph = new GlyphLayout(menuFont, "Quit to Desktop");
 
         // post-processing shaders
         if (menuShaderA == null) menuShaderA = new PostProcessShaderProgram(Gdx.files.internal("shaders/post/menu-1.fragment.glsl"));
@@ -111,15 +109,7 @@ public class OverlayRenderingSystem extends EntitySystem {
         winsCache.addText(winsGlyph, 0.5f * width - 0.5f * winsGlyph.width, height - 22f);
 
         // menu cache
-        resetCache = new BitmapFontCache(menuFont);
-        resetCache.setColor(0f, 0f, 0f, 1f);
-        resetCache.addText(resetGlyph, 0.5f * width - 0.5f * resetGlyph.width, 0.5f * height + 50f);
-        switchCache = new BitmapFontCache(menuFont);
-        switchCache.setColor(0f, 0f, 0f, 1f);
-        switchCache.addText(switchGlyph, 0.5f * width - 0.5f * switchGlyph.width, 0.5f * height);
-        exitCache = new BitmapFontCache(menuFont);
-        exitCache.setColor(0f, 0f, 0f, 1f);
-        exitCache.addText(exitGlyph, 0.5f * width - 0.5f * exitGlyph.width, 0.5f * height - 50f);
+        menuState.cacheGlyphs(menuFont);
     }
 
     @Override
@@ -201,15 +191,38 @@ public class OverlayRenderingSystem extends EntitySystem {
                 .translate(-0.5f * Gdx.graphics.getWidth(), -0.5f * Gdx.graphics.getHeight(), 0f);
 
 
+        // FIXME this is hacky; render our own outline rather than using ShapeRenderer
+        shapeRenderer.setTransformMatrix(spriteBatch.getTransformMatrix());
+        shapeRenderer.setProjectionMatrix(spriteBatch.getProjectionMatrix());
+
+        Color playerColour = (playerEntities.get(0).getId() == menuState.menuOpenedByPlayerEID)
+                ? Constants.PLAYER_ONE_COLOUR : Constants.PLAYER_TWO_COLOUR;
+
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+
+        MenuChoice currentChoice = menuState.choices.get(menuState.choice);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(playerColour);
+        shapeRenderer.getColor().a = Constants.MENU_CHOICE_ALPHA * factor * factor;
+        shapeRenderer.rect(
+                currentChoice.bounds.x - Constants.MENU_CHOICE_PADDING,
+                currentChoice.bounds.y + 0.5f * Gdx.graphics.getHeight() - Constants.MENU_CHOICE_PADDING,
+                currentChoice.bounds.width + 2f * Constants.MENU_CHOICE_PADDING,
+                currentChoice.bounds.height + 2f * Constants.MENU_CHOICE_PADDING);
+        shapeRenderer.end();
+
+        Gdx.gl.glDisable(GL20.GL_BLEND);
+
+        // draw all menu text
         spriteBatch.begin();
 
             spriteBatch.enableBlending();
 
-            resetCache.setColor(1f, 0f, 0f, 1f);
-
-            resetCache.draw(spriteBatch, factor * factor);
-            exitCache.draw(spriteBatch, factor * factor);
-            switchCache.draw(spriteBatch, factor * factor);
+            for (int i = 0; i < menuState.choices.size(); ++i)
+            {
+                menuState.choices.get(i).draw(spriteBatch, factor * factor);
+            }
 
         spriteBatch.end();
     }

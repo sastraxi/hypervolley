@@ -173,7 +173,14 @@ public class Constants {
 
     // in-game menu
     public static final float MENU_SHOW_TIME = 0.2f; // seconds
+    public static final float MENU_CHOICE_SPEED = 5f; // 1/s
+    public static final float MENU_Y_OFFSET = 50f; // pixels
+    public static final float MENU_CHOICE_PADDING = 10f; // pixels
+    public static final float MENU_CHOICE_ALPHA = 0.75f;
+
+    // hud
     public static final float HUD_SHADOW_ALPHA = 0.5f;
     public static final float HUD_SCORE_MARKER_SIZE = 0.02f; // % of screen
     public static final float HUD_SCORE_MARKER_GAP = 0.25f * HUD_SCORE_MARKER_SIZE; // % of screen
+
 }
