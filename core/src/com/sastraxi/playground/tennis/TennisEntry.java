@@ -200,10 +200,12 @@ public class TennisEntry extends ApplicationAdapter {
         menuComponent.choices.add(new MenuChoice("Toggle Fullscreen") {
             @Override
             public boolean performAction(Engine engine) {
+                boolean fullscreen = !Gdx.graphics.isFullscreen();
+                Gdx.input.setCursorCatched(fullscreen);
                 Gdx.graphics.setDisplayMode(
                         Gdx.graphics.getWidth(),
                         Gdx.graphics.getHeight(),
-                        !Gdx.graphics.isFullscreen());
+                        fullscreen);
                 return false;
             }
         });
