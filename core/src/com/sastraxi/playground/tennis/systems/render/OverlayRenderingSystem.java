@@ -91,9 +91,6 @@ public class OverlayRenderingSystem extends EntitySystem {
         hudFont = new BitmapFont(Gdx.files.internal("fonts/exo-bold-32-2.fnt"));
         menuFont = new BitmapFont(Gdx.files.internal("fonts/exo-bold-32.fnt"));
 
-        // glyphs
-        winsGlyph = new GlyphLayout(hudFont, "WINS");
-
         // post-processing shaders
         if (menuShaderA == null) menuShaderA = new PostProcessShaderProgram(Gdx.files.internal("shaders/post/menu-1.fragment.glsl"));
         if (menuShaderB == null) menuShaderB = new PostProcessShaderProgram(Gdx.files.internal("shaders/post/menu-2.fragment.glsl"));
@@ -105,6 +102,7 @@ public class OverlayRenderingSystem extends EntitySystem {
     public void resize(int width, int height)
     {
         // hud cache
+        winsGlyph = new GlyphLayout(hudFont, "WINS");
         winsCache = new BitmapFontCache(hudFont);
         winsCache.addText(winsGlyph, 0.5f * width - 0.5f * winsGlyph.width, height - 22f);
 
@@ -196,7 +194,8 @@ public class OverlayRenderingSystem extends EntitySystem {
         shapeRenderer.setProjectionMatrix(spriteBatch.getProjectionMatrix());
 
         Color playerColour = (playerEntities.get(0).getId() == menuState.menuOpenedByPlayerEID)
-                ? Constants.PLAYER_ONE_COLOUR : Constants.PLAYER_TWO_COLOUR;
+                ? Constants.PLAYER_ONE_COLOUR
+                : Constants.PLAYER_TWO_COLOUR;
 
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
@@ -221,7 +220,8 @@ public class OverlayRenderingSystem extends EntitySystem {
 
             for (int i = 0; i < menuState.choices.size(); ++i)
             {
-                menuState.choices.get(i).draw(spriteBatch, factor * factor);
+                // FIXME: if we pass in 1, fullscreen switch makes the text white???
+                menuState.choices.get(i).draw(spriteBatch, factor * factor * 0.9999f);
             }
 
         spriteBatch.end();

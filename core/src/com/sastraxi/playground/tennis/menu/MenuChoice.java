@@ -25,7 +25,7 @@ public abstract class MenuChoice {
         this.text = text;
     }
 
-    public abstract void performAction(Engine engine);
+    public abstract boolean performAction(Engine engine);
 
     /**
      * Lays out and calculates quads/UVs for the text

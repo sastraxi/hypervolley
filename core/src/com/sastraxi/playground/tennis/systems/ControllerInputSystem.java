@@ -96,8 +96,10 @@ public class ControllerInputSystem extends IteratingSystem {
                 menuState.choice = mod(menuState.choice + 1, menuState.choices.size());
             }
             if (pic.inputFrame.swing && !pic.lastInputFrame.swing) {
-                menuState.choices.get(menuState.choice).performAction(engine);
-                menuState.showing = false;
+                boolean hideMenu = menuState.choices.get(menuState.choice).performAction(engine);
+                if (hideMenu) {
+                    menuState.showing = false;
+                }
             }
         }
         // FIXME hacky public gamestate stuff

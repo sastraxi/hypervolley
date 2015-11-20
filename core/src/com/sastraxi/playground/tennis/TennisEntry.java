@@ -170,16 +170,17 @@ public class TennisEntry extends ApplicationAdapter {
         MenuComponent menuComponent = new MenuComponent();
         menuComponent.choices.add(new MenuChoice("Reset Scores") {
             @Override
-            public void performAction(Engine engine) {
+            public boolean performAction(Engine engine) {
                 for (Entity playerEntity: engine.getEntitiesFor(PLAYER_ENTITIES))
                 {
                     picm.get(playerEntity).wins = 0;
                 }
+                return true;
             }
         });
         menuComponent.choices.add(new MenuChoice("Switch Serving Player") {
             @Override
-            public void performAction(Engine engine) {
+            public boolean performAction(Engine engine) {
                 for (Entity playerEntity: engine.getEntitiesFor(PLAYER_ENTITIES))
                 {
                     CharacterComponent character = picm.get(playerEntity);
@@ -193,13 +194,25 @@ public class TennisEntry extends ApplicationAdapter {
                         BallMovementSystem.destroyBall(engine, ball);
                     }
                 }
+                return true;
+            }
+        });
+        menuComponent.choices.add(new MenuChoice("Toggle Fullscreen") {
+            @Override
+            public boolean performAction(Engine engine) {
+                Gdx.graphics.setDisplayMode(
+                        Gdx.graphics.getWidth(),
+                        Gdx.graphics.getHeight(),
+                        !Gdx.graphics.isFullscreen());
+                return false;
             }
         });
         menuComponent.choices.add(new MenuChoice("Quit to Desktop") {
             @Override
-            public void performAction(Engine engine) {
+            public boolean performAction(Engine engine) {
                 // TODO perform cleanup before exiting
                 Gdx.app.exit();
+                return true;
             }
         });
 
