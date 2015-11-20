@@ -35,7 +35,8 @@ public class PlayerMovementSystem extends IteratingSystem {
     Vector3 _left_stick = new Vector3(),
             _tmp = new Vector3(),
             _tmp_player_focal = new Vector3(),
-            _velocity = new Vector3();
+            _velocity = new Vector3(),
+            _bearing = new Vector3();
 
     Vector2 _ball_target = new Vector2(),
             _isect_tmp = new Vector2(),
@@ -223,7 +224,9 @@ public class PlayerMovementSystem extends IteratingSystem {
         MovementComponent movement = mc.get(entity);
 
         // get original orientation (only Z component) in radians
-        float _rot = movement.orientation.getRollRad();
+        _bearing.set(1f, 0f, 0f);
+        movement.orientation.transform(_bearing);
+        float _rot = (float) Math.atan2(_bearing.y, _bearing.x);
 
         // dash state changes; only allow when resting or we've done our animations
         if (pic.inputFrame.dash && !pic.lastInputFrame.dash
