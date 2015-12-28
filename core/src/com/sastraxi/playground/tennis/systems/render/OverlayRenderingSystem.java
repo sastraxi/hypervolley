@@ -12,6 +12,7 @@ import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Interpolation;
 import com.sastraxi.playground.shaders.PostProcessShaderProgram;
 import com.sastraxi.playground.tennis.Constants;
 import com.sastraxi.playground.tennis.components.character.CharacterComponent;
@@ -21,6 +22,7 @@ import com.sastraxi.playground.tennis.components.global.MenuComponent;
 import com.sastraxi.playground.tennis.components.global.SharedRenderStateComponent;
 import com.sastraxi.playground.tennis.menu.MenuChoice;
 import com.sastraxi.playground.tennis.models.HUDModel;
+import org.lwjgl.Sys;
 
 /**
  * Renders the menu, HUD, and post-processing effects.
@@ -40,6 +42,9 @@ public class OverlayRenderingSystem extends EntitySystem {
 
     Engine engine;
     ImmutableArray<Entity> playerEntities;
+
+    // animation curves
+    private static final Interpolation easeOut = Interpolation.pow2;
 
     // text layouts
     GlyphLayout winsGlyph;
@@ -108,6 +113,9 @@ public class OverlayRenderingSystem extends EntitySystem {
 
         // menu cache
         menuState.cacheGlyphs(menuFont);
+
+        spriteBatch.getProjectionMatrix()
+            .setToOrtho2D(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
     }
 
     @Override
@@ -233,9 +241,13 @@ public class OverlayRenderingSystem extends EntitySystem {
      */
     private void drawHUD(float factor)
     {
+        float y = 45f * easeOut.apply(factor);
+        float frac_y = (y / (float) Gdx.graphics.getHeight());
+
         spriteBatch.getTransformMatrix().idt();
         spriteBatch.begin();
 
+            winsCache.setPosition(0, y);
             winsCache.draw(spriteBatch);
 
         spriteBatch.end();
@@ -246,7 +258,7 @@ public class OverlayRenderingSystem extends EntitySystem {
             float x = -0.06f;
             for (int i = 0; i < playerOne.wins; ++i)
             {
-                scoreMarkerOne.transform.setToTranslation(x, 0.45f, 0f);
+                scoreMarkerOne.transform.setToTranslation(x, 0.45f + frac_y, 0f);
                 modelBatch.render(scoreMarkerOne);
 
                 x -= Constants.HUD_SCORE_MARKER_SIZE;
@@ -257,7 +269,7 @@ public class OverlayRenderingSystem extends EntitySystem {
             x = 0.06f;
             for (int i = 0; i < playerTwo.wins; ++i)
             {
-                scoreMarkerTwo.transform.setToTranslation(x, 0.45f, 0f);
+                scoreMarkerTwo.transform.setToTranslation(x, 0.45f + frac_y, 0f);
                 modelBatch.render(scoreMarkerTwo);
 
                 x += Constants.HUD_SCORE_MARKER_SIZE;

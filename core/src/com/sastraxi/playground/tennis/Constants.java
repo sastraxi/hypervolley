@@ -32,7 +32,7 @@ public class Constants {
     public static final Vector3 GAME_CAMERA_POINT_AT = new Vector3(0f, 0.5f * COURT_HALF_DEPTH, 0f);
     public static final float GAME_ORTHOGRAPHIC_CAMERA_ZOOM = 0.54f;
 
-    public static final float PLAYER_HEIGHT = 52f;
+    public static final float PLAYER_HEIGHT = 70f;
     public static final float PLAYER_RADIUS = 8f;
     public static final float PLAYER_SIZE = 2f * PLAYER_RADIUS;
 
@@ -48,12 +48,12 @@ public class Constants {
     public static final float CONTROLLER_VIBRATION_BOUNCE_POWER = 2f;
     public static final float CONTROLLER_FINE_LEFT_MOTOR = 0.4f; // positional effects need finer left motor control (in 360 controllers, it's the bigger one).
 
-    public static final float DASH_SPEED = 450f;
+    public static final float DASH_SPEED = 1080f;
     public static final float DASH_ACCEL = 0.04f; // seconds to get up to speed
     public static final float DASH_DECEL = 0.09f; // seconds to slow down to regular speed
-    public static final float DASH_MAX_METER = 0.4f; // how many seconds it takes to recharge
-    public static final float DASH_METER_DEPLETION_RATE = 3f; // how many times faster it depletes
-    public static final float DASH_MIN_METER = 0.4f; // this much of the meter must be full to dash
+    public static final float DASH_MAX_METER = 0.12f; // how many seconds it takes to recharge
+    public static final float DASH_METER_DEPLETION_RATE = 1.5f; // how many times faster it depletes
+    public static final float DASH_MIN_METER = 0.12f; // this much of the meter must be full to dash
 
     public static final Plane LEVEL_GROUND_PLANE = new Plane(Constants.UP_VECTOR, 0f);
     public static final Plane LEVEL_FAR_PLANE = new Plane(new Vector3(0f, 1f, 0f), LEVEL_HALF_DEPTH);
@@ -83,11 +83,6 @@ public class Constants {
             LEVEL_HALF_WIDTH - 2f*PLAYER_RADIUS - NET_RADIUS - NET_PADDING,
             2f*(LEVEL_HALF_DEPTH - PLAYER_RADIUS));
 
-    ///////////////////////////////////////
-    // TODO the shot area should be a trapezoid somewhat based on hitter position
-    // TODO and not allow super-shallow shots.
-    ///////////////////////////////////////
-
     public static final Rectangle LEFT_SHOT_BOUNDS = new Rectangle(
             -0.9f * COURT_HALF_WIDTH,
             -COURT_HALF_DEPTH,
@@ -110,7 +105,7 @@ public class Constants {
     public static final float BALL_SHEAR_LERP_BOTTOM = 0f;         // when we're close to the tennis court
     public static final float BALL_THINNING = 0.07f;
 
-    public static final float PLAYER_SPEED = 140f;
+    public static final float PLAYER_SPEED = 110f;
     public static final float PLAYER_MIN_REACH = 1.8f * PLAYER_RADIUS;       // units
     public static final float PLAYER_MAX_REACH = 2.5f * PLAYER_RADIUS;       // units
     public static final float PLAYER_MAX_SWING_SPEEDUP = Constants.PLAYER_SPEED * 0.3f; // units
@@ -130,7 +125,7 @@ public class Constants {
 
     // when we're set to a collision course (anywhere in the "strike zone") this many seconds in the future,
     // put the player's movement on auto-pilot and use input instead to aim/take the shot (w/perfect frame detection)
-    public static final float PLAYER_BALL_LOCK_LOOKAHEAD_SEC = 0.3f;
+    public static final float PLAYER_BALL_LOCK_LOOKAHEAD_SEC = 0.2f;
 
     public static final int DETAIL_LEVEL_SPHERE = 32;
     public static final int DETAIL_LEVEL_CIRCLE = 64;

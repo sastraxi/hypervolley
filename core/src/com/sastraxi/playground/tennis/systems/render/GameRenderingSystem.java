@@ -307,17 +307,22 @@ public class GameRenderingSystem extends EntitySystem {
      */
     private ModelInstance getTennisCourt()
     {
-        if (assets == null) {
-            assets = new AssetManager();
-            assets.load(TENNIS_COURT_PATH, Model.class);
-            assets.finishLoading();
-        }
+        loadAssets();
 
-        // Create an instance of our crate model and put it in an array
+        // create a model instance of the tennis court model.
         Model model = assets.get(TENNIS_COURT_PATH, Model.class);
         ModelInstance tennisCourt = new ModelInstance(model);
         tennisCourt.transform.idt().scl(0.01f).rotate(1f, 0f, 0f, 90f);
         return tennisCourt;
+    }
+
+    private void loadAssets()
+    {
+        if (assets != null) return;
+
+        assets = new AssetManager();
+        assets.load(TENNIS_COURT_PATH, Model.class);
+        assets.finishLoading();
     }
 
     private void saveScreenshot() {

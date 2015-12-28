@@ -1,13 +1,17 @@
 package com.sastraxi.playground.tennis.models;
 
+import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.VertexAttributes;
 import com.badlogic.gdx.graphics.g3d.Material;
 import com.badlogic.gdx.graphics.g3d.Model;
+import com.badlogic.gdx.graphics.g3d.ModelInstance;
+import com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.model.Node;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import com.sastraxi.playground.tennis.Constants;
 
@@ -16,13 +20,48 @@ import com.sastraxi.playground.tennis.Constants;
  */
 public class PlayerModel {
 
+    public static final Matrix4 DUKE_TRANSFORM = new Matrix4();
+    static {
+        DUKE_TRANSFORM.idt().scl(3f).rotate(0f, 0f, 1f, 90f).rotate(1f, 0f, 0f, 90f);
+    }
+
+    private static final String TEST_PATH = "models/TEST_w_anim.g3db";
+    private static AssetManager assets;
+
     public static final String NODE_BASE = "base";
     public static final String NODE_TORSO = "torso";
     public static final String NODE_HEAD = "head";
 
     private static final long vertexAttributes = VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal;
 
-    public static Model build(Color colour)
+    public static Model buildDuke(Color colour)
+    {
+        loadAssets();
+
+        // create a model instance of the test model.
+        Model model = assets.get(TEST_PATH, Model.class);
+
+        // make duke visible
+        BlendingAttribute ba = (BlendingAttribute) model.getMaterial("lambert2").get(BlendingAttribute.Type);
+        ba.opacity = 1.0f;
+
+        // give duke the correct colour
+        ColorAttribute diffuse = (ColorAttribute) model.getMaterial("lambert2").get(ColorAttribute.Diffuse);
+        diffuse.color.set(colour);
+
+        return model;
+    }
+
+    private static void loadAssets()
+    {
+        if (assets != null) return;
+
+        assets = new AssetManager();
+        assets.load(TEST_PATH, Model.class);
+        assets.finishLoading();
+    }
+
+    public static Model buildRectanglePlayer(Color colour)
     {
         Node node;
         ModelBuilder builder = new ModelBuilder();

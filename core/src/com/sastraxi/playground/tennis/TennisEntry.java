@@ -120,14 +120,14 @@ public class TennisEntry extends ApplicationAdapter {
 
             // create the model
             Color playerColour = (i == 0) ? Constants.PLAYER_ONE_COLOUR : Constants.PLAYER_TWO_COLOUR;
-            playerModelInstances[i] = new ModelInstance(PlayerModel.build(playerColour));
+            playerModelInstances[i] = new ModelInstance(PlayerModel.buildDuke(playerColour));
             players[i].add(new RenderableComponent(playerModelInstances[i]));
 
             // swing detector
             players[i].add(new SwingDetectorComponent());
 
             // strike zone vis.
-            // players[i].add(new StrikeZoneDebugComponent());
+            players[i].add(new StrikeZoneDebugComponent());
 
             // actual player
             engine.addEntity(players[i]);
@@ -203,8 +203,8 @@ public class TennisEntry extends ApplicationAdapter {
                 boolean fullscreen = !Gdx.graphics.isFullscreen();
                 Gdx.input.setCursorCatched(fullscreen);
                 Gdx.graphics.setDisplayMode(
-                        Gdx.graphics.getWidth(),
-                        Gdx.graphics.getHeight(),
+                        fullscreen ? 1280 : 1280,
+                        fullscreen ? 720 : 720,
                         fullscreen);
                 return false;
             }
@@ -272,7 +272,6 @@ public class TennisEntry extends ApplicationAdapter {
             }
         };
         InputMultiplexer multiplexer = new InputMultiplexer(exitProcessor);
-        // multiplexer.addProcessor(stage);
         Gdx.input.setInputProcessor(multiplexer);
 	}
 
@@ -296,7 +295,8 @@ public class TennisEntry extends ApplicationAdapter {
     @Override
     public void resize(int width, int height)
     {
-        //stage.setViewport(width, height, true);
+        System.out.println("resize: " + width + "x" + height);
+
         for (Camera c: cameraManagementComponent.cameras)
         {
             c.viewportWidth = (float) width;

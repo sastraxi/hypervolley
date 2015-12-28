@@ -11,6 +11,7 @@ import com.sastraxi.playground.tennis.components.MovementComponent;
 import com.sastraxi.playground.tennis.components.RenderableComponent;
 import com.sastraxi.playground.tennis.components.character.AlertedComponent;
 import com.sastraxi.playground.tennis.components.character.CharacterComponent;
+import com.sastraxi.playground.tennis.models.PlayerModel;
 
 /**
  * Created by sastr on 2015-11-09.
@@ -41,8 +42,10 @@ public class PlayerMatrixSystem  extends IteratingSystem {
         RenderableComponent rc = rcm.get(entity);
 
         rc.modelInstance.transform
-                .setToTranslation(mc.position)
-                .rotate(mc.orientation);
+                .idt()
+                .translate(mc.position)
+                .rotate(mc.orientation)
+                .mul(PlayerModel.DUKE_TRANSFORM);
 
         if (character.state == CharacterComponent.PlayerState.HITTING)
         {

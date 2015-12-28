@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch4jConfig>
   <dontWrapJar>false</dontWrapJar>
-  <headerType>gui</headerType>
+  <headerType>console</headerType>
   <jar>C:\dev\playground\out\artifacts\desktop_jar\desktop.jar</jar>
   <outfile>C:\dev\playground\desktop\exe\prototype.exe</outfile>
   <errTitle></errTitle>
