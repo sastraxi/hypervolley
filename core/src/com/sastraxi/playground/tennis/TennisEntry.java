@@ -83,7 +83,8 @@ public class TennisEntry extends ApplicationAdapter {
         }
         catch (XInputNotLoadedException e)
         {
-            System.out.println("You're out of luck bud");
+            System.err.println("You're out of luck bud");
+            e.printStackTrace(System.err);
             System.exit(5);
         }
 
@@ -144,8 +145,8 @@ public class TennisEntry extends ApplicationAdapter {
         orthographicCamera.zoom = Constants.GAME_ORTHOGRAPHIC_CAMERA_ZOOM;
         orthographicCamera.up.set(Constants.UP_VECTOR);
         orthographicCamera.lookAt(Constants.GAME_CAMERA_POINT_AT);
-        orthographicCamera.near = 300f;
-        orthographicCamera.far = 1000.0f;
+        orthographicCamera.near = 600f;
+        orthographicCamera.far = 1500.0f;
         orthographicCamera.update();
 
         // a new camera that tries to keep all points in the frame of the shot

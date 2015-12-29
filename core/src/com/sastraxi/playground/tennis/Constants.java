@@ -19,16 +19,16 @@ public class Constants {
     public static final float FRAME_TIME_SEC = 1f / (float) FRAME_RATE;
     public static final double FRAME_TIME_SEC_DBL = 1f / (double) FRAME_RATE;
 
-    public static final float G = 200f; // 98.1f;
+    public static final float G = 300f;
+    public static final float G_PERFECT_FRAME = 450f;
 
     public static final float LEVEL_HALF_WIDTH = 300f;
     public static final float LEVEL_HALF_DEPTH = 150f;
     public static final float COURT_HALF_WIDTH = 200f;
     public static final float COURT_HALF_DEPTH = 100f;
 
-    public static final float CAMERA_FOV = 30f;
     public static final Vector3 UP_VECTOR = Vector3.Z;
-    public static final Vector3 GAME_CAMERA_POSITION = new Vector3(0f, -300f, 600f);
+    public static final Vector3 GAME_CAMERA_POSITION = new Vector3(0f, -700f, 1400f);
     public static final Vector3 GAME_CAMERA_POINT_AT = new Vector3(0f, 0.5f * COURT_HALF_DEPTH, 0f);
     public static final float GAME_ORTHOGRAPHIC_CAMERA_ZOOM = 0.54f;
 
@@ -49,7 +49,6 @@ public class Constants {
     public static final float CONTROLLER_FINE_LEFT_MOTOR = 0.4f; // positional effects need finer left motor control (in 360 controllers, it's the bigger one).
 
     public static final float DASH_SPEED = 1080f;
-    public static final float DASH_MIN_HIT_SPEED = 0f;
     public static final float DASH_ACCEL = 0.04f; // seconds to get up to speed
     public static final float DASH_DECEL = 0.09f; // seconds to slow down to regular speed
     public static final float DASH_MAX_METER = 0.12f; // how many seconds it takes to recharge
@@ -131,7 +130,7 @@ public class Constants {
     public static final float JUICY_BOUNCE_MARKER_OPACITY = 1f;
 
     public static final Vector3 CAMERA_NEUTRAL_GAZE = new Vector3(0f, 0f, 50f);
-    public static final float CAMERA_NEUTRAL_FOV = 33f;
+    public static final float CAMERA_NEUTRAL_FOV = 13.7f;
     public static final float CAMERA_INV_FRAME_FILL = 4f;
     public static final float CAMERA_POSITION_INTENSITY_INV = 0.8f;
     public static final float CAMERA_HORIZONTAL_MOVEMENT_SCALE = 2f;

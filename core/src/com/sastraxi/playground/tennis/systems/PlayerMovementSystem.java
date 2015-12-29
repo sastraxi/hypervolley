@@ -306,13 +306,6 @@ public class PlayerMovementSystem extends IteratingSystem {
             float dist = _r.sub(_p0_a).dot(_direction);
             float candidateSpeed = dist / timeElapsed;
 
-            // if we're dashing there's a minimum speed (so dashes aren't overpowered)
-            // FIXME fudge factor (+1f)
-            if (currentSpeed > (Constants.PLAYER_SPEED + 1f) && candidateSpeed < Constants.DASH_MIN_HIT_SPEED) {
-                System.out.println(":( - no hit because we're going too fast (" + currentSpeed + ") .");
-                return false;
-            }
-
             chosenSpeed = MathUtils.clamp(candidateSpeed, 0f, currentSpeed);
             System.out.println("-> hitting at " + chosenSpeed + " (instead of " + candidateSpeed + ")");
         }
