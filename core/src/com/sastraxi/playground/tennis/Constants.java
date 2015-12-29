@@ -105,15 +105,13 @@ public class Constants {
     public static final float BALL_SHEAR_LERP_BOTTOM = 0f;         // when we're close to the tennis court
     public static final float BALL_THINNING = 0.07f;
 
+    // when we're set to a collision course (anywhere in the "strike zone") this many frames in the future,
+    // put the player's movement on auto-pilot and use input instead to aim/take the shot (w/perfect frame detection)
+    public static final float PLAYER_LOOKAHEAD_FRAMES = 12;
     public static final float PLAYER_SPEED = 110f;
-    public static final float PLAYER_MIN_REACH = 1.8f * PLAYER_RADIUS;       // units
-    public static final float PLAYER_MAX_REACH = 2.5f * PLAYER_RADIUS;       // units
-    public static final float PLAYER_MAX_SWING_SPEEDUP = Constants.PLAYER_SPEED * 0.3f; // units
-    public static final float PLAYER_MAX_SWING_SLOWDOWN = Constants.PLAYER_SPEED; // units
-    public static final float PLAYER_SWING_SPEED_CAP = 180f; // allow a bit of speed-up on shots even if already @ player speed?
-    public static final float PLAYER_HALF_SIDESTEP = Constants.PLAYER_RADIUS * 2f; // units
-    public static final float PLAYER_BALL_SWING_DURATION = Constants.FRAME_TIME_SEC * 4; // 4 frames
-    public static final float PLAYER_BALL_STRIKE_LEEWAY = Constants.PLAYER_RADIUS * 4f; // how far away from perfect can we be and still hit the ball?
+    public static final float PLAYER_REACH = 2f * PLAYER_RADIUS;                     // units
+    public static final float PLAYER_WALL_HALF_WIDTH = Constants.PLAYER_RADIUS * 2f; // units
+    public static final float IDEAL_BALL_HIT_HEIGHT = 0.7f * PLAYER_HEIGHT;          // units
 
     public static final float LOB_ANGLE = (float) (0.2 * Math.PI);
 
@@ -121,11 +119,7 @@ public class Constants {
     public static final float SERVING_RECOVERY_TIME = 0.4f;
     public static final float SERVING_APEX = PLAYER_HEIGHT * 1.5f;
     public static final float SERVING_IDEAL_HEIGHT = PLAYER_HEIGHT * 1.3f; // N.B. must be between apex + ball start z
-    public static final Vector3 SERVING_BALL_START = new Vector3(2f * PLAYER_HALF_SIDESTEP, 0f, PLAYER_HEIGHT * 0.5f);
-
-    // when we're set to a collision course (anywhere in the "strike zone") this many seconds in the future,
-    // put the player's movement on auto-pilot and use input instead to aim/take the shot (w/perfect frame detection)
-    public static final float PLAYER_BALL_LOCK_LOOKAHEAD_SEC = 0.2f;
+    public static final Vector3 SERVING_BALL_START = new Vector3(2f * PLAYER_WALL_HALF_WIDTH, 0f, PLAYER_HEIGHT * 0.5f);
 
     public static final int DETAIL_LEVEL_SPHERE = 32;
     public static final int DETAIL_LEVEL_CIRCLE = 64;

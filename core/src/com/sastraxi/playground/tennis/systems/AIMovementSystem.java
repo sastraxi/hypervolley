@@ -112,7 +112,7 @@ public class AIMovementSystem  extends IteratingSystem {
                 float ball_time = _tmp.len() / ball.velocity.len(); // act as if ball gets there faster, so we can get our player there in time
 
                 _tmp.set(_isct).sub(player.position.x, player.position.y);
-                _tmp.scl(1f -  (Constants.PLAYER_MAX_REACH /_tmp.len())); // factor in the reach of the player
+                _tmp.scl(1f -  (Constants.PLAYER_REACH /_tmp.len())); // factor in the reach of the player
                 float player_time = _tmp.len() / Constants.PLAYER_SPEED;
                 float playerDistance = _tmp.len();
 
