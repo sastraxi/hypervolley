@@ -8,16 +8,15 @@ import com.badlogic.ashley.systems.IteratingSystem;
 import com.badlogic.ashley.utils.ImmutableArray;
 import com.badlogic.gdx.math.MathUtils;
 import com.ivan.xinput.XInputDevice;
-import com.sastraxi.playground.tennis.components.*;
 import com.sastraxi.playground.tennis.Constants;
+import com.sastraxi.playground.tennis.components.BallComponent;
+import com.sastraxi.playground.tennis.components.MovementComponent;
 import com.sastraxi.playground.tennis.components.character.CharacterComponent;
 import com.sastraxi.playground.tennis.components.character.ControllerInputComponent;
 import com.sastraxi.playground.tennis.components.global.CameraManagementComponent;
 import com.sastraxi.playground.tennis.components.global.GameStateComponent;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 public class ControllerFeedbackSystem extends IteratingSystem {
 
@@ -34,7 +33,6 @@ public class ControllerFeedbackSystem extends IteratingSystem {
     private Engine engine;
     private Entity gameStateEntity;
     private ImmutableArray<Entity> ballEntities;
-
 
     public ControllerFeedbackSystem() {
         super(Family.all(CharacterComponent.class, ControllerInputComponent.class).get(), PRIORITY);
@@ -53,16 +51,22 @@ public class ControllerFeedbackSystem extends IteratingSystem {
     protected void processEntity(Entity entity, float deltaTime)
     {
         GameStateComponent gameState = gscm.get(engine.getEntitiesFor(GAME_STATE_FAMILY).get(0));
-        if (gameState.isPaused()) return;
 
+        long eid = entity.getId();
         CharacterComponent pic = picm.get(entity);
         ControllerInputComponent cic = cicm.get(entity);
         XInputDevice controller = cic.controller;
         float combinedVibration = 0;
 
-        if (pic.state == CharacterComponent.PlayerState.DASHING)         impulse(0.2f);
+        // don't vibrate controllers when the game is paused
+        if (gameState.isPaused()) {
+            controller.setVibration(0, 0);
+            return;
+        }
+
+        if (pic.state == CharacterComponent.PlayerState.DASHING)         impulse(eid, 0.2f);
         if (pic.state == CharacterComponent.PlayerState.HITTING)         combinedVibration += 0.08f;
-        if (pic.justHitOrServed())                                       impulse(0.6f); // state transition out
+        if (pic.justHitOrServed())                                       impulse(eid, 0.6f); // state transition out
 
         // a subtle vibration every time the ball bounces off of something.
         for (Entity ballEntity : ballEntities) {
@@ -80,12 +84,12 @@ public class ControllerFeedbackSystem extends IteratingSystem {
                 left += Constants.CONTROLLER_VIBRATION_BOUNCE_ADD;
                 right += Constants.CONTROLLER_VIBRATION_BOUNCE_ADD;
 
-                impulse(left, right);
+                impulse(eid, left, right);
             }
         }
 
         // set the vibration
-        Impulse current = tickAndGetImpulse();
+        Impulse current = tickAndGetImpulse(eid);
         current.add(new Impulse(combinedVibration, combinedVibration));
         int _left = (int) (MathUtils.clamp(current.left, 0f, 1f) * Constants.CONTROLLER_VIBRATION_MAX_VALUE);
         int _right = (int) (MathUtils.clamp(current.right, 0f, 1f) * Constants.CONTROLLER_VIBRATION_MAX_VALUE);
@@ -121,20 +125,28 @@ public class ControllerFeedbackSystem extends IteratingSystem {
         }
     }
 
-    List<Impulse> impulses = new ArrayList<>();
+    Map<Long, List<Impulse>> impulseMap = new HashMap<>();
 
-    protected void impulse(float amt) {
-        impulses.add(new Impulse(amt, amt));
+    protected void impulse(long eid, float amt) {
+        impulse(eid, amt, amt);
     }
 
-    protected void impulse(float left, float right) {
+    protected void impulse(long eid, float left, float right) {
+        List<Impulse> impulses = impulseMap.get(eid);
+        if (impulses == null) {
+            impulses = new ArrayList<>();
+            impulseMap.put(eid, impulses);
+        }
         impulses.add(new Impulse(left, right));
     }
 
-    private Impulse tickAndGetImpulse()
+    private Impulse tickAndGetImpulse(long eid)
     {
         Impulse total = new Impulse();
 
+        if (!impulseMap.containsKey(eid)) return total;
+
+        List<Impulse> impulses = impulseMap.get(eid);
         Iterator<Impulse> it = impulses.iterator();
         while (it.hasNext()) {
             Impulse impulse = it.next();

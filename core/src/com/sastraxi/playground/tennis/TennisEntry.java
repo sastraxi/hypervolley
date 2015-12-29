@@ -127,7 +127,7 @@ public class TennisEntry extends ApplicationAdapter {
             players[i].add(new SwingDetectorComponent());
 
             // strike zone vis.
-            players[i].add(new StrikeZoneDebugComponent());
+            //players[i].add(new StrikeZoneDebugComponent());
 
             // actual player
             engine.addEntity(players[i]);

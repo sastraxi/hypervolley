@@ -254,21 +254,19 @@ public class GameRenderingSystem extends EntitySystem {
                 Constants.STRIKE_ZONE_COLOUR,
                 strikeZone.start, strikeZone.axis1, strikeZone.axis2, 0.05f);
 
-        if (strikeZone.points == 0) return;
-        if (strikeZone.points == 1) {
-            System.out.println("Only 1 point??");
-            return;
-        }
+        /*
 
-        // draw the ball trajectory
-        RenderUtils.drawLine(strikeZoneRenderer, camera.combined,
-                Constants.STRIKE_BALL_TRAJECTORY_COLOUR,
-                strikeZone.a, strikeZone.b, Constants.STRIKE_ZONE_LINE_THICKNESS, 0.08f);
-
-        // draw the hit point
+        // draw the two ball points
         RenderUtils.drawCircle(strikeZoneRenderer, camera.combined,
-                Constants.STRIKE_BALL_HIT_COLOUR,
-                strikeZone.hit, Constants.STRIKE_ZONE_BALL_RADIUS, 0.11f);
+                Constants.STRIKE_BALL_PREV_COLOUR,
+                strikeZone.ball_prev, Constants.STRIKE_ZONE_BALL_RADIUS, 0.11f);
+
+        RenderUtils.drawCircle(strikeZoneRenderer, camera.combined,
+                Constants.STRIKE_BALL_COLOUR,
+                strikeZone.ball, Constants.STRIKE_ZONE_BALL_RADIUS, 0.11f);
+
+        */
+
 
         strikeZoneRenderer.flush();
         Gdx.gl.glDisable(GL20.GL_BLEND);

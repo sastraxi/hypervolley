@@ -13,12 +13,11 @@ public class StrikeZoneDebugComponent extends Component {
 
     public boolean enabled = false;
     public int points;
-    public Vector2 a = new Vector2(),
-                   b = new Vector2(),
+    public Vector2 ball = new Vector2(),
+                   ball_prev = new Vector2(),
                    start = new Vector2(),
                    axis1 = new Vector2(),
-                   axis2 = new Vector2(),
-                   hit = new Vector2();
+                   axis2 = new Vector2();
 
 }
 

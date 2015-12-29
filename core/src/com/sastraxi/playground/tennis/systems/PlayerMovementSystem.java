@@ -6,6 +6,7 @@ import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
 import com.badlogic.gdx.math.*;
+import com.sastraxi.playground.found.MiscMath;
 import com.sastraxi.playground.tennis.Constants;
 import com.sastraxi.playground.tennis.components.BallComponent;
 import com.sastraxi.playground.tennis.components.MovementComponent;
@@ -39,14 +40,10 @@ public class PlayerMovementSystem extends IteratingSystem {
             _velocity = new Vector3(),
             _bearing = new Vector3();
 
-    Vector2 _ball_target = new Vector2(),
-            _isect_tmp = new Vector2(),
-            _a = new Vector2(), _b = new Vector2(),
-            _isect_pt = new Vector2(),
-            _heading = new Vector2(),
-            _right = new Vector2();
+    Vector2 _ball_target = new Vector2();
 
     Vector2 _direction = new Vector2(),
+            _isect_pt = new Vector2(),
             _p0_a = new Vector2(),
             _p0_b = new Vector2(),
             _pt_a = new Vector2(),
@@ -56,8 +53,6 @@ public class PlayerMovementSystem extends IteratingSystem {
     Vector3 _ball = new Vector3(),
             _ball_prev = new Vector3(),
             _ball_velocity = new Vector3();
-
-    Polygon _extrusion = new Polygon();
 
     public PlayerMovementSystem() {
         super(Family.all(MovementComponent.class, CharacterComponent.class).get(), PRIORITY);
@@ -253,12 +248,18 @@ public class PlayerMovementSystem extends IteratingSystem {
         CharacterComponent pic = picm.get(playerEntity);
         StrikeZoneDebugComponent strikeZone = szcm.get(playerEntity);
         float towardsNet = Math.signum(pic.focalPoint.x);
+        float currentSpeed = player.velocity.len();
 
         // p0 is "blocking wall" line segment towards net
         _p0_a.set(player.position.x, player.position.y)
-                .add(towardsNet * Constants.PLAYER_REACH, -Constants.PLAYER_WALL_HALF_WIDTH);
+             .add(towardsNet * Constants.PLAYER_REACH, -Constants.PLAYER_WALL_HALF_WIDTH);
         _p0_b.set(player.position.x, player.position.y)
-                .add(towardsNet * Constants.PLAYER_REACH, Constants.PLAYER_WALL_HALF_WIDTH);
+             .add(towardsNet * Constants.PLAYER_REACH, Constants.PLAYER_WALL_HALF_WIDTH);
+
+        // clear debug view
+        if (strikeZone != null) {
+            strikeZone.enabled = false;
+        }
 
         float chosenSpeed;
         if (player.velocity.len() < Constants.EPSILON)
@@ -274,41 +275,46 @@ public class PlayerMovementSystem extends IteratingSystem {
         }
         else
         {
-            // player's hit wall is extruded along movement direction
+            // player's hit volume is extruded along movement direction;
             // pt is that "blocking wall" line segment once the player has moved in this frame (thus frame+1)
             _pt_a.set(player.velocity.x, player.velocity.y).scl(timeElapsed)
                  .add(_p0_a);
             _pt_b.set(player.velocity.x, player.velocity.y).scl(timeElapsed)
                  .add(_p0_b);
 
-            // determine if we intersect the extrusion
-            _extrusion.setVertices(new float[]{
-                    _p0_b.x, _p0_b.y,
-                    _p0_a.x, _p0_a.y,
-                    _pt_a.x, _pt_a.y,
-                    _pt_b.x, _pt_b.y
-            });
-            boolean intersects = Intersector.intersectLinePolygon(
-                    _q.set(_ball_prev.x, _ball_prev.y),
-                    _r.set(_ball.x, _ball.y),
-                    _extrusion);
-
-
+            // debug view
             if (strikeZone != null) {
                 strikeZone.enabled = true;
                 strikeZone.points = 2;
                 strikeZone.start.set(_p0_a);
                 strikeZone.axis1.set(_p0_b).sub(_p0_a);
                 strikeZone.axis2.set(_pt_a).sub(_p0_a);
-                strikeZone.a.set(_q);
-                strikeZone.b.set(_r);
+                strikeZone.ball.set(_ball.x, _ball.y);
+                strikeZone.ball_prev.set(_ball_prev.x, _ball_prev.y);
             }
+
+            // determine if we intersect the (convex) extrusion (p0 -> pt)
+            boolean intersects = MiscMath.intersectSegmentPolygon(
+                    _q.set(_ball_prev.x, _ball_prev.y),
+                    _r.set(_ball.x, _ball.y),
+                    _p0_a, _p0_b, _pt_b, _pt_a);
+
             if (!intersects) return false;
 
             // determine what speed we'll need to attain to hit the ball on this frame
             _direction.set(player.velocity.x, player.velocity.y).nor();
             float dist = _r.sub(_p0_a).dot(_direction);
-            chosenSpeed = dist / timeElapsed;
+            float candidateSpeed = dist / timeElapsed;
+
+            // if we're dashing there's a minimum speed (so dashes aren't overpowered)
+            // FIXME fudge factor (+1f)
+            if (currentSpeed > (Constants.PLAYER_SPEED + 1f) && candidateSpeed < Constants.DASH_MIN_HIT_SPEED) {
+                System.out.println(":( - no hit because we're going too fast (" + currentSpeed + ") .");
+                return false;
+            }
+
+            chosenSpeed = MathUtils.clamp(candidateSpeed, 0f, currentSpeed);
+            System.out.println("-> hitting at " + chosenSpeed + " (instead of " + candidateSpeed + ")");
         }
 
         // set hit parameters
@@ -317,10 +323,10 @@ public class PlayerMovementSystem extends IteratingSystem {
         pic.hitBallEID = pic.ballEID;
         pic.hitFrame = null;
         pic.tHitActual = timeElapsed;
-        pic.originalSpeed = _direction.len();
+        pic.originalSpeed = currentSpeed;
         pic.originalTrajectory.set(player.velocity).nor();
         pic.originalPosition.set(player.position);
-        pic.speedDelta = chosenSpeed - pic.originalSpeed;
+        pic.speedDelta = chosenSpeed - currentSpeed;
         pic.tHit = 0f;
 
         // we'll be hitting that ball

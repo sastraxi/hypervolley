@@ -1,14 +1,48 @@
 package com.sastraxi.playground.found;
 
-import com.badlogic.gdx.math.Circle;
-import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.math.Rectangle;
-import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.*;
 
 /**
  * Created by sastr on 2015-06-21.
  */
 public class MiscMath {
+
+    static float[] verts = new float[100];
+
+    /**
+     * Not thread-safe.
+     * @param a
+     * @param b
+     * @param points
+     * @return
+     */
+    public static boolean intersectSegmentPolygon(Vector2 a, Vector2 b, Vector2... points)
+    {
+        // is at least one point outside the polygon, with the other inside?
+        for (int i = 0; i < points.length; ++i)
+        {
+            if (Intersector.intersectSegments(a, b, points[i], points[(i+1) % points.length], null)) {
+                return true;
+            }
+        }
+
+        // make sure we have enough storage
+        if (verts.length < 2 * points.length) {
+            verts = new float[2 * points.length];
+        }
+
+        // are both points inside the polygon?
+        int j = 0;
+        for (int i = 0; i < points.length; ++i) {
+            verts[j++] = points[i].x;
+            verts[j++] = points[i].y;
+        }
+        if (Intersector.isPointInPolygon(verts, 0, 2 * points.length, a.x, a.y)) return true;
+        if (Intersector.isPointInPolygon(verts, 0, 2 * points.length, b.x, b.y)) return true;
+
+        // both points are outside the polygon.
+        return false;
+    }
 
     public static boolean intersects(Circle c, Rectangle r)
     {

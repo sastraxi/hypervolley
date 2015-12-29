@@ -49,6 +49,7 @@ public class Constants {
     public static final float CONTROLLER_FINE_LEFT_MOTOR = 0.4f; // positional effects need finer left motor control (in 360 controllers, it's the bigger one).
 
     public static final float DASH_SPEED = 1080f;
+    public static final float DASH_MIN_HIT_SPEED = 0f;
     public static final float DASH_ACCEL = 0.04f; // seconds to get up to speed
     public static final float DASH_DECEL = 0.09f; // seconds to slow down to regular speed
     public static final float DASH_MAX_METER = 0.12f; // how many seconds it takes to recharge
@@ -107,10 +108,10 @@ public class Constants {
 
     // when we're set to a collision course (anywhere in the "strike zone") this many frames in the future,
     // put the player's movement on auto-pilot and use input instead to aim/take the shot (w/perfect frame detection)
-    public static final float PLAYER_LOOKAHEAD_FRAMES = 12;
+    public static final float PLAYER_LOOKAHEAD_FRAMES = 20;
     public static final float PLAYER_SPEED = 110f;
-    public static final float PLAYER_REACH = 2f * PLAYER_RADIUS;                     // units
-    public static final float PLAYER_WALL_HALF_WIDTH = Constants.PLAYER_RADIUS * 2f; // units
+    public static final float PLAYER_REACH = 3.2f * PLAYER_RADIUS;                   // units
+    public static final float PLAYER_WALL_HALF_WIDTH = 4f * PLAYER_RADIUS;           // units
     public static final float IDEAL_BALL_HIT_HEIGHT = 0.7f * PLAYER_HEIGHT;          // units
 
     public static final float LOB_ANGLE = (float) (0.2 * Math.PI);
@@ -119,7 +120,7 @@ public class Constants {
     public static final float SERVING_RECOVERY_TIME = 0.4f;
     public static final float SERVING_APEX = PLAYER_HEIGHT * 1.5f;
     public static final float SERVING_IDEAL_HEIGHT = PLAYER_HEIGHT * 1.3f; // N.B. must be between apex + ball start z
-    public static final Vector3 SERVING_BALL_START = new Vector3(2f * PLAYER_WALL_HALF_WIDTH, 0f, PLAYER_HEIGHT * 0.5f);
+    public static final Vector3 SERVING_BALL_START = new Vector3(PLAYER_WALL_HALF_WIDTH, 0f, PLAYER_HEIGHT * 0.5f);
 
     public static final int DETAIL_LEVEL_SPHERE = 32;
     public static final int DETAIL_LEVEL_CIRCLE = 64;
@@ -151,9 +152,8 @@ public class Constants {
 
     // debug strike zone visualisation
     public static final Color STRIKE_ZONE_COLOUR = new Color(0.3f, 0.3f, 0.3f, 0.7f);
-    public static final Color STRIKE_BALL_TRAJECTORY_COLOUR = new Color(1.0f, 0.8f, 0.0f, 1.0f);
-    public static final Color STRIKE_BALL_HIT_COLOUR = new Color(0.6f, 1.0f, 0.6f, 1.0f);
-    public static final float STRIKE_ZONE_LINE_THICKNESS = Constants.BALL_RADIUS;
+    public static final Color STRIKE_BALL_PREV_COLOUR = new Color(1.0f, 0.0f, 0.0f, 1.0f);
+    public static final Color STRIKE_BALL_COLOUR = new Color(0.4f, 1.0f, 0.4f, 1.0f);
     public static final float STRIKE_ZONE_BALL_RADIUS = Constants.BALL_RADIUS;
 
     // system priorities
