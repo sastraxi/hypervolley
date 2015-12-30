@@ -82,8 +82,7 @@ public class AIMovementSystem  extends IteratingSystem {
 
         // sensible defaults
         pic.inputFrame.swing = false;
-        pic.inputFrame.curve = false;
-        pic.inputFrame.lob = false;
+        pic.inputFrame.slice = false;
 
         float back_x = pic.bounds.x < 0 ? pic.bounds.x : pic.bounds.x + pic.bounds.width;
         float front_x = pic.bounds.x > 0 ? pic.bounds.x : pic.bounds.x + pic.bounds.width;

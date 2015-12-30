@@ -3,6 +3,7 @@ package com.sastraxi.playground.tennis.graphics;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g3d.Renderable;
 import com.badlogic.gdx.graphics.g3d.Shader;
+import com.badlogic.gdx.graphics.g3d.shaders.DefaultShader;
 import com.badlogic.gdx.graphics.g3d.utils.DefaultShaderProvider;
 import com.sastraxi.playground.shaders.BounceMarkerShader;
 import com.sastraxi.playground.shaders.TennisCourtShader;
@@ -11,6 +12,19 @@ import com.sastraxi.playground.shaders.TennisCourtShader;
  * Created by sastr on 2015-09-23.
  */
 public class CustomShaderProvider extends DefaultShaderProvider {
+
+    public static CustomShaderProvider create()
+    {
+        DefaultShader.Config config = new DefaultShader.Config();
+        config.numBones = 16;
+        config.vertexShader = Gdx.files.internal("shaders/default.vertex.glsl").readString();
+        config.fragmentShader = Gdx.files.internal("shaders/default.fragment.glsl").readString();
+        return new CustomShaderProvider(config);
+    }
+
+    protected CustomShaderProvider(DefaultShader.Config config) {
+        super(config);
+    }
 
     public CustomShaderProvider() {
         // we have a customized default shader that implements PCSS shadows

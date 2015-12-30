@@ -2,6 +2,7 @@ package com.sastraxi.playground.desktop;
 
 import com.badlogic.gdx.backends.lwjgl.LwjglApplication;
 import com.badlogic.gdx.backends.lwjgl.LwjglApplicationConfiguration;
+import com.sastraxi.playground.tennis.Constants;
 import com.sastraxi.playground.tennis.TennisEntry;
 
 public class DesktopLauncher {
@@ -15,7 +16,7 @@ public class DesktopLauncher {
 
 		config.depth = 24;
 		config.fullscreen = false;
-		config.foregroundFPS = 60;
+		config.foregroundFPS = (int) Constants.FRAME_RATE;
 		config.backgroundFPS = 10;
 		//config.useGL30 = true;
 		new LwjglApplication(new TennisEntry(), config);

@@ -21,6 +21,7 @@ public class StraightBallPath implements BallPath {
     private BallFrame origin;
     private NavigableSet<BallFrame> bounces = new TreeSet<>();
     private float deathTime;
+    private float G;
 
     private static Vector3 _velocity = new Vector3();
 
@@ -32,7 +33,7 @@ public class StraightBallPath implements BallPath {
      * @param timeBase
      * @return
      */
-    public static StraightBallPath fromAngleTarget(Vector3 position, float zAngle, Vector2 bounceTarget, float timeBase)
+    public static StraightBallPath fromAngleTarget(Vector3 position, float zAngle, Vector2 bounceTarget, float G, float timeBase)
     {
         // System.out.println("pos=" + position + "   zAngle=" + zAngle + "   bounceTarget=" + bounceTarget);
 
@@ -41,7 +42,7 @@ public class StraightBallPath implements BallPath {
 
         // solve for initial speed (v0)
         float d = _velocity.len();
-        float numerator = 0.5f * Constants.G * d * d;
+        float numerator = 0.5f * G * d * d;
         float denom = d * (float) Math.tan(zAngle) + position.z;
         float v0 = (float) ((1.0 / Math.cos(zAngle)) * Math.sqrt(numerator / denom));
 
@@ -51,20 +52,20 @@ public class StraightBallPath implements BallPath {
                 (float) Math.sin(zAngle)
         ).scl(v0);
 
-        return new StraightBallPath(position, _velocity, timeBase);
+        return new StraightBallPath(position, _velocity, G, timeBase);
     }
 
     /**
      * Creates a path based on hitting a certain bounce target from a certain position
      * knowing the highest Z point achieved during flight.
      */
-    public static StraightBallPath fromMaxHeightTarget(Vector3 position, float zHigh, Vector2 bounceTarget, float timeBase)
+    public static StraightBallPath fromMaxHeightTarget(Vector3 position, float zHigh, Vector2 bounceTarget, float G, float timeBase)
     {
         // System.out.println("pos=" + position + "   zHigh=" + zHigh + "   bounceTarget=" + bounceTarget);
         zHigh = Math.max(zHigh, position.z);
 
-        float t_apex = (float) Math.sqrt(2f * (zHigh - position.z) / Constants.G);
-        float t_end = t_apex + (float) Math.sqrt(t_apex * t_apex + (2 * position.z / Constants.G));
+        float t_apex = (float) Math.sqrt(2f * (zHigh - position.z) / G);
+        float t_end = t_apex + (float) Math.sqrt(t_apex * t_apex + (2 * position.z / G));
 
         _velocity.set(bounceTarget, 0f).sub(position.x, position.y, 0f);
         if (_velocity.len() < Constants.EPSILON) {
@@ -75,21 +76,22 @@ public class StraightBallPath implements BallPath {
             _velocity.x /= t_end;
             _velocity.y /= t_end;
         }
-        _velocity.z = Constants.G * t_apex;
+        _velocity.z = G * t_apex;
 
-        return new StraightBallPath(position, _velocity, timeBase);
+        return new StraightBallPath(position, _velocity, G, timeBase);
     }
 
-    public static StraightBallPath fromLaunchSpeedTarget(Vector3 position, float initialSpeed, Vector2 bounceTarget, float timeBase)
+    public static StraightBallPath fromLaunchSpeedTarget(Vector3 position, float initialSpeed, Vector2 bounceTarget, float G, float timeBase)
     {
         // TODO
         return null;
     }
 
 
-    public StraightBallPath(Vector3 position, Vector3 velocity, float timeBase)
+    public StraightBallPath(Vector3 position, Vector3 velocity, float G, float timeBase)
     {
         float _t, dt;
+        this.G = G;
         this.origin = new BallFrame(position, velocity, velocity, timeBase, 0);
 
         // determine critical points of our path
@@ -102,14 +104,14 @@ public class StraightBallPath implements BallPath {
         {
             // try colliding with the floor.
             BallFrame floorBounce = new BallFrame();
-            _t = lastFrame.velocity.z / Constants.G;
+            _t = lastFrame.velocity.z / G;
             // N.B. z - ball_radius below because we need to account for the ball's size
             // we are testing the center point of the ball with a plane pushed up
-            dt = _t + (float) Math.sqrt(_t*_t + 2f * (lastFrame.position.z - Constants.BALL_RADIUS) / Constants.G);
+            dt = _t + (float) Math.sqrt(_t*_t + 2f * (lastFrame.position.z - Constants.BALL_RADIUS) / G);
             floorBounce.time = lastFrame.time + dt;
             floorBounce.position.set(lastFrame.position).add(dt * lastFrame.velocity.x, dt * lastFrame.velocity.y, 0f);
             floorBounce.velocity.set(lastFrame.velocity);
-            floorBounce.velocity.z = -(lastFrame.velocity.z - dt * Constants.G);
+            floorBounce.velocity.z = -(lastFrame.velocity.z - dt * G);
             floorBounce.position.z = 0f;
             floorBounce.planeNormal.set(Vector3.Z);
 
@@ -169,7 +171,7 @@ public class StraightBallPath implements BallPath {
      *                        after the ball once again reaches its apex.
      * @return
      */
-    private static BallFrame _bounce_no_z(BallFrame start, Plane plane, int numFloorBounces)
+    private BallFrame _bounce_no_z(BallFrame start, Plane plane, int numFloorBounces)
     {
         BallFrame bounceFrame = new BallFrame();
         bounceFrame.planeNormal.set(plane.normal);
@@ -199,10 +201,10 @@ public class StraightBallPath implements BallPath {
         bounceFrame.time = start.time + dt;
 
         // fix up intersection z (apply current gravity rules)
-        bounceFrame.position.z = start.position.z + start.velocity.z * dt - 0.5f * Constants.G * dt * dt;
+        bounceFrame.position.z = start.position.z + start.velocity.z * dt - 0.5f * G * dt * dt;
 
         // figure out the reflectance vector based on velocity at the time of impact
-        bounceFrame.velocity.set(start.velocity.x, start.velocity.y, start.velocity.z - dt * Constants.G);
+        bounceFrame.velocity.set(start.velocity.x, start.velocity.y, start.velocity.z - dt * G);
         float mag_velocity = bounceFrame.velocity.len();
         _velo.set(bounceFrame.velocity).nor();
         bounceFrame.velocity.set(plane.normal).scl(-2f).scl(_velo.dot(plane.normal)).add(_velo);
@@ -240,7 +242,7 @@ public class StraightBallPath implements BallPath {
 
         // extrapolate based on the "window" that we're in between frames
         out.set(chosen.velocity).scl(dt).add(chosen.position);
-        out.z = chosen.position.z + chosen.velocity.z * dt - 0.5f * Constants.G * dt * dt;
+        out.z = chosen.position.z + chosen.velocity.z * dt - 0.5f * G * dt * dt;
     }
 
     @Override
@@ -254,7 +256,7 @@ public class StraightBallPath implements BallPath {
         float dt = t - chosen.time;
 
         // extrapolate based on the "window" that we're in between frames
-        out.set(chosen.velocity.x, chosen.velocity.y, chosen.velocity.z - dt * Constants.G);
+        out.set(chosen.velocity.x, chosen.velocity.y, chosen.velocity.z - dt * G);
     }
 
     @Override
@@ -269,6 +271,12 @@ public class StraightBallPath implements BallPath {
         // FIXME how to deal with an invalid input here? don't want to use exceptions for performance
         assert(false);
         return Float.MIN_VALUE;
+    }
+
+    @Override
+    public float getGravity()
+    {
+        return this.G;
     }
 
     @Override

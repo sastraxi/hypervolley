@@ -56,6 +56,8 @@ public class GlobalBeforeSystem extends IteratingSystem {
                 character.bounds.getCenter(_tmp);
                 player.position.set(_tmp.x, _tmp.y, 0f);
 
+                // swap servers every rally
+                character.isServingPlayer = !character.isServingPlayer;
                 if (character.isServingPlayer) {
                     character.lastState = ccm.get(e).state;
                     character.state = CharacterComponent.PlayerState.SERVE_SETUP;

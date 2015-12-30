@@ -47,6 +47,11 @@ public class StaticBallPath implements BallPath {
     }
 
     @Override
+    public float getGravity() {
+        return 0;
+    }
+
+    @Override
     public Iterable<BallFrame> getFrames() {
         return new ArrayList<BallFrame>();
     }

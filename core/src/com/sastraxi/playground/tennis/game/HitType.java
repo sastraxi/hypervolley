@@ -9,9 +9,8 @@ import com.sastraxi.playground.tennis.Constants;
 public enum HitType {
 
     NORMAL(Constants.BALL_COLOUR),
-    LOB(Constants.BALL_COLOUR_LOB),
     POWER(Constants.BALL_COLOUR_POWER),
-    CURVE(Constants.BALL_COLOUR_CURVE);
+    SLICE(Constants.BALL_COLOUR_SLICE);
 
     private final Color colour;
 

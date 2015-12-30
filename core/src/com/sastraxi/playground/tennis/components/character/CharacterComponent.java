@@ -4,6 +4,7 @@ import com.badlogic.ashley.core.Component;
 import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.audio.Sound;
+import com.badlogic.gdx.math.Path;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
@@ -91,6 +92,7 @@ public class CharacterComponent extends Component {
     public float tHit;
     public HitType chosenHitType;
     public Long hitFrame;
+    public float hitDistance;
 
     // low-level
     public InputFrame inputFrame = new InputFrame();

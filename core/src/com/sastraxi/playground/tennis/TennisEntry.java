@@ -4,7 +4,6 @@ import com.badlogic.ashley.core.ComponentMapper;
 import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
-import com.badlogic.ashley.utils.ImmutableArray;
 import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
@@ -13,6 +12,7 @@ import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.math.*;
 import com.ivan.xinput.XInputDevice;
 import com.ivan.xinput.exceptions.XInputNotLoadedException;
+import com.sastraxi.playground.tennis.components.AnimationComponent;
 import com.sastraxi.playground.tennis.components.CameraComponent;
 import com.sastraxi.playground.tennis.components.MovementComponent;
 import com.sastraxi.playground.tennis.components.RenderableComponent;
@@ -27,6 +27,7 @@ import com.sastraxi.playground.tennis.models.PlayerModel;
 import com.sastraxi.playground.tennis.systems.*;
 import com.sastraxi.playground.tennis.systems.render.GameRenderingSystem;
 import com.sastraxi.playground.tennis.systems.render.OverlayRenderingSystem;
+import com.sastraxi.playground.tennis.systems.update.AnimationUpdateSystem;
 import com.sastraxi.playground.tennis.systems.update.BallMatrixSystem;
 import com.sastraxi.playground.tennis.systems.update.BounceMarkerMatrixSystem;
 import com.sastraxi.playground.tennis.systems.update.PlayerMatrixSystem;
@@ -110,7 +111,7 @@ public class TennisEntry extends ApplicationAdapter {
             mc.position.set(center, 0f);
             if (i == 1) mc.orientation = new Quaternion(Constants.UP_VECTOR, 180f);
             players[i].add(mc);
-            players[i].add(new CharacterComponent(playerTypes[i], bounds, shotBounds, i == 0));
+            players[i].add(new CharacterComponent(playerTypes[i], bounds, shotBounds, i != 0));
 
             // the player's input is a controller
             if (playerTypes[i] == PlayerType.HUMAN) {
@@ -126,6 +127,10 @@ public class TennisEntry extends ApplicationAdapter {
 
             // swing detector
             players[i].add(new SwingDetectorComponent());
+
+            // animation component
+            AnimationComponent animation = new AnimationComponent(playerModelInstances[i]);
+            players[i].add(animation);
 
             // strike zone vis.
             //players[i].add(new StrikeZoneDebugComponent());
@@ -179,25 +184,6 @@ public class TennisEntry extends ApplicationAdapter {
                 return true;
             }
         });
-        menuComponent.choices.add(new MenuChoice("Switch Serving Player") {
-            @Override
-            public boolean performAction(Engine engine) {
-                for (Entity playerEntity: engine.getEntitiesFor(PLAYER_ENTITIES))
-                {
-                    CharacterComponent character = picm.get(playerEntity);
-                    character.isServingPlayer = !character.isServingPlayer;
-                    if (character.state == CharacterComponent.PlayerState.SERVE_SETUP)
-                    {
-                        // destroy the ball, to trigger the change-over
-                        character.state = CharacterComponent.PlayerState.NONE;
-                        Entity ball = character.getBall(engine);
-                        character.ballEID = null;
-                        BallMovementSystem.destroyBall(engine, ball);
-                    }
-                }
-                return true;
-            }
-        });
         menuComponent.choices.add(new MenuChoice("Toggle Fullscreen") {
             @Override
             public boolean performAction(Engine engine) {
@@ -232,6 +218,9 @@ public class TennisEntry extends ApplicationAdapter {
         engine.addSystem(new BallMatrixSystem());
         engine.addSystem(new BounceMarkerMatrixSystem());
         engine.addSystem(new PlayerMatrixSystem());
+
+        // animation
+        engine.addSystem(new AnimationUpdateSystem());
 
         // rendering
         gameRenderingSystem = new GameRenderingSystem();

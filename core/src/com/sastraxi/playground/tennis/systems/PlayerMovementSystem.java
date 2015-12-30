@@ -5,14 +5,18 @@ import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
-import com.badlogic.gdx.math.*;
+import com.badlogic.gdx.math.Intersector;
+import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Vector3;
 import com.sastraxi.playground.found.MiscMath;
+import com.sastraxi.playground.tennis.AnimationConstants;
 import com.sastraxi.playground.tennis.Constants;
+import com.sastraxi.playground.tennis.components.AnimationComponent;
 import com.sastraxi.playground.tennis.components.BallComponent;
 import com.sastraxi.playground.tennis.components.MovementComponent;
 import com.sastraxi.playground.tennis.components.character.CharacterComponent;
 import com.sastraxi.playground.tennis.components.character.StrikeZoneDebugComponent;
-import com.sastraxi.playground.tennis.components.character.SwingDetectorComponent;
 import com.sastraxi.playground.tennis.components.global.CameraManagementComponent;
 import com.sastraxi.playground.tennis.components.global.GameStateComponent;
 import com.sastraxi.playground.tennis.game.*;
@@ -26,8 +30,8 @@ public class PlayerMovementSystem extends IteratingSystem {
     private ComponentMapper<BallComponent> bcm = ComponentMapper.getFor(BallComponent.class);
     private ComponentMapper<MovementComponent> mc = ComponentMapper.getFor(MovementComponent.class);
     private ComponentMapper<CharacterComponent> picm = ComponentMapper.getFor(CharacterComponent.class);
-    private ComponentMapper<SwingDetectorComponent> sdcm = ComponentMapper.getFor(SwingDetectorComponent.class);
     private ComponentMapper<StrikeZoneDebugComponent> szcm = ComponentMapper.getFor(StrikeZoneDebugComponent.class);
+    private ComponentMapper<AnimationComponent> acm = ComponentMapper.getFor(AnimationComponent.class);
 
     private static final Family GAME_STATE_FAMILY = Family.one(GameStateComponent.class).get();
     private ComponentMapper<GameStateComponent> gscm = ComponentMapper.getFor(GameStateComponent.class);
@@ -48,7 +52,7 @@ public class PlayerMovementSystem extends IteratingSystem {
             _p0_b = new Vector2(),
             _pt_a = new Vector2(),
             _pt_b = new Vector2(),
-            _q = new Vector2(), _r = new Vector2();
+            _q = new Vector2(), _r = new Vector2(), _s = new Vector2(), _t = new Vector2();
 
     Vector3 _ball = new Vector3(),
             _ball_prev = new Vector3(),
@@ -110,8 +114,7 @@ public class PlayerMovementSystem extends IteratingSystem {
         BallComponent ball = bcm.get(ballEntity);
 
         boolean isHitFrame = (pic.inputFrame.swing && !pic.lastInputFrame.swing) ||
-                             (pic.inputFrame.curve && !pic.lastInputFrame.curve) ||
-                             (pic.inputFrame.lob && !pic.lastInputFrame.lob);
+                             (pic.inputFrame.slice && !pic.lastInputFrame.slice);
 
         if (pic.state == CharacterComponent.PlayerState.SERVE_SETUP)
         {
@@ -157,7 +160,7 @@ public class PlayerMovementSystem extends IteratingSystem {
 
             // set ball position based on offset from player
             // if we got a fresh ball, give it a path we can mess with programmatically
-            StaticBallPath path = (StaticBallPath) ball.path;
+                StaticBallPath path = (StaticBallPath) ball.path;
             _tmp.set(Constants.SERVING_BALL_START).rotate(Vector3.Z, _heading * MathUtils.radiansToDegrees).add(movement.position); // new path position
             if (isNewBall) {
                 path.position.set(_tmp);
@@ -175,7 +178,7 @@ public class PlayerMovementSystem extends IteratingSystem {
             if (isHitFrame) {
                 // FIXME ctor call in game loop
                 _ball_target.set(_tmp.x, _tmp.y);
-                ball.path = StraightBallPath.fromMaxHeightTarget(_tmp, Constants.SERVING_APEX, _ball_target, time);
+                ball.path = StraightBallPath.fromMaxHeightTarget(_tmp, Constants.SERVING_APEX, _ball_target, Constants.G_NORMAL, time);
                 ball.colour = Constants.BALL_COLOUR;
                 ball.lastHitByPlayerEID = entity.getId();
                 ball.currentBounce = 0;
@@ -188,8 +191,8 @@ public class PlayerMovementSystem extends IteratingSystem {
                 float z0 = ballMovement.velocity.z;
                 float c = Constants.SERVING_IDEAL_HEIGHT - Constants.SERVING_BALL_START.z;
                 float negative_b = z0;
-                float t_optimal = negative_b + (float) Math.sqrt(negative_b * negative_b - 2f * Constants.G * c);
-                t_optimal /= Constants.G;
+                float t_optimal = negative_b + (float) Math.sqrt(negative_b * negative_b - 2f * ball.path.getGravity() * c);
+                t_optimal /= ball.path.getGravity();
 
                 // best time to hit
                 pic.hitFrame = gameState.getTick() + (long) Math.floor(t_optimal * Constants.FRAME_RATE);
@@ -203,8 +206,7 @@ public class PlayerMovementSystem extends IteratingSystem {
             {
                 // set up the ball hit
                 if (pic.inputFrame.swing)       pic.chosenHitType = HitType.NORMAL;
-                else if (pic.inputFrame.curve)  pic.chosenHitType = HitType.CURVE;
-                else if (pic.inputFrame.lob)    pic.chosenHitType = HitType.LOB;
+                else if (pic.inputFrame.slice)  pic.chosenHitType = HitType.SLICE;
                 performHit(entity.getId(), pic, ball, ballMovement, gameState);
 
                 // use transition HIT_ENDING state to smoothly give character control
@@ -249,6 +251,7 @@ public class PlayerMovementSystem extends IteratingSystem {
         StrikeZoneDebugComponent strikeZone = szcm.get(playerEntity);
         float towardsNet = Math.signum(pic.focalPoint.x);
         float currentSpeed = player.velocity.len();
+        _direction.set(player.velocity.x, player.velocity.y).nor();
 
         // p0 is "blocking wall" line segment towards net
         _p0_a.set(player.position.x, player.position.y)
@@ -261,7 +264,8 @@ public class PlayerMovementSystem extends IteratingSystem {
             strikeZone.enabled = false;
         }
 
-        float chosenSpeed;
+        // whether or not we hit the ball this frame depends on whether or not we're standing still.
+        float chosenSpeed, hitDistance;
         if (player.velocity.len() < Constants.EPSILON)
         {
             // player is standing still; don't need to extrude based on time
@@ -272,6 +276,7 @@ public class PlayerMovementSystem extends IteratingSystem {
                     _isect_pt);
             if (!intersects) return false;
             chosenSpeed = 0f;
+            hitDistance = 0f;
         }
         else
         {
@@ -302,9 +307,8 @@ public class PlayerMovementSystem extends IteratingSystem {
             if (!intersects) return false;
 
             // determine what speed we'll need to attain to hit the ball on this frame
-            _direction.set(player.velocity.x, player.velocity.y).nor();
-            float dist = _r.sub(_p0_a).dot(_direction);
-            float candidateSpeed = dist / timeElapsed;
+            hitDistance = Math.max(_r.sub(_p0_a).dot(_direction), 0f);
+            float candidateSpeed = hitDistance / timeElapsed;
 
             chosenSpeed = MathUtils.clamp(candidateSpeed, 0f, currentSpeed);
             System.out.println("-> hitting at " + chosenSpeed + " (instead of " + candidateSpeed + ")");
@@ -321,6 +325,16 @@ public class PlayerMovementSystem extends IteratingSystem {
         pic.originalPosition.set(player.position);
         pic.speedDelta = chosenSpeed - currentSpeed;
         pic.tHit = 0f;
+        pic.hitDistance = hitDistance;
+
+        // queue our hit animation
+        AnimationComponent animation = acm.get(playerEntity);
+        float animDelay = pic.tHitActual - AnimationConstants.SWING_RIGHT_HIT_SECONDS;
+        if (animDelay < 0f) {
+            animation.play(AnimationConstants.SWING_NAME, -animDelay, AnimationConstants.SWING_RIGHT_DURATION + animDelay, 1, 0);
+        } else {
+            animation.play(AnimationConstants.SWING_NAME, 0f, AnimationConstants.SWING_RIGHT_DURATION, 1, (int) (animDelay * Constants.FRAME_RATE));
+        }
 
         // we'll be hitting that ball
         return true;
@@ -431,6 +445,9 @@ public class PlayerMovementSystem extends IteratingSystem {
 
                 // make the character point the correct direction
                 float _heading = (float) Math.atan2(movement.velocity.y, movement.velocity.x);
+                if (movement.velocity.len() < Constants.EPSILON) {
+                    _heading = pic.focalPoint.x < 0 ? MathUtils.PI : 0f;
+                }
                 movement.orientation.set(Constants.UP_VECTOR, MathUtils.radiansToDegrees * _heading);
 
                 pic.tHit += deltaTime;
@@ -453,8 +470,8 @@ public class PlayerMovementSystem extends IteratingSystem {
             MovementComponent ballMovement = mc.get(ball);
             BallComponent ballComponent = bcm.get(ball);
 
-            // don't allow the ball to be hit in succession by the same player.
-            if (ballComponent.lastHitByPlayerEID == null || ballComponent.lastHitByPlayerEID != entity.getId()) {
+            // only allow the ball to be hit once it's been hit by the other player
+            if (ballComponent.lastHitByPlayerEID != null && ballComponent.lastHitByPlayerEID != entity.getId()) {
                 if (pic.state != CharacterComponent.PlayerState.HITTING) {
 
                     // continually look in the future for opportunities to hit the ball.
@@ -489,12 +506,8 @@ public class PlayerMovementSystem extends IteratingSystem {
                             pic.chosenHitType = HitType.NORMAL;
                             pic.hitFrame = gameState.getTick();
 
-                        } else if (pic.inputFrame.lob && !pic.lastInputFrame.lob) {
-                            pic.chosenHitType = HitType.LOB;
-                            pic.hitFrame = gameState.getTick();
-
-                        } else if (pic.inputFrame.curve && !pic.lastInputFrame.curve) {
-                            pic.chosenHitType = HitType.CURVE;
+                        } else if (pic.inputFrame.slice && !pic.lastInputFrame.slice) {
+                            pic.chosenHitType = HitType.SLICE;
                             pic.hitFrame = gameState.getTick();
                         }
                     }
@@ -503,15 +516,47 @@ public class PlayerMovementSystem extends IteratingSystem {
                     pic.tHit += deltaTime;
                     float t = MathUtils.clamp(pic.tHit, 0f, pic.tHitActual);
 
-                    movement.velocity
-                            .set(pic.originalTrajectory)
-                            .scl(pic.originalSpeed + 2f * pic.speedDelta * t / pic.tHitActual);
+                    float pctZeroVelocity = pic.originalSpeed / (-2f * pic.speedDelta);
+                    if (pic.hitDistance < Constants.LAZY_EPSILON)
+                    {
+                        // don't move at all.
+                        movement.velocity.setZero();
+                        movement.position.set(pic.originalPosition);
+                    }
+                    else if (pic.speedDelta < 0f && pctZeroVelocity < 1f)
+                    {
+                        // TODO move calculations into prediction code and merge this and next branch
+                        // naive calculation would put our speed as negative for the last bit
+                        // of the player slowdown. so instead slow down the player more at the start
+                        float newDelta = pic.originalSpeed * pic.originalSpeed / (2f * pic.hitDistance);
+                        float tMax = pic.originalSpeed / newDelta;
+                        t = MathUtils.clamp(t, 0f, tMax);
 
-                    float _speed = pic.originalSpeed * t + pic.speedDelta * t * t / pic.tHitActual;
-                    movement.position
-                            .set(pic.originalTrajectory)
-                            .scl(_speed)
-                            .add(pic.originalPosition);
+                        // System.out.println("^^ hitDistance=" + pic.hitDistance + "    tMax=" + tMax + "    tHitActual=" + pic.tHitActual + "    newDelta=" + newDelta + "    speedDelta=" + pic.speedDelta);
+
+                        movement.velocity
+                                .set(pic.originalTrajectory)
+                                .scl(pic.originalSpeed - newDelta * t);
+
+                        float _displacement = pic.originalSpeed * t - 0.5f * newDelta * t * t;
+                        movement.position
+                                .set(pic.originalTrajectory)
+                                .scl(_displacement)
+                                .add(pic.originalPosition);
+                    }
+                    else
+                    {
+                        // naive calculations are fine
+                        movement.velocity
+                                .set(pic.originalTrajectory)
+                                .scl(pic.originalSpeed + 2f * pic.speedDelta * t / pic.tHitActual);
+
+                        float _displacement = pic.originalSpeed * t + pic.speedDelta * t * t / pic.tHitActual;
+                        movement.position
+                                .set(pic.originalTrajectory)
+                                .scl(_displacement)
+                                .add(pic.originalPosition);
+                    }
 
                     // ball-hitting
                     if (pic.tHit >= pic.tHitActual) {
@@ -549,15 +594,19 @@ public class PlayerMovementSystem extends IteratingSystem {
     protected void performHit(long thisEID, CharacterComponent pic, BallComponent ball, MovementComponent ballMovement, GameStateComponent gameState)
     {
         // normal hits by default
+        boolean canAim = true;
         if (pic.chosenHitType == null) {
+            canAim = false;
             pic.chosenHitType = HitType.NORMAL;
         }
 
         // perfect frame calculation
+        boolean isPerfectHit = false;
         ball.colour = pic.chosenHitType.getColour();
         if (pic.hitFrame != null) {
             int framesAway = (int) Math.abs(gameState.getTick() - pic.hitFrame);
             if (framesAway < Constants.PERFECT_HIT_FRAMES) {
+                isPerfectHit = true;
                 ball.colour = HitType.POWER.getColour();
             } else {
                 System.out.println("missed by " + (framesAway - Constants.PERFECT_HIT_FRAMES + 1)  + " :(");
@@ -566,16 +615,16 @@ public class PlayerMovementSystem extends IteratingSystem {
 
         // decide the return position
         pic.shotBounds.getCenter(_ball_target);
-        _ball_target.add(0.5f * _left_stick.x * pic.shotBounds.width,
-                         0.5f * _left_stick.y * pic.shotBounds.height);
-
-        // craft the new path.
-        // FIXME ctor usage in game loop
-        if (pic.chosenHitType == HitType.LOB) {
-            ball.path = StraightBallPath.fromAngleTarget(ballMovement.position, Constants.LOB_ANGLE, _ball_target, gameState.getPreciseTime());
-        } else {
-            ball.path = StraightBallPath.fromMaxHeightTarget(ballMovement.position, Constants.HIT_HEIGHT, _ball_target, gameState.getPreciseTime());
+        if (canAim) {
+            _ball_target.add(0.5f * _left_stick.x * pic.shotBounds.width,
+                             0.5f * _left_stick.y * pic.shotBounds.height);
         }
+
+        // craft the new path. FIXME ctor usage in game loop
+        float G = pic.chosenHitType == HitType.SLICE ? Constants.G_SLICE :
+                (isPerfectHit ? Constants.G_PERFECT_FRAME : Constants.G_NORMAL);
+        ball.path = StraightBallPath.fromMaxHeightTarget(ballMovement.position, Constants.HIT_HEIGHT, _ball_target, G, gameState.getPreciseTime());
+
         // FIXME this is only for lower-priority (i.e. later) systems that look @ ball movement after player changes it, i.e. SoundEffectsSystem
         ball.path.getPosition(gameState.getPreciseTime(), ballMovement.position);
         ball.path.getVelocity(gameState.getPreciseTime(), ballMovement.velocity);

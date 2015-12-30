@@ -114,7 +114,7 @@ public class GameRenderingSystem extends EntitySystem {
 
         // libgdx
         strikeZoneRenderer = new ImmediateModeRenderer20(Constants.DETAIL_LEVEL_CIRCLE + 1 + 4 + 4, false, true, 0);
-        shaderProvider = new CustomShaderProvider();
+        shaderProvider = CustomShaderProvider.create();
         shadowBatch = new ModelBatch(new DepthShaderProvider(
                 Gdx.files.internal("shaders/depth.vertex.glsl").readString(),
                 Gdx.files.internal("shaders/depth.fragment.glsl").readString()));
@@ -122,10 +122,12 @@ public class GameRenderingSystem extends EntitySystem {
 
         // environment
         sunLight = new DirectionalLight().set(0.6f, 0.6f, 0.6f, -3f, 1f, -8f);
+        // sunLight = new DirectionalLight().set(0.6f, 0.6f, 0.6f, 0f, 0f, -8f);
         environment = new Environment();
         environment.add(sunLight);
         environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.4f, 0.4f, 0.4f, 1f));
         setupShadowLight(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+
 
         // tennis court
         tennisCourt = getTennisCourt();

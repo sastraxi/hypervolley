@@ -22,10 +22,10 @@ public class PlayerModel {
 
     public static final Matrix4 DUKE_TRANSFORM = new Matrix4();
     static {
-        DUKE_TRANSFORM.idt().scl(3f).rotate(0f, 0f, 1f, 90f).rotate(1f, 0f, 0f, 90f);
+        DUKE_TRANSFORM.idt().scl(1.8f).rotate(0f, 0f, 1f, 90f).rotate(1f, 0f, 0f, 90f);
     }
 
-    private static final String TEST_PATH = "models/TEST_w_anim.g3db";
+    private static final String TEST_PATH = "models/DUKE_rerigged_1.g3db";
     private static AssetManager assets;
 
     public static final String NODE_BASE = "base";
@@ -42,11 +42,11 @@ public class PlayerModel {
         Model model = assets.get(TEST_PATH, Model.class);
 
         // make duke visible
-        BlendingAttribute ba = (BlendingAttribute) model.getMaterial("lambert2").get(BlendingAttribute.Type);
+        BlendingAttribute ba = (BlendingAttribute) model.getMaterial("lambert1").get(BlendingAttribute.Type);
         ba.opacity = 1.0f;
 
         // give duke the correct colour
-        ColorAttribute diffuse = (ColorAttribute) model.getMaterial("lambert2").get(ColorAttribute.Diffuse);
+        ColorAttribute diffuse = (ColorAttribute) model.getMaterial("lambert1").get(ColorAttribute.Diffuse);
         diffuse.color.set(colour);
 
         return model;
@@ -87,12 +87,12 @@ public class PlayerModel {
 
         builder.begin();
         node = builder.node();
-        node.translation.set(0f, 0f, Constants.PLAYER_HEIGHT + scale);
+        node.translation.set(0f, 0f, Constants.PLAYER_HEIGHT + 2f *scale);
         builder.part("dot", GL20.GL_TRIANGLES, vertexAttributes, material)
                 .box(scale, scale, scale);
 
         node = builder.node();
-        node.translation.set(0f, 0f, Constants.PLAYER_HEIGHT + 4f * scale);
+        node.translation.set(0f, 0f, Constants.PLAYER_HEIGHT + 5f * scale);
         builder.part("pole", GL20.GL_TRIANGLES, vertexAttributes, material)
                .box(scale, scale, 3f * scale);
         return builder.end();

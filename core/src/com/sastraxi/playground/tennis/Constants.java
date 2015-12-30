@@ -11,16 +11,19 @@ import com.badlogic.gdx.math.Vector3;
 public class Constants {
 
     public static final float EPSILON = 1e-9f;
+    public static final float LAZY_EPSILON = 0.001f;
 
     public static final double SEC_TO_NS = 0.000000001;
     public static final long FRAME_TIME_NS = 1000000000 / Constants.FRAME_RATE;
     public static final long MICRO_TO_NANO = 1000000;
     public static final long FRAME_RATE = 60;
+    public static final float FRAME_RATE_FLOAT = (float) FRAME_RATE;
     public static final float FRAME_TIME_SEC = 1f / (float) FRAME_RATE;
     public static final double FRAME_TIME_SEC_DBL = 1f / (double) FRAME_RATE;
 
-    public static final float G = 300f;
-    public static final float G_PERFECT_FRAME = 450f;
+    public static final float G_SLICE = 100f;
+    public static final float G_NORMAL = 300f;
+    public static final float G_PERFECT_FRAME = 550f;
 
     public static final float LEVEL_HALF_WIDTH = 300f;
     public static final float LEVEL_HALF_DEPTH = 150f;
@@ -32,7 +35,7 @@ public class Constants {
     public static final Vector3 GAME_CAMERA_POINT_AT = new Vector3(0f, 0.5f * COURT_HALF_DEPTH, 0f);
     public static final float GAME_ORTHOGRAPHIC_CAMERA_ZOOM = 0.54f;
 
-    public static final float PLAYER_HEIGHT = 70f;
+    public static final float PLAYER_HEIGHT = 80f;
     public static final float PLAYER_RADIUS = 8f;
     public static final float PLAYER_SIZE = 2f * PLAYER_RADIUS;
 
@@ -97,7 +100,7 @@ public class Constants {
 
     public static final float BALL_RADIUS = 3.4f;
     public static final Color BALL_COLOUR = new Color(0.8f, 0.2f, 0.8f, 1.0f);
-    public static final Color BALL_COLOUR_CURVE = new Color(0.7f, 0.7f, 0.7f, 1.0f);
+    public static final Color BALL_COLOUR_SLICE = new Color(0.7f, 0.7f, 0.7f, 1.0f);
     public static final Color BALL_COLOUR_POWER = new Color(1.0f, 0.6f, 0.3f, 1.0f);
     public static final Color BALL_COLOUR_LOB = new Color(0.5f, 0.8f, 0.42f, 1.0f);
     public static final float BALL_SHEAR = 0.002f;                // exaggerate ball movement
@@ -137,7 +140,7 @@ public class Constants {
     public static final float CAMERA_FOV_INTENSITY = 0.05f;
     public static final int CAMERA_POSITION_SMOOTHING_FRAMES = 90;
     public static final int CAMERA_FOV_SMOOTHING_FRAMES = 90;
-    public static final float CAMERA_MARKER_VELOCITY_ANTICIPATION_SEC = 1.5f;
+    public static final float CAMERA_MARKER_VELOCITY_ANTICIPATION_SEC = 0.5f;
 
     // how high balls should be
     public static final float HIT_HEIGHT = PLAYER_HEIGHT * 0.6f;
@@ -156,8 +159,9 @@ public class Constants {
     public static final float STRIKE_ZONE_BALL_RADIUS = Constants.BALL_RADIUS;
 
     // system priorities
-    public static final int SYSTEM_PRIORITY_MATRIX = 1000;
-    public static final int SYSTEM_PRIORITY_RENDER = 1001;
+    public static final int SYSTEM_PRIORITY_ANIMATION = 1000;
+    public static final int SYSTEM_PRIORITY_MATRIX = 1001;
+    public static final int SYSTEM_PRIORITY_RENDER = 1002;
 
     // in-game menu
     public static final float MENU_SHOW_TIME = 0.2f; // seconds
@@ -170,5 +174,4 @@ public class Constants {
     public static final float HUD_SHADOW_ALPHA = 0.5f;
     public static final float HUD_SCORE_MARKER_SIZE = 0.02f; // % of screen
     public static final float HUD_SCORE_MARKER_GAP = 0.25f * HUD_SCORE_MARKER_SIZE; // % of screen
-
 }
