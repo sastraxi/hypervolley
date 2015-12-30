@@ -12,6 +12,7 @@ import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
+import com.badlogic.gdx.graphics.g3d.environment.PointLight;
 import com.badlogic.gdx.graphics.g3d.utils.DepthShaderProvider;
 import com.badlogic.gdx.graphics.g3d.utils.ShaderProvider;
 import com.badlogic.gdx.graphics.glutils.ImmediateModeRenderer20;
@@ -33,6 +34,7 @@ import com.sastraxi.playground.tennis.components.global.SharedRenderStateCompone
 import com.sastraxi.playground.tennis.graphics.CustomShaderProvider;
 import com.sastraxi.playground.tennis.graphics.Materials;
 import com.sastraxi.playground.tennis.models.MeshUtils;
+import com.sastraxi.playground.tennis.models.Models;
 import com.sastraxi.playground.tennis.models.RenderUtils;
 
 import java.nio.ByteBuffer;
@@ -105,29 +107,52 @@ public class GameRenderingSystem extends EntitySystem {
     DirectionalLight sunLight;
     ModelBatch shadowBatch;
     ImmediateModeRenderer20 strikeZoneRenderer;
+    PointLight ballLight;
 
     // things to draw
     ModelInstance tennisCourt;
-    private AssetManager assets;
 
     private void setup() {
 
         // libgdx
         strikeZoneRenderer = new ImmediateModeRenderer20(Constants.DETAIL_LEVEL_CIRCLE + 1 + 4 + 4, false, true, 0);
-        shaderProvider = CustomShaderProvider.create();
+        shaderProvider = CustomShaderProvider.create(8 + 25 + 1);
         shadowBatch = new ModelBatch(new DepthShaderProvider(
                 Gdx.files.internal("shaders/depth.vertex.glsl").readString(),
                 Gdx.files.internal("shaders/depth.fragment.glsl").readString()));
         batch = new ModelBatch(shaderProvider);
 
         // environment
-        sunLight = new DirectionalLight().set(0.6f, 0.6f, 0.6f, -3f, 1f, -8f);
-        // sunLight = new DirectionalLight().set(0.6f, 0.6f, 0.6f, 0f, 0f, -8f);
         environment = new Environment();
-        environment.add(sunLight);
         environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.4f, 0.4f, 0.4f, 1f));
+
+        // red lights
+        for (int i = -2; i <= 2; ++i) {
+            for (int j = -2; j <= 2; ++j) {
+                environment.add(new PointLight().set(1f, 0f, 0f, i * 250f, j * 125f, 100f, 4000f));
+            }
+        }
+
+        // stadium lights
+        float stadiumIntensity = 10000f;
+        float scale = 1f / 6f;
+        environment.add(new PointLight().set(1f, 1f, 1f, scale * -2103.797119f, scale *  1698.016235f, scale * 1003.235229f, stadiumIntensity));
+        environment.add(new PointLight().set(1f, 1f, 1f, scale * -858.932251f,  scale *  1732.562622f, scale * 1003.235229f, stadiumIntensity));
+        environment.add(new PointLight().set(1f, 1f, 1f, scale *  858.932251f,  scale *  1732.562622f, scale * 1003.235229f, stadiumIntensity));
+        environment.add(new PointLight().set(1f, 1f, 1f, scale *  2103.797119f, scale *  1698.016235f, scale * 1003.235229f, stadiumIntensity));
+        environment.add(new PointLight().set(1f, 1f, 1f, scale *  2802.628418f, scale *  958.335754f,  scale * 1003.235229f, stadiumIntensity));
+        environment.add(new PointLight().set(1f, 1f, 1f, scale * -2796.860840f, scale *  958.335754f,  scale * 1003.235229f, stadiumIntensity));
+        environment.add(new PointLight().set(1f, 1f, 1f, scale *  2802.628418f, scale * -999.767090f,  scale * 1003.235229f, stadiumIntensity));
+        environment.add(new PointLight().set(1f, 1f, 1f, scale * -2796.860840f, scale * -999.767090f,  scale * 1003.235229f, stadiumIntensity));
+
+        // sun light
+        sunLight = new DirectionalLight().set(0.5f, 0.65f, 0.5f, -3f, 1f, -8f);
+        environment.add(sunLight);
         setupShadowLight(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
+        // ball light
+        ballLight = new PointLight().set(Constants.BALL_COLOUR, 0f, 0f, 0f, 600f);
+        environment.add(ballLight);
 
         // tennis court
         tennisCourt = getTennisCourt();
@@ -159,6 +184,13 @@ public class GameRenderingSystem extends EntitySystem {
     public void update(float deltaTime) {
 
         Gdx.gl.glViewport(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+
+        // FIXME this doesn't belong here -- update the ball light position
+        for (Entity entity: ballEntities)
+        {
+            MovementComponent mc = mcm.get(entity);
+            ballLight.setPosition(mc.position);
+        }
 
         // render the shadow map
         shadowLight.begin(Vector3.Zero, cameraManagementComponent.getCamera().direction);
@@ -210,8 +242,8 @@ public class GameRenderingSystem extends EntitySystem {
         {
             BallComponent bc = bcm.get(entity);
             RenderableComponent rc = rcm.get(entity);
-            ColorAttribute colour = (ColorAttribute) rc.modelInstance.getMaterial(Materials.ID_BALL).get(ColorAttribute.Diffuse);
-            colour.color.set(bc.colour);
+            // ColorAttribute colour = (ColorAttribute) rc.modelInstance.getMaterial(Materials.ID_BALL).get(ColorAttribute.Diffuse);
+            // colour.color.set(bc.colour);
             batch.render(rc.modelInstance, environment);
         }
         for (Entity entity: playerEntities)
@@ -232,6 +264,8 @@ public class GameRenderingSystem extends EntitySystem {
             batch.render(rc.modelInstance, environment);
         }
         batch.end();
+
+
 
         if (menuState.isActive()) {
             renderState.fbPing.end();
@@ -257,7 +291,6 @@ public class GameRenderingSystem extends EntitySystem {
                 strikeZone.start, strikeZone.axis1, strikeZone.axis2, 0.05f);
 
         /*
-
         // draw the two ball points
         RenderUtils.drawCircle(strikeZoneRenderer, camera.combined,
                 Constants.STRIKE_BALL_PREV_COLOUR,
@@ -268,7 +301,6 @@ public class GameRenderingSystem extends EntitySystem {
                 strikeZone.ball, Constants.STRIKE_ZONE_BALL_RADIUS, 0.11f);
 
         */
-
 
         strikeZoneRenderer.flush();
         Gdx.gl.glDisable(GL20.GL_BLEND);
@@ -293,36 +325,23 @@ public class GameRenderingSystem extends EntitySystem {
     {
         // TODO determine smallest AABB around entirety of court area
         // TODO update to cover entire level environment geometry + generate shadow cascades
-        int shadow_bounds_w = 800;
-        int shadow_bounds_h = 800;
+        int shadow_bounds_w = 1200;
+        int shadow_bounds_h = 1100;
 
-        shadowLight = (ShadowLightR32F) new ShadowLightR32F(2048, 2048, shadow_bounds_w, shadow_bounds_h, 20f, 1000f).set(sunLight);
+        shadowLight = (ShadowLightR32F) new ShadowLightR32F(4096, 4096, shadow_bounds_w, shadow_bounds_h, -1000f, 2000f).set(sunLight);
         environment.shadowMap = shadowLight;
     }
-
-    private static final String TENNIS_COURT_PATH = "models/tennis-court.g3db";
 
     /**
      * Loads (if necessary) then creates an instance of the Tennis Court model.
      */
     private ModelInstance getTennisCourt()
     {
-        loadAssets();
-
         // create a model instance of the tennis court model.
-        Model model = assets.get(TENNIS_COURT_PATH, Model.class);
-        ModelInstance tennisCourt = new ModelInstance(model);
-        tennisCourt.transform.idt().scl(0.01f).rotate(1f, 0f, 0f, 90f);
-        return tennisCourt;
-    }
-
-    private void loadAssets()
-    {
-        if (assets != null) return;
-
-        assets = new AssetManager();
-        assets.load(TENNIS_COURT_PATH, Model.class);
-        assets.finishLoading();
+        Model model = Models.buildCourt();
+        ModelInstance instance = new ModelInstance(model);
+        instance.transform.set(Models.COURT_TRANSFORM);
+        return instance;
     }
 
     private void saveScreenshot() {

@@ -32,4 +32,8 @@ public class GameStateComponent extends Component {
         return paused;
     }
 
+    ////////////////////////////////////////////////////////////
+
+    public boolean isInServe = false;
+
 }

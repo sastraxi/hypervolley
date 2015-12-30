@@ -30,8 +30,4 @@ public class FrameBufferMSAA extends FrameBuffer {
         super(Pixmap.Format.RGBA8888, width, height, hasDepth, false);
     }
 
-    /** Override this method in a derived class to set up the backing texture as you like. */
-    protected void setupTexture () {
-        super.setupTexture();
-    }
 }

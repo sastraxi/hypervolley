@@ -43,8 +43,8 @@ public class CameraComponent extends Component {
         this.fovEstimator = new FloatSmoother(Constants.CAMERA_FOV_SMOOTHING_FRAMES);
 
         this.camera = new PerspectiveCamera(0f, Gdx.graphics.getWidth(), Gdx.graphics.getHeight()); // FIXME shouldn't directly call gdx here
-        this.camera.near = 1300f;
-        this.camera.far = 1700f;
+        this.camera.near = Constants.CAMERA_CLIP_NEAR;
+        this.camera.far = Constants.CAMERA_CLIP_FAR;
 
         for (Long eid: entitiesToTrack) {
             entities.add(eid);

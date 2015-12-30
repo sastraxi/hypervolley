@@ -5,10 +5,7 @@ import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
-import com.badlogic.gdx.math.Intersector;
-import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.math.*;
 import com.sastraxi.playground.found.MiscMath;
 import com.sastraxi.playground.tennis.AnimationConstants;
 import com.sastraxi.playground.tennis.Constants;
@@ -214,6 +211,9 @@ public class PlayerMovementSystem extends IteratingSystem {
                 pic.originalSpeed = 0f;
                 pic.tHit = 0f;
                 pic.tHitActual = Constants.SERVING_RECOVERY_TIME;
+
+                // game is no longer in serve mode
+                gameState.isInServe = false;
             }
             // if we caught the ball instead of hitting it, return to serve setup
             else if (ballMovement.velocity.z < 0 && ballMovement.position.z <= Constants.SERVING_BALL_START.z)
@@ -252,6 +252,11 @@ public class PlayerMovementSystem extends IteratingSystem {
         float towardsNet = Math.signum(pic.focalPoint.x);
         float currentSpeed = player.velocity.len();
         _direction.set(player.velocity.x, player.velocity.y).nor();
+
+        // if the ball is outside of the player's bounds, it cannot be hit
+        if (!pic.bounds.contains(_ball.x, _ball.y)) {
+            return false;
+        }
 
         // p0 is "blocking wall" line segment towards net
         _p0_a.set(player.position.x, player.position.y)
@@ -327,19 +332,26 @@ public class PlayerMovementSystem extends IteratingSystem {
         pic.tHit = 0f;
         pic.hitDistance = hitDistance;
 
+        // is the ball to the left or the right of the player on the hit frame?
+        // _t = player position, _s = ball position w.r.t. player, _r = perpendicular vector to player heading
+        _t.set(player.velocity.x, player.velocity.y).scl(timeElapsed)
+          .add(player.position.x, player.position.y);
+        _r.set(-_direction.y, _direction.x);
+        boolean isLeft = _s.set(_ball.x, _ball.y).sub(_t).dot(_r) > 0f;
+
         // queue our hit animation
         AnimationComponent animation = acm.get(playerEntity);
-        float animDelay = pic.tHitActual - AnimationConstants.SWING_RIGHT_HIT_SECONDS;
+        float animDelay = pic.tHitActual - AnimationConstants.SWING_HIT_SECONDS;
+        float animStart = isLeft ? AnimationConstants.SWING_LEFT_START : AnimationConstants.SWING_RIGHT_START;
         if (animDelay < 0f) {
-            animation.play(AnimationConstants.SWING_NAME, -animDelay, AnimationConstants.SWING_RIGHT_DURATION + animDelay, 1, 0);
+            animation.play(AnimationConstants.SWING_NAME, animStart - animDelay, AnimationConstants.SWING_DURATION + animDelay, 1, 0);
         } else {
-            animation.play(AnimationConstants.SWING_NAME, 0f, AnimationConstants.SWING_RIGHT_DURATION, 1, (int) (animDelay * Constants.FRAME_RATE));
+            animation.play(AnimationConstants.SWING_NAME, animStart, AnimationConstants.SWING_DURATION, 1, (int) (animDelay * Constants.FRAME_RATE));
         }
 
         // we'll be hitting that ball
         return true;
     }
-
 
     protected void regularMovement(Entity entity, GameStateComponent gameState, float deltaTime)
     {
@@ -567,16 +579,19 @@ public class PlayerMovementSystem extends IteratingSystem {
         }
 
         // slide along walls if we hit the boundary
-        if (!pic.bounds.contains(movement.position.x, movement.position.y)) {
+        // the boundary is different if we are in a volley or waiting for the opponent to serve
+        Rectangle bounds = gameState.isInServe ? pic.receiveBounds : pic.bounds;
+
+        if (!bounds.contains(movement.position.x, movement.position.y)) {
             if (pic.state == CharacterComponent.PlayerState.DASHING) {
                 // cancel dash
                 pic.state = CharacterComponent.PlayerState.DASH_ENDING;
                 pic.timeSinceStateChange = 0f;
             }
-            movement.position.x = Math.max(movement.position.x, pic.bounds.x);
-            movement.position.x = Math.min(movement.position.x, pic.bounds.x + pic.bounds.width);
-            movement.position.y = Math.max(movement.position.y, pic.bounds.y);
-            movement.position.y = Math.min(movement.position.y, pic.bounds.y + pic.bounds.height);
+            movement.position.x = Math.max(movement.position.x, bounds.x);
+            movement.position.x = Math.min(movement.position.x, bounds.x + bounds.width);
+            movement.position.y = Math.max(movement.position.y, bounds.y);
+            movement.position.y = Math.min(movement.position.y, bounds.y + bounds.height);
         }
 
     }

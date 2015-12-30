@@ -12,6 +12,7 @@ import com.sastraxi.playground.tennis.Constants;
 import com.sastraxi.playground.tennis.components.*;
 import com.sastraxi.playground.tennis.components.character.CharacterComponent;
 import com.sastraxi.playground.tennis.models.BallModel;
+import com.sastraxi.playground.tennis.models.Models;
 
 /**
  * Created by sastr on 2015-10-24.
@@ -27,7 +28,7 @@ public class BallFactory {
     protected static Model ballModel, bounceMarkerModel;
     static {
         Color bounceMarkerColour = new Color(0.2f, 0.6f, 0.2f, 1.0f);
-        ballModel = BallModel.build();
+        ballModel = Models.buildBall();
         bounceMarkerModel = BallModel.buildBounceMarker(bounceMarkerColour, Constants.BOUNCE_MARKER_RADIUS);
     }
 

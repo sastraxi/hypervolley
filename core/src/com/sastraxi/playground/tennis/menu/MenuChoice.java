@@ -9,8 +9,6 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
 import com.sastraxi.playground.tennis.Constants;
 
-import java.util.function.Consumer;
-
 /**
  * Created by sastr on 2015-11-19.
  */
@@ -37,7 +35,7 @@ public abstract class MenuChoice {
         cache = new BitmapFontCache(font);
         cache.setColor(0f, 0f, 0f, 1f);
 
-        float y = 0.5f * Constants.MENU_Y_OFFSET * (total - 1) - pos * Constants.MENU_Y_OFFSET;
+        float y = 0.5f * Constants.MENU_Y_LEADING * (total - 1) - pos * Constants.MENU_Y_LEADING - Constants.MENU_Y_OFFSET;
         cache.addText(layout, 0.5f * Gdx.graphics.getWidth() - 0.5f * layout.width, 0.5f * Gdx.graphics.getHeight() + y);
 
         bounds.set(0.5f * (Gdx.graphics.getWidth() - layout.width), y - layout.height, layout.width, layout.height);

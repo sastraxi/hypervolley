@@ -5,6 +5,10 @@ import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
+import com.badlogic.gdx.math.Quaternion;
+import com.badlogic.gdx.math.Vector3;
+import com.sastraxi.playground.found.MiscMath;
+import com.sastraxi.playground.tennis.Constants;
 import com.sastraxi.playground.tennis.components.*;
 import com.sastraxi.playground.tennis.components.character.CharacterComponent;
 import com.sastraxi.playground.tennis.components.global.GameStateComponent;
@@ -23,6 +27,8 @@ public class BallMovementSystem extends IteratingSystem {
     private static ComponentMapper<BallComponent> bcm = ComponentMapper.getFor(BallComponent.class);
 
     private Engine engine = null;
+
+    private static Quaternion _delta = new Quaternion();
 
     public BallMovementSystem() {
         super(Family.all(MovementComponent.class, BallComponent.class).get(), PRIORITY);
@@ -48,6 +54,18 @@ public class BallMovementSystem extends IteratingSystem {
 
         ball.path.getPosition(time, movement.position);
         ball.path.getVelocity(time, movement.velocity);
+
+        // rotational velocity -> orientation
+        ball.path.getAngularVelocity(time, ball.angularVelocity);
+        MiscMath.integrate(movement.orientation, ball.angularVelocity, deltaTime);
+
+        /*
+        if (movement.velocity.hasSameDirection(Constants.UP_VECTOR)) {
+            // special case so that we get some rotation here
+        } else {
+            ball.angularVelocity.set(movement.velocity, 10f);
+        }
+        */
 
         // create a "just bounced" flag
         int previousBounce = ball.currentBounce;

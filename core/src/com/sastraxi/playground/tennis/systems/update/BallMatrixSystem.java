@@ -12,6 +12,7 @@ import com.sastraxi.playground.tennis.Constants;
 import com.sastraxi.playground.tennis.components.BallComponent;
 import com.sastraxi.playground.tennis.components.MovementComponent;
 import com.sastraxi.playground.tennis.components.RenderableComponent;
+import com.sastraxi.playground.tennis.models.Models;
 
 /**
  * Created by sastr on 2015-11-09.
@@ -49,7 +50,10 @@ public class BallMatrixSystem extends IteratingSystem {
 
         // negligable shear early-out
         if (mc.velocity.len() < Constants.EPSILON) {
-            rc.modelInstance.transform.idt().translate(mc.position);
+            rc.modelInstance.transform.idt()
+                    .translate(mc.position)
+                    .rotate(mc.orientation)
+                    .mul(Models.BALL_TRANSFORM);
             return;
         }
 
@@ -104,7 +108,9 @@ public class BallMatrixSystem extends IteratingSystem {
                 .translate(mc.position)
                 .mul(_R_T)
                 .mul(_D)
-                .mul(_R);
+                .mul(_R)
+                .rotate(mc.orientation)
+                .mul(Models.BALL_TRANSFORM);
     }
 
 }

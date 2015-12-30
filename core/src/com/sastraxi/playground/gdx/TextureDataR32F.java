@@ -55,14 +55,18 @@ public class TextureDataR32F implements TextureData {
     @Override
     public void prepare () {
         if (isPrepared) throw new GdxRuntimeException("Already prepared");
+        // TODO this implementation should not create a buffer in system RAM
         this.buffer = BufferUtils.newFloatBuffer(width * height);
         isPrepared = true;
     }
 
     @Override
     public void consumeCustomData (int target) {
+        // FIXME test stopped working in upgrade from 1.6.2 -> 1.7.2
+        /*
         if (!Gdx.graphics.supportsExtension("texture_float"))
             throw new GdxRuntimeException("Extension OES_TEXTURE_FLOAT not supported!");
+        */
 
         Gdx.gl.glTexImage2D(target, 0, GL30.GL_R32F, width, height, 0, GL30.GL_RED, GL20.GL_FLOAT, buffer);
     }

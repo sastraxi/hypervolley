@@ -3,10 +3,8 @@ package com.sastraxi.playground.tennis.systems.render;
 import com.badlogic.ashley.core.*;
 import com.badlogic.ashley.utils.ImmutableArray;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.Camera;
-import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.*;
+import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.BitmapFontCache;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
@@ -16,6 +14,7 @@ import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Interpolation;
+import com.badlogic.gdx.utils.Align;
 import com.sastraxi.playground.shaders.PostProcessShaderProgram;
 import com.sastraxi.playground.tennis.Constants;
 import com.sastraxi.playground.tennis.components.character.CharacterComponent;
@@ -51,12 +50,15 @@ public class OverlayRenderingSystem extends EntitySystem {
     // text layouts
     GlyphLayout winsGlyph;
     BitmapFontCache winsCache;
+    BitmapFontCache[] playerWinCache = new BitmapFontCache[2];
+    int[] currentPlayerWins = new int[]{ -1, -1 };
 
     // 2d graphics
     ShapeRenderer shapeRenderer = new ShapeRenderer();
     SpriteBatch spriteBatch;
-    BitmapFont hudFont, menuFont;
+    BitmapFont hudFont, menuFont, playerWinFont;
     Color choiceColour = new Color();
+    Texture controllerDiagram;
 
     // HUD stuff (technically 3D)
     ModelBatch modelBatch = new ModelBatch();
@@ -93,8 +95,13 @@ public class OverlayRenderingSystem extends EntitySystem {
         menuState = menucm.get(gameStateEntity);
         renderState = srscm.get(gameStateEntity);
 
+        // controller diagram
+        controllerDiagram = new Texture(Gdx.files.internal("textures/controller_diagram_v002.png"), true);
+        controllerDiagram.setFilter(TextureFilter.MipMap, TextureFilter.Nearest);
+
         // text drawing
         spriteBatch = new SpriteBatch();
+        playerWinFont = new BitmapFont(Gdx.files.internal("fonts/exo-bold-64.fnt"));
         hudFont = new BitmapFont(Gdx.files.internal("fonts/exo-bold-32-2.fnt"));
         menuFont = new BitmapFont(Gdx.files.internal("fonts/exo-bold-32.fnt"));
 
@@ -111,7 +118,11 @@ public class OverlayRenderingSystem extends EntitySystem {
         // hud cache
         winsGlyph = new GlyphLayout(hudFont, "WINS");
         winsCache = new BitmapFontCache(hudFont);
-        winsCache.addText(winsGlyph, 0.5f * width - 0.5f * winsGlyph.width, height - 22f);
+        winsCache.addText(winsGlyph, 0.5f * width - 0.5f * winsGlyph.width, height - 34f);
+        playerWinCache[0] = new BitmapFontCache(playerWinFont);
+        playerWinCache[1] = new BitmapFontCache(playerWinFont);
+        currentPlayerWins[0] = currentPlayerWins[1] = -1;
+        updateWins();
 
         // menu cache
         menuState.cacheGlyphs(menuFont);
@@ -120,9 +131,34 @@ public class OverlayRenderingSystem extends EntitySystem {
             .setToOrtho2D(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
     }
 
+    /**
+     * Update player win caches with their current scores.
+     */
+    private void updateWins()
+    {
+        for (int i = 0; i < playerEntities.size(); ++i)
+        {
+            CharacterComponent player = picm.get(playerEntities.get(i));
+            if (currentPlayerWins[i] != player.wins) {
+                float dir = (i == 0) ? -1f : 1f;
+                playerWinCache[i].clear();
+                playerWinCache[i].setColor(i == 0 ? Constants.PLAYER_ONE_HUD_COLOUR : Constants.PLAYER_TWO_HUD_COLOUR);
+                playerWinCache[i].addText(
+                        String.valueOf(player.wins),
+                        0.5f * Gdx.graphics.getWidth() + dir * 0.8f * winsGlyph.width - (i == 0 ? 100f : 0f),
+                        Gdx.graphics.getHeight() - 22f,
+                        100f, i == 0 ? Align.right : Align.left, false);
+                currentPlayerWins[i] = player.wins;
+            }
+        }
+    }
+
     @Override
     public void update(float deltaTime)
     {
+        // update player win caches with scores
+        updateWins();
+
         // render the HUD and vignette
         if (menuState.isActive()) {
             renderState.fbPing.begin();
@@ -228,6 +264,13 @@ public class OverlayRenderingSystem extends EntitySystem {
 
             spriteBatch.enableBlending();
 
+            spriteBatch.setColor(1f, 1f, 1f, factor * factor);
+            spriteBatch.draw(controllerDiagram,
+                    Gdx.graphics.getWidth() * 0.5f - Constants.MENU_DIAGRAM_HALF_WIDTH,
+                    Gdx.graphics.getHeight() * 0.5f - Constants.MENU_DIAGRAM_HALF_HEIGHT + Constants.MENU_DIAGRAM_Y_OFFSET,
+                    2f * Constants.MENU_DIAGRAM_HALF_WIDTH, 2f * Constants.MENU_DIAGRAM_HALF_HEIGHT,
+                    0, 0, controllerDiagram.getWidth(), controllerDiagram.getHeight(), false, false);
+
             for (int i = 0; i < menuState.choices.size(); ++i)
             {
                 // FIXME: if we pass in 1, fullscreen switch makes the text white???
@@ -251,8 +294,13 @@ public class OverlayRenderingSystem extends EntitySystem {
 
             winsCache.setPosition(0, y);
             winsCache.draw(spriteBatch);
+            for (BitmapFontCache cache: playerWinCache) {
+                cache.draw(spriteBatch);
+            }
 
         spriteBatch.end();
+
+        /*
 
         modelBatch.begin(camera);
 
@@ -279,6 +327,7 @@ public class OverlayRenderingSystem extends EntitySystem {
             }
 
         modelBatch.end();
+        */
     }
 
 }

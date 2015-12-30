@@ -1,9 +1,7 @@
 package com.sastraxi.playground.tennis;
 
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.math.Plane;
-import com.badlogic.gdx.math.Rectangle;
-import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.math.*;
 
 /**
  * Created by sastr on 2015-06-27.
@@ -25,15 +23,15 @@ public class Constants {
     public static final float G_NORMAL = 300f;
     public static final float G_PERFECT_FRAME = 550f;
 
-    public static final float LEVEL_HALF_WIDTH = 300f;
-    public static final float LEVEL_HALF_DEPTH = 150f;
+    public static final float LEVEL_HALF_WIDTH = 420f;
+    public static final float LEVEL_HALF_DEPTH = 300f;
     public static final float COURT_HALF_WIDTH = 200f;
     public static final float COURT_HALF_DEPTH = 100f;
 
     public static final Vector3 UP_VECTOR = Vector3.Z;
     public static final Vector3 GAME_CAMERA_POSITION = new Vector3(0f, -700f, 1400f);
     public static final Vector3 GAME_CAMERA_POINT_AT = new Vector3(0f, 0.5f * COURT_HALF_DEPTH, 0f);
-    public static final float GAME_ORTHOGRAPHIC_CAMERA_ZOOM = 0.54f;
+    public static final float GAME_ORTHOGRAPHIC_CAMERA_ZOOM = 0.9f;
 
     public static final float PLAYER_HEIGHT = 80f;
     public static final float PLAYER_RADIUS = 8f;
@@ -98,6 +96,21 @@ public class Constants {
             0.6f * COURT_HALF_WIDTH,
             COURT_HALF_DEPTH * 2f);
 
+    public static final Rectangle PLAYER_ONE_RECEIVE_BOUNDS = new Rectangle(
+            -LEVEL_HALF_WIDTH + PLAYER_RADIUS,
+            -LEVEL_HALF_DEPTH + PLAYER_RADIUS,
+            LEVEL_HALF_WIDTH - 2f*PLAYER_RADIUS - 0.8f * COURT_HALF_WIDTH,
+            2f*(LEVEL_HALF_DEPTH - PLAYER_RADIUS));
+
+    public static final Rectangle PLAYER_TWO_RECEIVE_BOUNDS = new Rectangle(
+            0.8f * COURT_HALF_WIDTH,
+            -LEVEL_HALF_DEPTH + PLAYER_RADIUS,
+            LEVEL_HALF_WIDTH - 2f*PLAYER_RADIUS - 0.8f * COURT_HALF_WIDTH,
+            2f*(LEVEL_HALF_DEPTH - PLAYER_RADIUS));
+
+    public static final Vector2 PLAYER_ONE_INITIAL_POSITION = new Vector2(-COURT_HALF_WIDTH, 0f);
+    public static final Vector2 PLAYER_TWO_INITIAL_POSITION = new Vector2(COURT_HALF_WIDTH, 0f);
+
     public static final float BALL_RADIUS = 3.4f;
     public static final Color BALL_COLOUR = new Color(0.8f, 0.2f, 0.8f, 1.0f);
     public static final Color BALL_COLOUR_SLICE = new Color(0.7f, 0.7f, 0.7f, 1.0f);
@@ -107,6 +120,8 @@ public class Constants {
     public static final float BALL_SHEAR_LERP_TOP = 10f;           // "splat" ball back to a sphere
     public static final float BALL_SHEAR_LERP_BOTTOM = 0f;         // when we're close to the tennis court
     public static final float BALL_THINNING = 0.07f;
+    public static final Vector3 BALL_NEUTRAL_ROTATION = new Vector3(5f, 5f, -3f);
+    public static final float BALL_ROTATION_FACTOR = 7f;
 
     // when we're set to a collision course (anywhere in the "strike zone") this many frames in the future,
     // put the player's movement on auto-pilot and use input instead to aim/take the shot (w/perfect frame detection)
@@ -133,11 +148,13 @@ public class Constants {
     public static final float JUICY_BOUNCE_MARKER_OPACITY = 1f;
 
     public static final Vector3 CAMERA_NEUTRAL_GAZE = new Vector3(0f, 0f, 50f);
-    public static final float CAMERA_NEUTRAL_FOV = 13.7f;
+    public static final float CAMERA_CLIP_NEAR = 1200f;
+    public static final float CAMERA_CLIP_FAR = 2000f;
+    public static final float CAMERA_NEUTRAL_FOV = 23.7f;
     public static final float CAMERA_INV_FRAME_FILL = 4f;
     public static final float CAMERA_POSITION_INTENSITY_INV = 0.8f;
     public static final float CAMERA_HORIZONTAL_MOVEMENT_SCALE = 2f;
-    public static final float CAMERA_FOV_INTENSITY = 0.05f;
+    public static final float CAMERA_FOV_INTENSITY = 0.2f;
     public static final int CAMERA_POSITION_SMOOTHING_FRAMES = 90;
     public static final int CAMERA_FOV_SMOOTHING_FRAMES = 90;
     public static final float CAMERA_MARKER_VELOCITY_ANTICIPATION_SEC = 0.5f;
@@ -166,12 +183,19 @@ public class Constants {
     // in-game menu
     public static final float MENU_SHOW_TIME = 0.2f; // seconds
     public static final float MENU_CHOICE_SPEED = 5f; // 1/s
-    public static final float MENU_Y_OFFSET = 50f; // pixels
+    public static final float MENU_Y_LEADING = 50f; // pixels
     public static final float MENU_CHOICE_PADDING = 10f; // pixels
     public static final float MENU_CHOICE_ALPHA = 0.75f;
+    public static final float MENU_Y_OFFSET = 175f; // pixels
+    public static final float MENU_DIAGRAM_Y_OFFSET = 75f; // pixels
 
     // hud
     public static final float HUD_SHADOW_ALPHA = 0.5f;
     public static final float HUD_SCORE_MARKER_SIZE = 0.02f; // % of screen
     public static final float HUD_SCORE_MARKER_GAP = 0.25f * HUD_SCORE_MARKER_SIZE; // % of screen
+    public static final Color PLAYER_ONE_HUD_COLOUR = new Color(0.27f, 0.58f, 1f, 1.0f);
+    public static final Color PLAYER_TWO_HUD_COLOUR = new Color(1f, 0.5f, 0.3f, 1.0f);
+
+    public static final float MENU_DIAGRAM_HALF_WIDTH = 400f; // pixels
+    public static final float MENU_DIAGRAM_HALF_HEIGHT = MENU_DIAGRAM_HALF_WIDTH / 1.77f; // guess
 }

@@ -18,10 +18,12 @@ package com.sastraxi.playground.gdx;
 
 import com.badlogic.gdx.Application.ApplicationType;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.badlogic.gdx.graphics.Texture.TextureWrap;
 import com.badlogic.gdx.graphics.glutils.FrameBuffer;
+import com.badlogic.gdx.graphics.glutils.GLOnlyTextureData;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 
 /** This is a {@link FrameBuffer} variant backed by a float texture. */
@@ -36,11 +38,13 @@ public class FrameBufferR32F extends FrameBuffer {
         super(null, width, height, hasDepth);
     }
 
-    /** Override this method in a derived class to set up the backing texture as you like. */
-    protected void setupTexture () {
+    @Override
+    protected Texture createColorTexture () {
         TextureDataR32F data = new TextureDataR32F(width, height);
-        colorTexture = new Texture(data);
-        colorTexture.setFilter(TextureFilter.Nearest, TextureFilter.Nearest);
-        colorTexture.setWrap(TextureWrap.ClampToEdge, TextureWrap.ClampToEdge);
+        Texture result = new Texture(data);
+        result.setFilter(TextureFilter.Nearest, TextureFilter.Nearest);
+        result.setWrap(TextureWrap.ClampToEdge, TextureWrap.ClampToEdge);
+        return result;
     }
+
 }

@@ -1,9 +1,6 @@
 package com.sastraxi.playground.tennis.game;
 
-import com.badlogic.gdx.math.Intersector;
-import com.badlogic.gdx.math.Plane;
-import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.math.*;
 import com.sastraxi.playground.tennis.Constants;
 
 import java.util.NavigableSet;
@@ -23,7 +20,8 @@ public class StraightBallPath implements BallPath {
     private float deathTime;
     private float G;
 
-    private static Vector3 _velocity = new Vector3();
+    private static Vector3 _velocity = new Vector3(),
+                           _nor = new Vector3();
 
     /**
      *
@@ -257,6 +255,21 @@ public class StraightBallPath implements BallPath {
 
         // extrapolate based on the "window" that we're in between frames
         out.set(chosen.velocity.x, chosen.velocity.y, chosen.velocity.z - dt * G);
+    }
+
+    @Override
+    public void getAngularVelocity(float t, Vector3 out)
+    {
+        BallFrame chosen = origin;
+        for (BallFrame f: bounces) {
+            if (f.time > t) break;
+            chosen = f;
+        }
+        float dt = t - chosen.time;
+
+        // angular velocity only changes when a force is applied (i.e. a bounce)
+        // therefore it's the same for the entire ball frame
+        out.set(chosen.velocity).scl(Constants.BALL_ROTATION_FACTOR);
     }
 
     @Override

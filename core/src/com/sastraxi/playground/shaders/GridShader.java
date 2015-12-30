@@ -46,10 +46,13 @@ public class GridShader implements Shader {
 	@Override
 	public void render(Renderable renderable) {
 		program.setUniformMatrix(u_worldTrans, renderable.worldTransform);
+		// FIXME broke in 1.6.2 -> 1.7.2
+		/*
 		renderable.mesh.render(program,
 				renderable.primitiveType,
 				renderable.meshPartOffset,
 				renderable.meshPartSize);
+				*/
 	}
 
 	@Override

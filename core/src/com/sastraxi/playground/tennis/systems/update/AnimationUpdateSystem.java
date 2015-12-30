@@ -10,9 +10,6 @@ import com.sastraxi.playground.tennis.Constants;
 import com.sastraxi.playground.tennis.components.AnimationComponent;
 import com.sastraxi.playground.tennis.components.MovementComponent;
 import com.sastraxi.playground.tennis.components.RenderableComponent;
-import com.sastraxi.playground.tennis.components.character.AlertedComponent;
-import com.sastraxi.playground.tennis.components.character.CharacterComponent;
-import com.sastraxi.playground.tennis.models.PlayerModel;
 
 /**
  * Created by sastr on 2015-12-29.

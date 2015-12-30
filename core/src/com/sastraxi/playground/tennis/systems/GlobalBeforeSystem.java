@@ -46,15 +46,15 @@ public class GlobalBeforeSystem extends IteratingSystem {
         GameStateComponent gameState = gscm.get(entity);
         if (ballEntities.size() == 0)
         {
+            gameState.isInServe = true;
+
             // reset player positions and
             // set the first character to be our server
             for (Entity e: playerEntities)
             {
                 MovementComponent player = mcm.get(e);
                 CharacterComponent character = ccm.get(e);
-
-                character.bounds.getCenter(_tmp);
-                player.position.set(_tmp.x, _tmp.y, 0f);
+                player.position.set(character.initialPosition, 0f);
 
                 // swap servers every rally
                 character.isServingPlayer = !character.isServingPlayer;

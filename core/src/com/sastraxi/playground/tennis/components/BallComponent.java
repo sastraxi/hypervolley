@@ -4,6 +4,8 @@ import com.badlogic.ashley.core.Component;
 import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.math.Quaternion;
+import com.badlogic.gdx.math.Vector3;
 import com.sastraxi.playground.tennis.game.BallPath;
 import com.sastraxi.playground.tennis.Constants;
 
@@ -11,6 +13,8 @@ import com.sastraxi.playground.tennis.Constants;
  * Created by sastr on 2015-07-01.
  */
 public class BallComponent extends Component {
+
+    public Vector3 angularVelocity = new Vector3();
 
     public Color colour;
     public int currentBounce, currentVolley;

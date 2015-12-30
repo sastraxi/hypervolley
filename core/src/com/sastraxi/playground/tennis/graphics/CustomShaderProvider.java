@@ -13,11 +13,12 @@ import com.sastraxi.playground.shaders.TennisCourtShader;
  */
 public class CustomShaderProvider extends DefaultShaderProvider {
 
-    public static CustomShaderProvider create()
+    public static CustomShaderProvider create(int numPointLights)
     {
         DefaultShader.Config config = new DefaultShader.Config();
         config.numBones = 16;
         config.vertexShader = Gdx.files.internal("shaders/default.vertex.glsl").readString();
+        config.numPointLights = numPointLights;
         config.fragmentShader = Gdx.files.internal("shaders/default.fragment.glsl").readString();
         return new CustomShaderProvider(config);
     }

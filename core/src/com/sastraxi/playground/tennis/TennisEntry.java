@@ -23,7 +23,7 @@ import com.sastraxi.playground.tennis.components.global.MenuComponent;
 import com.sastraxi.playground.tennis.components.global.SharedRenderStateComponent;
 import com.sastraxi.playground.tennis.game.PlayerType;
 import com.sastraxi.playground.tennis.menu.MenuChoice;
-import com.sastraxi.playground.tennis.models.PlayerModel;
+import com.sastraxi.playground.tennis.models.Models;
 import com.sastraxi.playground.tennis.systems.*;
 import com.sastraxi.playground.tennis.systems.render.GameRenderingSystem;
 import com.sastraxi.playground.tennis.systems.render.OverlayRenderingSystem;
@@ -100,9 +100,17 @@ public class TennisEntry extends ApplicationAdapter {
             Rectangle shotBounds = (i == 0) ? Constants.RIGHT_SHOT_BOUNDS
                                             : Constants.LEFT_SHOT_BOUNDS;
 
+            // determine receive area (where we can move when the opponent is serving)
+            Rectangle receiveBounds = (i == 0) ? Constants.PLAYER_ONE_RECEIVE_BOUNDS
+                                               : Constants.PLAYER_TWO_RECEIVE_BOUNDS;
+
+            // where we get reset before every serve
+            Vector2 initialPosition = (i == 0) ? Constants.PLAYER_ONE_INITIAL_POSITION
+                                               : Constants.PLAYER_TWO_INITIAL_POSITION;
+
             // an exclamation mark above the player's head
             // used to signify when ball is in strike zone
-            AlertedComponent ac = new AlertedComponent(new ModelInstance(PlayerModel.buildAlert(new Color(1f, 0f, 0f, 0f), 3f)));
+            AlertedComponent ac = new AlertedComponent(new ModelInstance(Models.buildAlert()));
             players[i].add(ac);
 
             // movement + orientation
@@ -111,7 +119,7 @@ public class TennisEntry extends ApplicationAdapter {
             mc.position.set(center, 0f);
             if (i == 1) mc.orientation = new Quaternion(Constants.UP_VECTOR, 180f);
             players[i].add(mc);
-            players[i].add(new CharacterComponent(playerTypes[i], bounds, shotBounds, i != 0));
+            players[i].add(new CharacterComponent(playerTypes[i], initialPosition, bounds, shotBounds, receiveBounds, i != 0));
 
             // the player's input is a controller
             if (playerTypes[i] == PlayerType.HUMAN) {
@@ -122,7 +130,7 @@ public class TennisEntry extends ApplicationAdapter {
 
             // create the model
             Color playerColour = (i == 0) ? Constants.PLAYER_ONE_COLOUR : Constants.PLAYER_TWO_COLOUR;
-            playerModelInstances[i] = new ModelInstance(PlayerModel.buildDuke(playerColour));
+            playerModelInstances[i] = new ModelInstance(Models.buildDuke(playerColour));
             players[i].add(new RenderableComponent(playerModelInstances[i]));
 
             // swing detector
@@ -150,8 +158,8 @@ public class TennisEntry extends ApplicationAdapter {
         orthographicCamera.zoom = Constants.GAME_ORTHOGRAPHIC_CAMERA_ZOOM;
         orthographicCamera.up.set(Constants.UP_VECTOR);
         orthographicCamera.lookAt(Constants.GAME_CAMERA_POINT_AT);
-        orthographicCamera.near = 600f;
-        orthographicCamera.far = 1500.0f;
+        orthographicCamera.near = Constants.CAMERA_CLIP_NEAR;
+        orthographicCamera.far = Constants.CAMERA_CLIP_FAR;
         orthographicCamera.update();
 
         // a new camera that tries to keep all points in the frame of the shot
@@ -190,8 +198,8 @@ public class TennisEntry extends ApplicationAdapter {
                 boolean fullscreen = !Gdx.graphics.isFullscreen();
                 Gdx.input.setCursorCatched(fullscreen);
                 Gdx.graphics.setDisplayMode(
-                        fullscreen ? 1280 : 1280,
-                        fullscreen ? 720 : 720,
+                        fullscreen ? 1920 : 1280,
+                        fullscreen ? 1080 : 720,
                         fullscreen);
                 return false;
             }

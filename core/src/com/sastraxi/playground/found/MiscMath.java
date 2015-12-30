@@ -1,6 +1,7 @@
 package com.sastraxi.playground.found;
 
 import com.badlogic.gdx.math.*;
+import com.sastraxi.playground.tennis.Constants;
 
 /**
  * Created by sastr on 2015-06-21.
@@ -98,6 +99,59 @@ public class MiscMath {
         while (toValue - fromValue > MathUtils.PI) fromValue += MathUtils.PI2;
         while (toValue - fromValue < -MathUtils.PI) fromValue -= MathUtils.PI2;
         return MathUtils.lerp(fromValue, toValue, amount);
+    }
+
+    private static Quaternion _deltaQ = new Quaternion();
+    private static Vector3 _theta = new Vector3();
+
+    /**
+     * Conceptually, q <= q + dt * omega.
+     * @param q the Quaternion to update.
+     * @param omega the "angular velocity" to update by
+     * @param dt the amount to scale omega by
+     *
+     * From http://physicsforgames.blogspot.ca/2010/02/quaternions.html
+     */
+    public static void integrate(Quaternion q, Vector3 omega, float dt)
+    {
+        _theta.set(omega.x, omega.y, omega.z).scl(dt * 0.5f);
+        float thetaMagSq = _theta.len2();
+        float s;
+        if(thetaMagSq * thetaMagSq / 24.0f < Constants.EPSILON)
+        {
+            _deltaQ.w = 1.0f - thetaMagSq / 2.0f;
+            s = 1.0f - thetaMagSq / 6.0f;
+        }
+        else
+        {
+            float thetaMag = _theta.len();
+            _deltaQ.w = (float) Math.cos(thetaMag);
+            s = (float) Math.sin(thetaMag) / thetaMag;
+        }
+        _deltaQ.x = _theta.x * s;
+        _deltaQ.y = _theta.y * s;
+        _deltaQ.z = _theta.z * s;
+        q.mulLeft(_deltaQ);
+    }
+
+    /**
+     * Returns the cumulative distribution function (CDF)
+     * for a standard normal: N(0,1)
+     *
+     * From http://stackoverflow.com/questions/442758/which-java-library-computes-the-cumulative-standard-normal-distribution-function
+     */
+    double normalCDF(double x)
+    {
+        int neg = (x < 0d) ? 1 : 0;
+        if ( neg == 1)
+            x *= -1d;
+
+        double k = (1d / ( 1d + 0.2316419 * x));
+        double y = (((( 1.330274429 * k - 1.821255978) * k + 1.781477937) *
+                k - 0.356563782) * k + 0.319381530) * k;
+        y = 1.0 - 0.398942280401 * Math.exp(-0.5 * x * x) * y;
+
+        return (1d - neg) * y + neg * (1d - y);
     }
 
 }

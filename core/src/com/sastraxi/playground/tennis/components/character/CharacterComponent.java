@@ -24,22 +24,27 @@ public class CharacterComponent extends Component {
         SERVING /* serve equiv. of HITTING */
     }
 
-    public CharacterComponent(PlayerType type, Rectangle bounds, Rectangle shotBounds, boolean isServingPlayer) {
+    public CharacterComponent(PlayerType type, Vector2 initialPosition, Rectangle bounds, Rectangle shotBounds, Rectangle receiveBounds, boolean isServingPlayer) {
         this.type = type;
         this.bounds = bounds;
         this.shotBounds = shotBounds;
+        this.receiveBounds = receiveBounds;
         this.isServingPlayer = isServingPlayer;
+
         Vector2 focalPoint2D = new Vector2();
         shotBounds.getCenter(focalPoint2D);
         focalPoint.set(focalPoint2D, 0f);
+
+        this.initialPosition = initialPosition;
     }
 
     // relationship with the game ball
     public Long ballEID = null, hitBallEID = null;
     public final Vector3 focalPoint = new Vector3(); // a place to look at on the other side of the court
     public final Rectangle shotBounds;
+    public final Rectangle receiveBounds;
     public final Rectangle bounds;
-    public boolean isServingPlayer;
+    public final Vector2 initialPosition;
 
     public Entity getBall(Engine engine) {
         return ballEID == null ? null : engine.getEntity(ballEID);
@@ -51,6 +56,7 @@ public class CharacterComponent extends Component {
     public PlayerState lastState = PlayerState.NONE;
     public float timeSinceStateChange = 0f;
     public float dashMeter = Constants.DASH_MAX_METER;
+    public boolean isServingPlayer;
 
     public boolean justHitOrServed()
     {

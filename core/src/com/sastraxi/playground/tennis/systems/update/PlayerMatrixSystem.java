@@ -6,12 +6,11 @@ import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
 import com.sastraxi.playground.tennis.Constants;
-import com.sastraxi.playground.tennis.components.BounceMarkerComponent;
 import com.sastraxi.playground.tennis.components.MovementComponent;
 import com.sastraxi.playground.tennis.components.RenderableComponent;
 import com.sastraxi.playground.tennis.components.character.AlertedComponent;
 import com.sastraxi.playground.tennis.components.character.CharacterComponent;
-import com.sastraxi.playground.tennis.models.PlayerModel;
+import com.sastraxi.playground.tennis.models.Models;
 
 /**
  * Created by sastr on 2015-11-09.
@@ -45,14 +44,15 @@ public class PlayerMatrixSystem extends IteratingSystem {
                 .idt()
                 .translate(mc.position)
                 .rotate(mc.orientation)
-                .mul(PlayerModel.DUKE_TRANSFORM);
+                .mul(Models.DUKE_TRANSFORM);
 
         if (character.state == CharacterComponent.PlayerState.HITTING)
         {
             AlertedComponent ac = acm.get(entity);
             ac.modelInstance.transform
                     .setToTranslation(mc.position)
-                    .rotate(mc.orientation);
+                    .rotate(mc.orientation)
+                    .mul(Models.ALERT_TRANSFORM);
         }
     }
 }

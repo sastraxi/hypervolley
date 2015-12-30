@@ -10,6 +10,7 @@ public class VectorSmoother {
     private final int ROLLOVER = 1000; // roll counter over at 1000 * samples
 
     protected Vector3[] samples;
+    protected float[] weights;
 
     int tick;
 
@@ -17,6 +18,7 @@ public class VectorSmoother {
         samples = new Vector3[numSamples];
         for (int i = 0; i < numSamples; ++i) {
             samples[i] = new Vector3();
+            // TODO generate CDF of normal -2..2 over the weights and subtract the previous version
         }
     }
 

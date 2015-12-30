@@ -57,10 +57,13 @@ public class CircularColliderShader implements Shader {
         program.setUniformf(u_radius, circle.radius);
 
 		program.setUniformMatrix(u_worldTrans, renderable.worldTransform);
+		// FIXME broke in 1.6.2 -> 1.7.2
+		/*
 		renderable.mesh.render(program,
 				renderable.primitiveType,
 				renderable.meshPartOffset,
 				renderable.meshPartSize);
+				*/
 	}
 
 	@Override

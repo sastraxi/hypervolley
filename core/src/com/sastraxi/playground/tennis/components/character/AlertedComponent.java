@@ -12,7 +12,6 @@ public class AlertedComponent extends Component {
 
     public AlertedComponent(ModelInstance modelInstance) {
         this.modelInstance = modelInstance;
-
     }
 
 }
