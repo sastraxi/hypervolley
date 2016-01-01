@@ -1,16 +1,16 @@
 package com.sastraxi.playground.tennis.util;
 
 import com.badlogic.gdx.math.Vector3;
+import com.sastraxi.playground.tennis.Constants;
 
 /**
  * Created by sastr on 2015-09-24.
  */
-public class VectorSmoother {
+public class VectorSmoother extends Smoother {
 
-    private final int ROLLOVER = 1000; // roll counter over at 1000 * samples
+    private static final int ROLLOVER = 1000; // roll counter over at 1000 * samples
 
     protected Vector3[] samples;
-    protected float[] weights;
 
     int tick;
 
@@ -18,8 +18,8 @@ public class VectorSmoother {
         samples = new Vector3[numSamples];
         for (int i = 0; i < numSamples; ++i) {
             samples[i] = new Vector3();
-            // TODO generate CDF of normal -2..2 over the weights and subtract the previous version
         }
+        generateWeights(numSamples, Constants.CAMERA_SMOOTH_STANDARD_DEVIATIONS);
     }
 
     public void insert(Vector3 sample) {
@@ -32,10 +32,9 @@ public class VectorSmoother {
 
     public void getValue(Vector3 out) {
         out.set(0f, 0f, 0f);
-        int i;
-        for (i = 0; i < tick && i < samples.length; ++i) {
-            out.add(samples[i]);
+        for (int i = 0; i < tick && i < samples.length; ++i) {
+            out.mulAdd(samples[i], weights[i]);
         }
-        out.scl(1f / (float) i);
+        out.scl(totalWeights[Math.min(tick, samples.length) - 1]);
     }
 }

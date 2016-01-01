@@ -83,6 +83,7 @@ public class AIMovementSystem  extends IteratingSystem {
         // sensible defaults
         pic.inputFrame.swing = false;
         pic.inputFrame.slice = false;
+        pic.inputFrame.dash = false;
 
         float back_x = pic.bounds.x < 0 ? pic.bounds.x : pic.bounds.x + pic.bounds.width;
         float front_x = pic.bounds.x > 0 ? pic.bounds.x : pic.bounds.x + pic.bounds.width;
@@ -94,6 +95,7 @@ public class AIMovementSystem  extends IteratingSystem {
             ballComponent.lastHitByPlayerEID != null && ballComponent.lastHitByPlayerEID != entity.getId())
         {
             // determine closest point to our player
+            // FIXME will only work for balls linear in xy
             boolean intersects = Intersector.intersectLines(
                     ball.position.x, ball.position.y,
                     ball.position.x + ball.velocity.x * 10f, ball.position.y + ball.velocity.y * 10f,
@@ -106,12 +108,18 @@ public class AIMovementSystem  extends IteratingSystem {
             // if it didn't intersect, maybe the ball's static or something, don't worry about it
             if (intersects) {
 
+                // hit the ball a little after the "perfect intersection"
+                // if it's
+                _tmp.set(ball.velocity.x, ball.velocity.y).nor().scl(Constants.PLAYER_REACH * 3f);
+                _isct.add(_tmp);
+
+                // FIXME fudge factors
                 // estimate where we should be based on player time/ball time differential @ intersectionpt.
                 _tmp.set(_isct).sub(ball.position.x, ball.position.y);
-                float ball_time = _tmp.len() / ball.velocity.len(); // act as if ball gets there faster, so we can get our player there in time
+                float ball_time = 0.8f * _tmp.len() / ball.velocity.len(); // act as if ball gets there faster, so we can get our player there in time
 
                 _tmp.set(_isct).sub(player.position.x, player.position.y);
-                _tmp.scl(1f -  (Constants.PLAYER_REACH /_tmp.len())); // factor in the reach of the player
+                _tmp.scl(1f -  (0.5f * Constants.PLAYER_REACH /_tmp.len())); // factor in the reach of the player
                 float player_time = _tmp.len() / Constants.PLAYER_SPEED;
                 float playerDistance = _tmp.len();
 
@@ -131,27 +139,12 @@ public class AIMovementSystem  extends IteratingSystem {
 
                 } else {
                     // we need to dash at some point. or maybe we don't get there at all?
-                    // FIXME this dash distance is wrong
-                    float dashTime = Constants.DASH_MAX_METER / Constants.DASH_METER_DEPLETION_RATE;
-                    float dashDistance = dashTime * Constants.DASH_SPEED;
-                    float preDashDistance = playerDistance - dashDistance;
-                    float totalTime = dashTime + (preDashDistance / Constants.PLAYER_SPEED);
-                    if (preDashDistance >= 0f && ball_time >= totalTime)
-                    {
-                        state.ballMode = BallState.WILL_HIT_WITH_DASH;
-                        state.ballTime = totalTime;
-                        state.dashAtTime = totalTime - dashTime;
-                        state.ballMovement.set(_tmp).nor();
-                        System.out.println("*** WILL_HIT_WITH_DASH");
-                    }
-                    else
-                    {
-                        // if we can't make it, do a sharply decelarating movement towards it.
-                        state.ballMode = BallState.MISSED;
-                        state.ballTime = 1.0f; // just some constant: how pathetic we want to be
-                        state.ballMovement.set(_tmp).nor();
-                        System.out.println("*** MISSED");
-                    }
+                    // FIXME this dash distance is wrong so we're fudging it
+                    state.ballMode = BallState.TRY_HIT_WITH_DASH;
+                    state.ballTime = ball_time;
+                    state.dashAtTime = ball_time - deltaTime;
+                    state.ballMovement.set(_tmp).nor();
+                    System.out.println("*** TRY_HIT_WITH_DASH");
                 }
                 state.initialBallTime = state.ballTime;
             }
@@ -184,6 +177,36 @@ public class AIMovementSystem  extends IteratingSystem {
             // convert shot position into left stick movement
             pic.shotBounds.getCenter(_tmp);
             _mvmt.sub(_tmp).scl(1f / (float) Math.sqrt(halfDistSq));
+
+            // do a perfect shot 20% of the time
+            if (pic.tHitActual - pic.tHit < ((Constants.PERFECT_HIT_FRAMES - 2) * Constants.FRAME_TIME_SEC)) {
+                pic.inputFrame.swing = true;
+            }
+
+        }
+        else if (pic.state == CharacterComponent.PlayerState.SERVE_SETUP)
+        {
+            if (Math.random() > 0.95) {
+                pic.inputFrame.swing = true;
+            }
+        }
+        else if (pic.state == CharacterComponent.PlayerState.SERVING)
+        {
+            state.ballMode = BallState.NONE;
+            if (pic.lastInputFrame.swing == false && Math.random() > 0.95)
+            {
+                pic.inputFrame.swing = true;
+                pic.shotBounds.getCenter(_rand);
+                _rand.add((float) (Math.pow(Math.random(), 0.3f) * Math.signum(Math.random() - 0.5f)) * pic.shotBounds.width * 0.5f,
+                        (float) (Math.pow(Math.random(), 0.3f) * Math.signum(Math.random() - 0.5f)) * pic.shotBounds.height * 0.5f);
+                _mvmt.set(_rand);
+                pic.shotBounds.getCenter(_tmp);
+                _mvmt.sub(_tmp).nor().scl((float) Math.random());
+            }
+            else
+            {
+                pic.inputFrame.swing = false;
+            }
         }
         else if (state.ballMode != BallState.NONE && pic.ballEID == lastBallEID)
         {
@@ -198,9 +221,9 @@ public class AIMovementSystem  extends IteratingSystem {
                 case WILL_HIT:
                     _mvmt.set(state.ballMovement);
                     break;
-                case WILL_HIT_WITH_DASH:
+                case TRY_HIT_WITH_DASH:
                     _mvmt.set(state.ballMovement);
-                    if (origTime > state.dashAtTime && state.ballTime < state.dashAtTime)
+                    if (origTime > state.dashAtTime && state.ballTime <= state.dashAtTime)
                     {
                         // trigger the dash on this frame
                         pic.inputFrame.dash = true;
@@ -208,26 +231,6 @@ public class AIMovementSystem  extends IteratingSystem {
                     break;
             }
             // move towards goal
-        }
-        else if (pic.state == CharacterComponent.PlayerState.SERVE_SETUP)
-        {
-            System.out.println("SERVE SETUP");
-            pic.inputFrame.swing = true;
-        }
-        else if (pic.state == CharacterComponent.PlayerState.SERVING)
-        {
-            if (pic.lastInputFrame.swing == false)
-            {
-                System.out.println("SERVE TIME");
-
-                pic.inputFrame.swing = true;
-                pic.shotBounds.getCenter(_rand);
-                _rand.add((float) (Math.pow(Math.random(), 0.3f) * Math.signum(Math.random() - 0.5f)) * pic.shotBounds.width * 0.5f,
-                        (float) (Math.pow(Math.random(), 0.3f) * Math.signum(Math.random() - 0.5f)) * pic.shotBounds.height * 0.5f);
-                _mvmt.set(_rand);
-                pic.shotBounds.getCenter(_tmp);
-                _mvmt.sub(_tmp).nor().scl((float) Math.random());
-            }
         }
         else
         {

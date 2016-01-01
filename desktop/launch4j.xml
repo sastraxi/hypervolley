@@ -2,7 +2,7 @@
 <launch4jConfig>
   <dontWrapJar>false</dontWrapJar>
   <headerType>console</headerType>
-  <jar>C:\dev\playground\out\artifacts\desktop_jar\desktop.jar</jar>
+  <jar>C:\dev\playground\out\artifacts\playground_jar\playground.jar</jar>
   <outfile>C:\dev\playground\desktop\exe\prototype.exe</outfile>
   <errTitle></errTitle>
   <cmdLine></cmdLine>

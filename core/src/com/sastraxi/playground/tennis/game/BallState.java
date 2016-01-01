@@ -6,7 +6,7 @@ package com.sastraxi.playground.tennis.game;
 public enum BallState {
 
     NONE,
-    WILL_HIT_WITH_DASH,
+    TRY_HIT_WITH_DASH,
     MISSED,
     WILL_HIT;
 

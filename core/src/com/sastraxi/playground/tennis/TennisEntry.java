@@ -21,6 +21,7 @@ import com.sastraxi.playground.tennis.components.global.CameraManagementComponen
 import com.sastraxi.playground.tennis.components.global.GameStateComponent;
 import com.sastraxi.playground.tennis.components.global.MenuComponent;
 import com.sastraxi.playground.tennis.components.global.SharedRenderStateComponent;
+import com.sastraxi.playground.tennis.components.level.WallComponent;
 import com.sastraxi.playground.tennis.game.PlayerType;
 import com.sastraxi.playground.tennis.menu.MenuChoice;
 import com.sastraxi.playground.tennis.models.Models;
@@ -42,6 +43,13 @@ public class TennisEntry extends ApplicationAdapter {
     CameraManagementComponent cameraManagementComponent;
     GameRenderingSystem gameRenderingSystem;
     OverlayRenderingSystem overlayRenderingSystem;
+
+    private void addWall(Engine engine, float ax, float ay, float bx, float by)
+    {
+        Entity entity = new Entity();
+        entity.add(new WallComponent(ax, ay, bx, by));
+        engine.addEntity(entity);
+    }
 
     @Override
 	public void create()
@@ -149,6 +157,18 @@ public class TennisEntry extends ApplicationAdapter {
 
         // allow players to move, shoot, serve, etc.
         engine.addSystem(new PlayerMovementSystem());
+
+        //////////////////////////////////////////////////////////////////////////////////////
+
+        // set up walls in the level
+        addWall(engine, -1.0f * Constants.LEVEL_HALF_WIDTH,  0.65f * Constants.LEVEL_HALF_DEPTH,  // top-left
+                        -0.3f * Constants.LEVEL_HALF_WIDTH,  1.0f * Constants.LEVEL_HALF_DEPTH);
+        addWall(engine,  0.3f * Constants.LEVEL_HALF_WIDTH,  1.0f * Constants.LEVEL_HALF_DEPTH,   // top-right
+                         1.0f * Constants.LEVEL_HALF_WIDTH,  0.65f * Constants.LEVEL_HALF_DEPTH);
+        addWall(engine,  1.0f * Constants.LEVEL_HALF_WIDTH, -0.65f * Constants.LEVEL_HALF_DEPTH,  // bottom-right
+                         0.3f * Constants.LEVEL_HALF_WIDTH, -1.0f * Constants.LEVEL_HALF_DEPTH);
+        addWall(engine, -0.3f * Constants.LEVEL_HALF_WIDTH, -1.0f * Constants.LEVEL_HALF_DEPTH,   // bottom-left
+                        -1.0f * Constants.LEVEL_HALF_WIDTH, -0.65f * Constants.LEVEL_HALF_DEPTH);
 
         //////////////////////////////////////////////////////////////////////////////////////
 

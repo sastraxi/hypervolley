@@ -5,6 +5,7 @@ import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
+import com.badlogic.ashley.utils.ImmutableArray;
 import com.badlogic.gdx.math.*;
 import com.sastraxi.playground.found.MiscMath;
 import com.sastraxi.playground.tennis.AnimationConstants;
@@ -16,13 +17,17 @@ import com.sastraxi.playground.tennis.components.character.CharacterComponent;
 import com.sastraxi.playground.tennis.components.character.StrikeZoneDebugComponent;
 import com.sastraxi.playground.tennis.components.global.CameraManagementComponent;
 import com.sastraxi.playground.tennis.components.global.GameStateComponent;
+import com.sastraxi.playground.tennis.components.level.WallComponent;
 import com.sastraxi.playground.tennis.game.*;
+
+import static com.sastraxi.playground.tennis.components.character.CharacterComponent.PlayerState.*;
 
 public class PlayerMovementSystem extends IteratingSystem {
 
-    private static final Family BALL_FAMILY = Family.one(BallComponent.class).get();
+    private static final Family WALL_FAMILY = Family.one(WallComponent.class).get();
     private static final int PRIORITY = 3; // after ball movement system
 
+    private ComponentMapper<WallComponent> wcm = ComponentMapper.getFor(WallComponent.class);
     private ComponentMapper<CameraManagementComponent> vpmc = ComponentMapper.getFor(CameraManagementComponent.class);
     private ComponentMapper<BallComponent> bcm = ComponentMapper.getFor(BallComponent.class);
     private ComponentMapper<MovementComponent> mc = ComponentMapper.getFor(MovementComponent.class);
@@ -34,14 +39,15 @@ public class PlayerMovementSystem extends IteratingSystem {
     private ComponentMapper<GameStateComponent> gscm = ComponentMapper.getFor(GameStateComponent.class);
 
     private Engine engine;
+    private ImmutableArray<Entity> wallEntities;
 
-    Vector3 _left_stick = new Vector3(),
-            _tmp = new Vector3(),
+    Vector3 _tmp = new Vector3(),
             _tmp_player_focal = new Vector3(),
             _velocity = new Vector3(),
             _bearing = new Vector3();
 
-    Vector2 _ball_target = new Vector2();
+    Vector2 _ball_target = new Vector2(),
+            _left_stick = new Vector2();
 
     Vector2 _direction = new Vector2(),
             _isect_pt = new Vector2(),
@@ -63,6 +69,7 @@ public class PlayerMovementSystem extends IteratingSystem {
     public void addedToEngine(Engine engine) {
         super.addedToEngine(engine);
         this.engine = engine;
+        this.wallEntities = engine.getEntitiesFor(WALL_FAMILY);
     }
 
     @Override
@@ -75,10 +82,10 @@ public class PlayerMovementSystem extends IteratingSystem {
         pic.lastState = pic.state;
         pic.timeSinceStateChange += deltaTime;
 
-        _left_stick.set(pic.inputFrame.movement, 0f);
+        _left_stick.set(pic.inputFrame.movement);
 
-        if (pic.state == CharacterComponent.PlayerState.SERVING ||
-            pic.state == CharacterComponent.PlayerState.SERVE_SETUP)
+        if (pic.state == SERVING ||
+            pic.state == SERVE_SETUP)
         {
             servingMovement(entity, gameState, deltaTime);
         }
@@ -102,7 +109,7 @@ public class PlayerMovementSystem extends IteratingSystem {
         if (ballEntity == null)
         {
             // FIXME ctor calls in game loop!!
-            pic.lastState = CharacterComponent.PlayerState.NONE;
+            pic.lastState = NONE;
             BallPath path = new StaticBallPath(Vector3.Zero);
             ballEntity = BallFactory.createAndAddBall(engine, path, gameState.getPreciseTime(), false);
             isNewBall = true;
@@ -113,7 +120,7 @@ public class PlayerMovementSystem extends IteratingSystem {
         boolean isHitFrame = (pic.inputFrame.swing && !pic.lastInputFrame.swing) ||
                              (pic.inputFrame.slice && !pic.lastInputFrame.slice);
 
-        if (pic.state == CharacterComponent.PlayerState.SERVE_SETUP)
+        if (pic.state == SERVE_SETUP)
         {
             float _heading = 0f;
 
@@ -122,7 +129,7 @@ public class PlayerMovementSystem extends IteratingSystem {
             _left_stick.x = 0f;
             if (_left_stick.len() >= Constants.CONTROLLER_WALK_MAGNITUDE)
             {
-                movement.velocity.set(_left_stick).nor();
+                movement.velocity.set(_left_stick, 0f).nor();
                 movement.velocity.scl(Constants.PLAYER_SPEED);
             }
             else
@@ -179,7 +186,7 @@ public class PlayerMovementSystem extends IteratingSystem {
                 ball.colour = Constants.BALL_COLOUR;
                 ball.lastHitByPlayerEID = entity.getId();
                 ball.currentBounce = 0;
-                pic.state = CharacterComponent.PlayerState.SERVING;
+                pic.state = SERVING;
 
                 // determine when the ball will attain that optimal height (quadratic eqn.)
                 // only process a hit if we're on the positive side (falling motion)
@@ -196,7 +203,7 @@ public class PlayerMovementSystem extends IteratingSystem {
             }
 
         }
-        else if (pic.state == CharacterComponent.PlayerState.SERVING)
+        else if (pic.state == SERVING)
         {
             // if we hit the ball, make it fly!
             if (isHitFrame)
@@ -207,7 +214,7 @@ public class PlayerMovementSystem extends IteratingSystem {
                 performHit(entity.getId(), pic, ball, ballMovement, gameState);
 
                 // use transition HIT_ENDING state to smoothly give character control
-                pic.state = CharacterComponent.PlayerState.HIT_ENDING;
+                pic.state = HIT_ENDING;
                 pic.originalSpeed = 0f;
                 pic.tHit = 0f;
                 pic.tHitActual = Constants.SERVING_RECOVERY_TIME;
@@ -218,12 +225,48 @@ public class PlayerMovementSystem extends IteratingSystem {
             // if we caught the ball instead of hitting it, return to serve setup
             else if (ballMovement.velocity.z < 0 && ballMovement.position.z <= Constants.SERVING_BALL_START.z)
             {
-                pic.state = CharacterComponent.PlayerState.SERVE_SETUP;
+                pic.state = SERVE_SETUP;
                 ball.path = new StaticBallPath(ballMovement.position, ballMovement.velocity);
                 ball.currentBounce = 0;
             }
 
         }
+    }
+
+    /**
+     * Apply player input to player movement.
+     *
+     * @param _rot current player rotation in radians
+     * @param pic (read-only) the player character we are updating.
+     * @param movement the character's movement component.
+     * @param input (read-only) the current input frame's input.
+     * @return new player rotation in radians
+     */
+    protected float stickToMovement(float _rot, CharacterComponent pic, MovementComponent movement, Vector2 input)
+    {
+        // treat all input below a certain threshold as 0,
+        if (input.len() >= Constants.CONTROLLER_WALK_MAGNITUDE) {
+
+            movement.velocity.set(input, 0f).nor();
+            movement.velocity.scl(Constants.PLAYER_SPEED);
+            _rot = (float) Math.atan2(input.y, input.x);
+
+            // all input below a second threshold as ramping from 0->1
+            float _heading;
+            if (input.len() < Constants.CONTROLLER_RUN_MAGNITUDE) {
+                movement.velocity.scl((input.len() - Constants.CONTROLLER_WALK_MAGNITUDE) /
+                        (Constants.CONTROLLER_RUN_MAGNITUDE - Constants.CONTROLLER_WALK_MAGNITUDE));
+                _tmp_player_focal.set(pic.focalPoint).sub(movement.position);
+                _heading = (float) Math.atan2(_tmp_player_focal.y, _tmp_player_focal.x);
+            } else {
+                _heading = _rot;
+            }
+            movement.orientation.set(Constants.UP_VECTOR, MathUtils.radiansToDegrees * _heading);
+
+        } else {
+            movement.velocity.set(0f, 0f, 0f);
+        }
+        return _rot;
     }
 
     /**
@@ -320,7 +363,7 @@ public class PlayerMovementSystem extends IteratingSystem {
         }
 
         // set hit parameters
-        pic.state = CharacterComponent.PlayerState.HITTING;
+        pic.state = HITTING;
         pic.chosenHitType = null;
         pic.hitBallEID = pic.ballEID;
         pic.hitFrame = null;
@@ -366,40 +409,40 @@ public class PlayerMovementSystem extends IteratingSystem {
 
         // dash state changes; only allow when resting or we've done our animations
         if (pic.inputFrame.dash && !pic.lastInputFrame.dash
-                && (pic.state == CharacterComponent.PlayerState.NONE
+                && (pic.state == NONE
                 || pic.timeSinceStateChange > Constants.DASH_ACCEL)) // FIXME when accel > decel there is dead time after ending dash when we cannot dash again
         {
-            if (pic.state == CharacterComponent.PlayerState.DASHING) {
+            if (pic.state == DASHING) {
                 // cancel dash
-                pic.state = CharacterComponent.PlayerState.DASH_ENDING;
+                pic.state = DASH_ENDING;
                 pic.timeSinceStateChange = 0f;
-            } else if (pic.state == CharacterComponent.PlayerState.NONE && pic.dashMeter >= Constants.DASH_MIN_METER) {
+            } else if (pic.state == NONE && pic.dashMeter >= Constants.DASH_MIN_METER) {
                 // begin dash
-                pic.state = CharacterComponent.PlayerState.DASHING;
+                pic.state = DASHING;
                 pic.timeSinceStateChange = 0f;
             }
         }
 
         // dash meter
-        if (pic.state == CharacterComponent.PlayerState.DASHING) {
+        if (pic.state == DASHING) {
             pic.dashMeter -= Constants.DASH_METER_DEPLETION_RATE * deltaTime;
             if (pic.dashMeter <= 0f) {
                 pic.dashMeter = 0f;
-                pic.state = CharacterComponent.PlayerState.DASH_ENDING;
+                pic.state = DASH_ENDING;
                 pic.timeSinceStateChange = 0f;
             }
-        } else if (pic.state == CharacterComponent.PlayerState.NONE) {
+        } else if (pic.state == NONE) {
             pic.dashMeter = Math.min(pic.dashMeter + deltaTime, Constants.DASH_MAX_METER);
         }
 
         // decide on our velocity
-        if (pic.state == CharacterComponent.PlayerState.DASH_ENDING)
+        if (pic.state == DASH_ENDING)
         {
             // decelerate dash
             float pct = (pic.timeSinceStateChange / Constants.DASH_DECEL);
             if (pct > 1.0) {
                 pct = 1.0f;
-                pic.state = CharacterComponent.PlayerState.NONE;
+                pic.state = NONE;
             }
             float speed = MathUtils.lerp(Constants.DASH_SPEED, Constants.PLAYER_SPEED, pct);
             movement.velocity.set(
@@ -407,8 +450,13 @@ public class PlayerMovementSystem extends IteratingSystem {
                     MathUtils.sin(_rot) * speed,
                     0f);
         }
-        else if (pic.state == CharacterComponent.PlayerState.DASHING)
+        else if (pic.state == DASHING)
         {
+            // if we are just about to dash, allow applying the current movement first.
+            if (pic.lastState != DASHING) {
+                _rot = stickToMovement(_rot, pic, movement, _left_stick);
+            }
+
             // accelerate dash
             float pct = (pic.timeSinceStateChange / Constants.DASH_ACCEL);
             if (pct > 1.0) {
@@ -421,34 +469,13 @@ public class PlayerMovementSystem extends IteratingSystem {
                     MathUtils.sin(_rot) * speed,
                     0f);
         }
-        else if (pic.state != CharacterComponent.PlayerState.HITTING) // don't allow change from left controller stick when we're winding up
+        else if (pic.state != HITTING) // don't allow change from left controller stick when we're winding up
         {
             // regular movement logic
-            // treat all input below a certain threshold as 0,
-            if (_left_stick.len() >= Constants.CONTROLLER_WALK_MAGNITUDE) {
-
-                movement.velocity.set(_left_stick).nor();
-                movement.velocity.scl(Constants.PLAYER_SPEED);
-                _rot = (float) Math.atan2(_left_stick.y, _left_stick.x);
-
-                // all input below a second threshold as ramping from 0->1
-                float _heading;
-                if (_left_stick.len() < Constants.CONTROLLER_RUN_MAGNITUDE) {
-                    movement.velocity.scl((_left_stick.len() - Constants.CONTROLLER_WALK_MAGNITUDE) /
-                            (Constants.CONTROLLER_RUN_MAGNITUDE - Constants.CONTROLLER_WALK_MAGNITUDE));
-                    _tmp_player_focal.set(pic.focalPoint).sub(movement.position);
-                    _heading = (float) Math.atan2(_tmp_player_focal.y, _tmp_player_focal.x);
-                } else {
-                    _heading = _rot;
-                }
-                movement.orientation.set(Constants.UP_VECTOR, MathUtils.radiansToDegrees * _heading);
-
-            } else {
-                movement.velocity.set(0f, 0f, 0f);
-            }
+            _rot = stickToMovement(_rot, pic, movement, _left_stick);
 
             // if we're recovering from a hit, gradually cede control back to the user
-            if (pic.state == CharacterComponent.PlayerState.HIT_ENDING)
+            if (pic.state == HIT_ENDING)
             {
                 float factor = 1f - (pic.tHit / pic.tHitActual);
                 _velocity.set(pic.originalTrajectory)
@@ -464,14 +491,13 @@ public class PlayerMovementSystem extends IteratingSystem {
 
                 pic.tHit += deltaTime;
                 if (pic.tHit >= pic.tHitActual) {
-                    pic.state = CharacterComponent.PlayerState.NONE;
+                    pic.state = NONE;
                 }
             }
         }
 
         // integrate velocity -> position
-        // _left_stick = movement vector
-        if (pic.state != CharacterComponent.PlayerState.HITTING) {
+        if (pic.state != HITTING) {
             _tmp.set(movement.velocity).scl(deltaTime);
             movement.position.add(_tmp);
         }
@@ -484,7 +510,7 @@ public class PlayerMovementSystem extends IteratingSystem {
 
             // only allow the ball to be hit once it's been hit by the other player
             if (ballComponent.lastHitByPlayerEID != null && ballComponent.lastHitByPlayerEID != entity.getId()) {
-                if (pic.state != CharacterComponent.PlayerState.HITTING) {
+                if (pic.state != HITTING) {
 
                     // continually look in the future for opportunities to hit the ball.
                     for (int i = 0; i < Constants.PLAYER_LOOKAHEAD_FRAMES; ++i) {
@@ -507,7 +533,7 @@ public class PlayerMovementSystem extends IteratingSystem {
 
                     // reset hit state if we miss the ball (i.e. the ball has changed on us)
                     if (pic.hitBallEID != pic.ballEID) {
-                        pic.state = CharacterComponent.PlayerState.HIT_ENDING;
+                        pic.state = HIT_ENDING;
                         if (pic.originalSpeed > Constants.PLAYER_SPEED) pic.originalSpeed = Constants.PLAYER_SPEED;
                         pic.tHit = 0f; // re-use timer variables
                     }
@@ -578,20 +604,25 @@ public class PlayerMovementSystem extends IteratingSystem {
             }
         }
 
-        // slide along walls if we hit the boundary
+        // slide if we hit the absolute boundary
         // the boundary is different if we are in a volley or waiting for the opponent to serve
         Rectangle bounds = gameState.isInServe ? pic.receiveBounds : pic.bounds;
-
         if (!bounds.contains(movement.position.x, movement.position.y)) {
-            if (pic.state == CharacterComponent.PlayerState.DASHING) {
+            if (pic.state == DASHING) {
                 // cancel dash
-                pic.state = CharacterComponent.PlayerState.DASH_ENDING;
+                pic.state = DASH_ENDING;
                 pic.timeSinceStateChange = 0f;
             }
             movement.position.x = Math.max(movement.position.x, bounds.x);
             movement.position.x = Math.min(movement.position.x, bounds.x + bounds.width);
             movement.position.y = Math.max(movement.position.y, bounds.y);
             movement.position.y = Math.min(movement.position.y, bounds.y + bounds.height);
+        }
+
+        // slide along additional court walls
+        for (Entity wallEntity: wallEntities) {
+            WallComponent wall = wcm.get(wallEntity);
+            wall.rectify(movement.position);
         }
 
     }
@@ -623,8 +654,9 @@ public class PlayerMovementSystem extends IteratingSystem {
             if (framesAway < Constants.PERFECT_HIT_FRAMES) {
                 isPerfectHit = true;
                 ball.colour = HitType.POWER.getColour();
+                System.out.println("KAPOW! Take that!");
             } else {
-                System.out.println("missed by " + (framesAway - Constants.PERFECT_HIT_FRAMES + 1)  + " :(");
+                System.out.println("Missed perfect shot by " + (framesAway - Constants.PERFECT_HIT_FRAMES + 1)  + " :(");
             }
         }
 
@@ -649,7 +681,7 @@ public class PlayerMovementSystem extends IteratingSystem {
         BallFactory.addBounceMarkers(engine, pic.getBall(engine));
 
         // that's all she wrote. start recovery
-        pic.state = CharacterComponent.PlayerState.HIT_ENDING;
+        pic.state = HIT_ENDING;
         if (pic.originalSpeed > Constants.PLAYER_SPEED) pic.originalSpeed = Constants.PLAYER_SPEED;
         pic.tHit -= pic.tHitActual; // re-use timer variables
     }

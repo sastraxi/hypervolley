@@ -23,7 +23,7 @@ public class Constants {
     public static final float G_NORMAL = 300f;
     public static final float G_PERFECT_FRAME = 550f;
 
-    public static final float LEVEL_HALF_WIDTH = 420f;
+    public static final float LEVEL_HALF_WIDTH = 400f;
     public static final float LEVEL_HALF_DEPTH = 300f;
     public static final float COURT_HALF_WIDTH = 200f;
     public static final float COURT_HALF_DEPTH = 100f;
@@ -154,10 +154,11 @@ public class Constants {
     public static final float CAMERA_INV_FRAME_FILL = 4f;
     public static final float CAMERA_POSITION_INTENSITY_INV = 0.8f;
     public static final float CAMERA_HORIZONTAL_MOVEMENT_SCALE = 2f;
-    public static final float CAMERA_FOV_INTENSITY = 0.2f;
+    public static final float CAMERA_FOV_INTENSITY = 0.1f;
     public static final int CAMERA_POSITION_SMOOTHING_FRAMES = 90;
     public static final int CAMERA_FOV_SMOOTHING_FRAMES = 90;
     public static final float CAMERA_MARKER_VELOCITY_ANTICIPATION_SEC = 0.5f;
+    public static final float CAMERA_SMOOTH_STANDARD_DEVIATIONS = 0.9f;
 
     // how high balls should be
     public static final float HIT_HEIGHT = PLAYER_HEIGHT * 0.6f;

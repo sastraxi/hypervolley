@@ -28,8 +28,6 @@ public class BallMovementSystem extends IteratingSystem {
 
     private Engine engine = null;
 
-    private static Quaternion _delta = new Quaternion();
-
     public BallMovementSystem() {
         super(Family.all(MovementComponent.class, BallComponent.class).get(), PRIORITY);
     }
@@ -58,14 +56,6 @@ public class BallMovementSystem extends IteratingSystem {
         // rotational velocity -> orientation
         ball.path.getAngularVelocity(time, ball.angularVelocity);
         MiscMath.integrate(movement.orientation, ball.angularVelocity, deltaTime);
-
-        /*
-        if (movement.velocity.hasSameDirection(Constants.UP_VECTOR)) {
-            // special case so that we get some rotation here
-        } else {
-            ball.angularVelocity.set(movement.velocity, 10f);
-        }
-        */
 
         // create a "just bounced" flag
         int previousBounce = ball.currentBounce;

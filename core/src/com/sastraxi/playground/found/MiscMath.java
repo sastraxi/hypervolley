@@ -140,7 +140,7 @@ public class MiscMath {
      *
      * From http://stackoverflow.com/questions/442758/which-java-library-computes-the-cumulative-standard-normal-distribution-function
      */
-    double normalCDF(double x)
+    public static double normalCDF(double x)
     {
         int neg = (x < 0d) ? 1 : 0;
         if ( neg == 1)
