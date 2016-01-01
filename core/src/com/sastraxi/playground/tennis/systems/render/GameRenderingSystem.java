@@ -124,12 +124,12 @@ public class GameRenderingSystem extends EntitySystem {
 
         // environment
         environment = new Environment();
-        environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.4f, 0.4f, 0.4f, 1f));
+        environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.4f, 0.4f, 0.5f, 1f));
 
         // red lights
         for (int i = -2; i <= 2; ++i) {
             for (int j = -2; j <= 2; ++j) {
-                environment.add(new PointLight().set(1f, 0f, 0f, i * 250f, j * 125f, 100f, 4000f));
+                environment.add(new PointLight().set(1f, 0f, 0f, i * 250f, j * 125f, 100f, 2000f));
             }
         }
 
@@ -146,7 +146,7 @@ public class GameRenderingSystem extends EntitySystem {
         environment.add(new PointLight().set(1f, 1f, 1f, scale * -2796.860840f, scale * -999.767090f,  scale * 1003.235229f, stadiumIntensity));
 
         // sun light
-        sunLight = new DirectionalLight().set(0.5f, 0.65f, 0.5f, -3f, 1f, -8f);
+        sunLight = new DirectionalLight().set(0.5f, 0.65f, 0.65f, -3f, 1f, -8f);
         environment.add(sunLight);
         setupShadowLight(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 

@@ -27,7 +27,7 @@ public class SoundEffectsSystem extends EntitySystem {
     private GameStateComponent gameState;
     private ImmutableArray<Entity> ballEntities, playerEntities;
 
-    private final Sound bounceSound, hitSound, beginServeSound, serveThrowSound, cancelServeSound, acquireBallSound;
+    private final Sound bounceSound, hitSound, beginServeSound, serveThrowSound, cancelServeSound, acquireBallSound, perfectSound;
 
     private final Vector3 _velo = new Vector3();
 
@@ -35,6 +35,7 @@ public class SoundEffectsSystem extends EntitySystem {
         super(PRIORITY);
         bounceSound = Gdx.audio.newSound(Gdx.files.internal("sounds/bounce.wav"));
         hitSound = Gdx.audio.newSound(Gdx.files.internal("sounds/hit.wav"));
+        perfectSound = Gdx.audio.newSound(Gdx.files.internal("sounds/perfect-hit.wav"));
         beginServeSound = Gdx.audio.newSound(Gdx.files.internal("sounds/serve-begin.wav"));
         serveThrowSound = Gdx.audio.newSound(Gdx.files.internal("sounds/serve-throw.wav"));
         cancelServeSound = Gdx.audio.newSound(Gdx.files.internal("sounds/serve-cancel.wav"));
@@ -79,6 +80,10 @@ public class SoundEffectsSystem extends EntitySystem {
                 MovementComponent ballMovement = mcm.get(pic.getBall(engine));
                 float lerp = MathUtils.clamp(ballMovement.velocity.len() / Constants.SOUND_HIT_MAX_VELOCITY, 0f, 1f);
                 play(pic, hitSound, Constants.SOUND_HIT_MAX_VOLUME * lerp, 1f, pan);
+
+                if (pic.isPerfectHit(gameState.getTick())) {
+                    overlay(perfectSound, Constants.SOUND_PERFECT_VOLUME, 1f, pan);
+                }
             }
             else if (pic.justBeganServing(gameState.getTick()))
             {
@@ -101,6 +106,9 @@ public class SoundEffectsSystem extends EntitySystem {
 
     }
 
+    /**
+     * Play a sound, stopping anything that is currently playing.
+     */
     private void play(CharacterComponent pic, Sound sound, float volume, float pitch, float pan)
     {
         if (pic.currentSound != null) {
@@ -108,5 +116,13 @@ public class SoundEffectsSystem extends EntitySystem {
         }
         pic.currentSound = sound;
         pic.currentSoundId = sound.play(volume, pitch, pan);
+    }
+
+    /**
+     * Play a sound, allowing other sounds to play.
+     */
+    private void overlay(Sound sound, float volume, float pitch, float pan)
+    {
+        sound.play(volume, pitch, pan);
     }
 }

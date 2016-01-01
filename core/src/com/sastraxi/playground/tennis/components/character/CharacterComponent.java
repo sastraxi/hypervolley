@@ -9,6 +9,7 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.sastraxi.playground.tennis.Constants;
+import com.sastraxi.playground.tennis.components.global.GameStateComponent;
 import com.sastraxi.playground.tennis.game.*;
 
 /**
@@ -67,6 +68,15 @@ public class CharacterComponent extends Component {
     public boolean justBeganServing(long tick)
     {
         return tick == 0 || (lastState != state && lastState != PlayerState.SERVING && state == PlayerState.SERVE_SETUP);
+    }
+
+
+    public boolean isPerfectHit(long tick)
+    {
+        if (hitFrame == null) return false;
+
+        int framesAway = (int) Math.abs(tick - hitFrame);
+        return framesAway < Constants.PERFECT_HIT_FRAMES;
     }
 
     public boolean justThrewServe()

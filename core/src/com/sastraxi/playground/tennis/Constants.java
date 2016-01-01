@@ -169,6 +169,7 @@ public class Constants {
     public static final float SOUND_BOUNCE_VOLUME = 0.7f;
     public static final float SOUND_SERVE_VOLUME = 0.65f;
     public static final float SOUND_ACQUIRE_VOLUME = 0.6f;
+    public static final float SOUND_PERFECT_VOLUME = 0.65f;
 
     // debug strike zone visualisation
     public static final Color STRIKE_ZONE_COLOUR = new Color(0.3f, 0.3f, 0.3f, 0.7f);

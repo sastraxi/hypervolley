@@ -647,17 +647,12 @@ public class PlayerMovementSystem extends IteratingSystem {
         }
 
         // perfect frame calculation
-        boolean isPerfectHit = false;
-        ball.colour = pic.chosenHitType.getColour();
-        if (pic.hitFrame != null) {
+        boolean isPerfectHit = pic.isPerfectHit(gameState.getTick());
+        if (isPerfectHit) {
+            System.out.println("KAPOW! Take that!");
+        } else if (pic.hitFrame != null) {
             int framesAway = (int) Math.abs(gameState.getTick() - pic.hitFrame);
-            if (framesAway < Constants.PERFECT_HIT_FRAMES) {
-                isPerfectHit = true;
-                ball.colour = HitType.POWER.getColour();
-                System.out.println("KAPOW! Take that!");
-            } else {
-                System.out.println("Missed perfect shot by " + (framesAway - Constants.PERFECT_HIT_FRAMES + 1)  + " :(");
-            }
+            System.out.println("Missed perfect shot by " + (framesAway - Constants.PERFECT_HIT_FRAMES + 1)  + " :(");
         }
 
         // decide the return position
