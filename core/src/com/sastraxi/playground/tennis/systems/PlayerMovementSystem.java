@@ -47,7 +47,12 @@ public class PlayerMovementSystem extends IteratingSystem {
             _bearing = new Vector3();
 
     Vector2 _ball_target = new Vector2(),
+            _curve_target = new Vector2(),
             _left_stick = new Vector2();
+
+    Vector2 _hit_line = new Vector2(),
+            _perpendicular = new Vector2(),
+            _curve_pt = new Vector2();
 
     Vector2 _direction = new Vector2(),
             _isect_pt = new Vector2(),
@@ -118,7 +123,8 @@ public class PlayerMovementSystem extends IteratingSystem {
         BallComponent ball = bcm.get(ballEntity);
 
         boolean isHitFrame = (pic.inputFrame.swing && !pic.lastInputFrame.swing) ||
-                             (pic.inputFrame.slice && !pic.lastInputFrame.slice);
+                             (pic.inputFrame.slice && !pic.lastInputFrame.slice) ||
+                             (pic.inputFrame.curve && !pic.lastInputFrame.curve);
 
         if (pic.state == SERVE_SETUP)
         {
@@ -211,6 +217,7 @@ public class PlayerMovementSystem extends IteratingSystem {
                 // set up the ball hit
                 if (pic.inputFrame.swing)       pic.chosenHitType = HitType.NORMAL;
                 else if (pic.inputFrame.slice)  pic.chosenHitType = HitType.SLICE;
+                else if (pic.inputFrame.curve)  pic.chosenHitType = HitType.CURVE;
                 performHit(entity.getId(), pic, ball, ballMovement, gameState);
 
                 // use transition HIT_ENDING state to smoothly give character control
@@ -547,6 +554,10 @@ public class PlayerMovementSystem extends IteratingSystem {
                         } else if (pic.inputFrame.slice && !pic.lastInputFrame.slice) {
                             pic.chosenHitType = HitType.SLICE;
                             pic.hitFrame = gameState.getTick();
+
+                        } else if (pic.inputFrame.curve && !pic.lastInputFrame.curve) {
+                            pic.chosenHitType = HitType.CURVE;
+                            pic.hitFrame = gameState.getTick();
                         }
                     }
 
@@ -647,7 +658,7 @@ public class PlayerMovementSystem extends IteratingSystem {
         }
 
         // perfect frame calculation
-        boolean isPerfectHit = pic.isPerfectHit(gameState.getTick());
+        boolean isPerfectHit = pic.wasPerfectHit(gameState.getTick());
         if (isPerfectHit) {
             System.out.println("KAPOW! Take that!");
         } else if (pic.hitFrame != null) {
@@ -663,9 +674,32 @@ public class PlayerMovementSystem extends IteratingSystem {
         }
 
         // craft the new path. FIXME ctor usage in game loop
-        float G = pic.chosenHitType == HitType.SLICE ? Constants.G_SLICE :
-                (isPerfectHit ? Constants.G_PERFECT_FRAME : Constants.G_NORMAL);
-        ball.path = StraightBallPath.fromMaxHeightTarget(ballMovement.position, Constants.HIT_HEIGHT, _ball_target, G, gameState.getPreciseTime());
+        float G;
+        switch (pic.chosenHitType)
+        {
+            case NORMAL:
+            case SLICE:
+                G = pic.chosenHitType == HitType.SLICE ? Constants.G_SLICE :
+                        (isPerfectHit ? Constants.G_PERFECT_FRAME : Constants.G_NORMAL);
+                ball.path = StraightBallPath.fromMaxHeightTarget(ballMovement.position, Constants.HIT_HEIGHT,
+                        _ball_target, G, gameState.getPreciseTime());
+                break;
+
+            case CURVE:
+                G = isPerfectHit ? Constants.G_PERFECT_CURVE : Constants.G_CURVE;
+
+                // direction + perpendicular of the "hit line" (current ball position -> bounce position)
+                _hit_line.set(_ball_target).sub(ballMovement.position.x, ballMovement.position.y);
+                _perpendicular.set(-_hit_line.y, _hit_line.x);
+
+                // which side of the hit line is the center of the other court on?
+                _curve_pt.set(pic.focalPoint.x, pic.focalPoint.y).sub(ballMovement.position.x, ballMovement.position.y);
+                boolean isRight = _curve_pt.dot(_perpendicular) > 0f;
+
+                ball.path = CurveBallPath.fromMaxHeightTarget(ballMovement.position, Constants.HIT_HEIGHT,
+                        _ball_target, isRight, G, gameState.getPreciseTime());
+                break;
+        }
 
         // FIXME this is only for lower-priority (i.e. later) systems that look @ ball movement after player changes it, i.e. SoundEffectsSystem
         ball.path.getPosition(gameState.getPreciseTime(), ballMovement.position);

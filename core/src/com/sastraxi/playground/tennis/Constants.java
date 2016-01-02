@@ -21,7 +21,9 @@ public class Constants {
 
     public static final float G_SLICE = 100f;
     public static final float G_NORMAL = 300f;
-    public static final float G_PERFECT_FRAME = 550f;
+    public static final float G_PERFECT_FRAME = 600f;
+    public static final float G_CURVE = 225f;
+    public static final float G_PERFECT_CURVE = 450f;
 
     public static final float LEVEL_HALF_WIDTH = 400f;
     public static final float LEVEL_HALF_DEPTH = 300f;
@@ -115,11 +117,10 @@ public class Constants {
     public static final Color BALL_COLOUR = new Color(0.8f, 0.2f, 0.8f, 1.0f);
     public static final Color BALL_COLOUR_SLICE = new Color(0.7f, 0.7f, 0.7f, 1.0f);
     public static final Color BALL_COLOUR_POWER = new Color(1.0f, 0.6f, 0.3f, 1.0f);
-    public static final Color BALL_COLOUR_LOB = new Color(0.5f, 0.8f, 0.42f, 1.0f);
-    public static final float BALL_SHEAR = 0.002f;                // exaggerate ball movement
+    public static final float BALL_SHEAR = 0.0012f;                // exaggerate ball movement
     public static final float BALL_SHEAR_LERP_TOP = 10f;           // "splat" ball back to a sphere
     public static final float BALL_SHEAR_LERP_BOTTOM = 0f;         // when we're close to the tennis court
-    public static final float BALL_THINNING = 0.07f;
+    public static final float BALL_THINNING = 0.15f;
     public static final Vector3 BALL_NEUTRAL_ROTATION = new Vector3(5f, 5f, -3f);
     public static final float BALL_ROTATION_FACTOR = 7f;
 
@@ -130,8 +131,6 @@ public class Constants {
     public static final float PLAYER_REACH = 3.2f * PLAYER_RADIUS;                   // units
     public static final float PLAYER_WALL_HALF_WIDTH = 4f * PLAYER_RADIUS;           // units
     public static final float IDEAL_BALL_HIT_HEIGHT = 0.7f * PLAYER_HEIGHT;          // units
-
-    public static final float LOB_ANGLE = (float) (0.2 * Math.PI);
 
     // serving
     public static final float SERVING_RECOVERY_TIME = 0.4f;
@@ -200,4 +199,8 @@ public class Constants {
 
     public static final float MENU_DIAGRAM_HALF_WIDTH = 400f; // pixels
     public static final float MENU_DIAGRAM_HALF_HEIGHT = MENU_DIAGRAM_HALF_WIDTH / 1.77f; // guess
+
+    public static final float BALL_CURVE_BOUNCE_RADS = (float) (Math.PI * 0.15);
+    public static final float BALL_CURVE_INITIAL_RADS = (float) (Math.PI * -0.05);
+
 }

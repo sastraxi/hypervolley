@@ -1,6 +1,5 @@
 package com.sastraxi.playground.tennis.game;
 
-import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
 import com.sastraxi.playground.tennis.Constants;
 
@@ -61,7 +60,7 @@ public class StaticBallPath implements BallPath {
     }
 
     @Override
-    public Iterable<BallFrame> getFrames() {
-        return new ArrayList<BallFrame>();
+    public Iterable<StraightBallFrame> getFrames() {
+        return new ArrayList<StraightBallFrame>();
     }
 }

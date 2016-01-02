@@ -71,7 +71,7 @@ public class CharacterComponent extends Component {
     }
 
 
-    public boolean isPerfectHit(long tick)
+    public boolean wasPerfectHit(long tick)
     {
         if (hitFrame == null) return false;
 

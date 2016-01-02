@@ -7,7 +7,7 @@ import com.badlogic.gdx.math.Vector2;
  */
 public class InputFrame {
 
-    public boolean swing, slice;
+    public boolean swing, slice, curve;
     public Vector2 movement = new Vector2();
     public boolean dash;
     public boolean toggleMenu;
@@ -20,6 +20,7 @@ public class InputFrame {
         this.dash = other.dash;
         this.swing = other.swing;
         this.slice = other.slice;
+        this.curve = other.curve;
         this.changeCamera = other.changeCamera;
         this.toggleMenu = other.toggleMenu;
         this.up = other.up;

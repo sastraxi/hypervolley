@@ -178,7 +178,7 @@ public class AIMovementSystem  extends IteratingSystem {
             pic.shotBounds.getCenter(_tmp);
             _mvmt.sub(_tmp).scl(1f / (float) Math.sqrt(halfDistSq));
 
-            // do a perfect shot 20% of the time
+            // do a perfect shot every time
             if (pic.tHitActual - pic.tHit < ((Constants.PERFECT_HIT_FRAMES - 2) * Constants.FRAME_TIME_SEC)) {
                 pic.inputFrame.swing = true;
             }

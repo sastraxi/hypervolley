@@ -81,7 +81,7 @@ public class SoundEffectsSystem extends EntitySystem {
                 float lerp = MathUtils.clamp(ballMovement.velocity.len() / Constants.SOUND_HIT_MAX_VELOCITY, 0f, 1f);
                 play(pic, hitSound, Constants.SOUND_HIT_MAX_VOLUME * lerp, 1f, pan);
 
-                if (pic.isPerfectHit(gameState.getTick())) {
+                if (pic.wasPerfectHit(gameState.getTick())) {
                     overlay(perfectSound, Constants.SOUND_PERFECT_VOLUME, 1f, pan);
                 }
             }

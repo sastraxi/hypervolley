@@ -15,8 +15,8 @@ public class StraightBallPath implements BallPath {
 
     public static final int MAX_BOUNCES = 2; // FIXME if there are more bounces, the ball (path) will ignore them!
 
-    private BallFrame origin;
-    private NavigableSet<BallFrame> bounces = new TreeSet<>();
+    private StraightBallFrame origin;
+    private NavigableSet<StraightBallFrame> bounces = new TreeSet<>();
     private float deathTime;
     private float G;
 
@@ -90,18 +90,19 @@ public class StraightBallPath implements BallPath {
     {
         float _t, dt;
         this.G = G;
-        this.origin = new BallFrame(position, velocity, velocity, timeBase, 0);
+        this.origin = new StraightBallFrame(position, velocity, velocity, timeBase, 0);
 
         // determine critical points of our path
         // http://hyperphysics.phy-astr.gsu.edu/hbase/traj.html
 
         // collide with either side wall or the floor, until we leave the court.
         int numFloorBounces = 0, numBounces = 1;
-        BallFrame lastFrame = this.origin;
+        StraightBallFrame lastFrame = this.origin;
         while (numBounces <= MAX_BOUNCES && (bounces.isEmpty() || Math.abs(bounces.last().position.x) < Constants.LEVEL_HALF_WIDTH))
         {
             // try colliding with the floor.
-            BallFrame floorBounce = new BallFrame();
+            // FIXME ctor usage in game loop
+            StraightBallFrame floorBounce = new StraightBallFrame();
             _t = lastFrame.velocity.z / G;
             // N.B. z - ball_radius below because we need to account for the ball's size
             // we are testing the center point of the ball with a plane pushed up
@@ -114,7 +115,7 @@ public class StraightBallPath implements BallPath {
             floorBounce.planeNormal.set(Vector3.Z);
 
             // try colliding with the wall we're headed towards.
-            BallFrame wallBounce = null;
+            StraightBallFrame wallBounce = null;
             if (Math.abs(lastFrame.velocity.y) > Constants.EPSILON) {
                 wallBounce = _bounce_no_z(
                         lastFrame,
@@ -169,9 +170,10 @@ public class StraightBallPath implements BallPath {
      *                        after the ball once again reaches its apex.
      * @return
      */
-    private BallFrame _bounce_no_z(BallFrame start, Plane plane, int numFloorBounces)
+    private StraightBallFrame _bounce_no_z(StraightBallFrame start, Plane plane, int numFloorBounces)
     {
-        BallFrame bounceFrame = new BallFrame();
+        // FIXME ctor usage in game loop
+        StraightBallFrame bounceFrame = new StraightBallFrame();
         bounceFrame.planeNormal.set(plane.normal);
 
         // figure out what side of the plane we're coming from and create a plane that
@@ -215,7 +217,7 @@ public class StraightBallPath implements BallPath {
     public int getNumBounces(float time)
     {
         int i = 0;
-        for (BallFrame f: bounces)
+        for (StraightBallFrame f: bounces)
         {
             if (f.time > time) return i;
             i += 1;
@@ -231,8 +233,8 @@ public class StraightBallPath implements BallPath {
     @Override
     public void getPosition(float t, Vector3 out)
     {
-        BallFrame chosen = origin;
-        for (BallFrame f: bounces) {
+        StraightBallFrame chosen = origin;
+        for (StraightBallFrame f: bounces) {
             if (f.time > t) break;
             chosen = f;
         }
@@ -246,8 +248,8 @@ public class StraightBallPath implements BallPath {
     @Override
     public void getVelocity(float t, Vector3 out)
     {
-        BallFrame chosen = origin;
-        for (BallFrame f: bounces) {
+        StraightBallFrame chosen = origin;
+        for (StraightBallFrame f: bounces) {
             if (f.time > t) break;
             chosen = f;
         }
@@ -260,8 +262,8 @@ public class StraightBallPath implements BallPath {
     @Override
     public void getAngularVelocity(float t, Vector3 out)
     {
-        BallFrame chosen = origin;
-        for (BallFrame f: bounces) {
+        StraightBallFrame chosen = origin;
+        for (StraightBallFrame f: bounces) {
             if (f.time > t) break;
             chosen = f;
         }
@@ -275,7 +277,7 @@ public class StraightBallPath implements BallPath {
     @Override
     public float getNextBounce(float t, Vector3 optionalOut)
     {
-        for (BallFrame f: bounces) {
+        for (StraightBallFrame f: bounces) {
             if (f.time > t) {
                 optionalOut.set(f.position);
                 return f.time;
@@ -293,7 +295,7 @@ public class StraightBallPath implements BallPath {
     }
 
     @Override
-    public Iterable<BallFrame> getFrames() {
+    public Iterable<StraightBallFrame> getFrames() {
         return bounces;
     }
 }

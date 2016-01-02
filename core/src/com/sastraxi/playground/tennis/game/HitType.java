@@ -8,18 +8,6 @@ import com.sastraxi.playground.tennis.Constants;
  */
 public enum HitType {
 
-    NORMAL(Constants.BALL_COLOUR),
-    POWER(Constants.BALL_COLOUR_POWER),
-    SLICE(Constants.BALL_COLOUR_SLICE);
+    NORMAL, SLICE, CURVE;
 
-    private final Color colour;
-
-    HitType(Color colour) {
-        this.colour = colour;
-    }
-
-
-    public Color getColour() {
-        return colour;
-    }
 }

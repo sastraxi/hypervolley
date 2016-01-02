@@ -16,6 +16,6 @@ public interface BallPath {
     float getNextBounce(float time, Vector3 optionalOut);
     float getGravity();
 
-    Iterable<BallFrame> getFrames();
+    Iterable<? extends BallFrame> getFrames();
 
 }
