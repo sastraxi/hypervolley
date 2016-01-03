@@ -282,11 +282,12 @@ public class PlayerMovementSystem extends IteratingSystem {
      * Try to hit the ball sometime in the future.
      * Returns true if we did a hit, and sets up the
      *
+     * @param playerDisplacement how far has the player moved at this point? (i.e. account for dash speed-up/slow-down)
      * @param frame the lower-frame to calculate
      *
      * @return
      */
-    protected boolean predictBallCollision(GameStateComponent gameState, Entity playerEntity, BallPath ball, int frame)
+    protected boolean predictBallCollision(GameStateComponent gameState, Entity playerEntity, BallPath ball, float playerDisplacement, int frame)
     {
         float timeBase = gameState.getPreciseTime();
 
@@ -338,11 +339,9 @@ public class PlayerMovementSystem extends IteratingSystem {
         else
         {
             // player's hit volume is extruded along movement direction;
-            // pt is that "blocking wall" line segment once the player has moved in this frame (thus frame+1)
-            _pt_a.set(player.velocity.x, player.velocity.y).scl(timeElapsed)
-                 .add(_p0_a);
-            _pt_b.set(player.velocity.x, player.velocity.y).scl(timeElapsed)
-                 .add(_p0_b);
+            // pt is that "blocking wall" line segment once the player has moved in this frame
+            _pt_a.set(_direction).scl(playerDisplacement).add(_p0_a);
+            _pt_b.set(_direction).scl(playerDisplacement).add(_p0_b);
 
             // debug view
             if (strikeZone != null) {
@@ -367,7 +366,9 @@ public class PlayerMovementSystem extends IteratingSystem {
             hitDistance = Math.max(_r.sub(_p0_a).dot(_direction), 0f);
             float candidateSpeed = hitDistance / timeElapsed;
 
-            chosenSpeed = MathUtils.clamp(candidateSpeed, 0f, currentSpeed);
+            // TODO going a little slower may put us closer to the ball, consider it
+
+            chosenSpeed = MathUtils.clamp(candidateSpeed, 0f, playerDisplacement / timeElapsed);
             System.out.println("-> hitting at " + chosenSpeed + " (instead of " + candidateSpeed + ")");
         }
 
@@ -386,8 +387,7 @@ public class PlayerMovementSystem extends IteratingSystem {
 
         // is the ball to the left or the right of the player on the hit frame?
         // _t = player position, _s = ball position w.r.t. player, _r = perpendicular vector to player heading
-        _t.set(player.velocity.x, player.velocity.y).scl(timeElapsed)
-          .add(player.position.x, player.position.y);
+        _t.set(_direction).scl(playerDisplacement).add(player.position.x, player.position.y);
         _r.set(-_direction.y, _direction.x);
         boolean isLeft = _s.set(_ball.x, _ball.y).sub(_t).dot(_r) > 0f;
 
@@ -479,6 +479,11 @@ public class PlayerMovementSystem extends IteratingSystem {
             // if we're recovering from a hit, gradually cede control back to the user
             if (pic.state == HIT_ENDING)
             {
+                if (pic.dashState == DashState.DASHING) {
+                    pic.dashState = DashState.DASH_ENDING;
+                    pic.timeSinceDashStateChange = 0f;
+                }
+
                 float factor = 1f - (pic.tHit / pic.tHitActual);
                 _velocity.set(pic.originalTrajectory)
                          .scl(pic.originalSpeed);
@@ -494,6 +499,10 @@ public class PlayerMovementSystem extends IteratingSystem {
                 pic.tHit += deltaTime;
                 if (pic.tHit >= pic.tHitActual) {
                     pic.state = NONE;
+                    if (pic.dashState != DashState.NONE) {
+                        pic.dashState = DashState.NONE;
+                        pic.timeSinceDashStateChange = 0f;
+                    }
                 }
             }
         }
@@ -515,8 +524,67 @@ public class PlayerMovementSystem extends IteratingSystem {
                 if (pic.state != HITTING) {
 
                     // continually look in the future for opportunities to hit the ball.
-                    for (int i = 0; i < Constants.PLAYER_LOOKAHEAD_FRAMES; ++i) {
-                        boolean hit = predictBallCollision(gameState, entity, ballComponent.path, i);
+                    // we'll independently simulate dash logic to predict player's future positions
+                    float displacement = 0f;
+                    float dashMeter = pic.dashMeter;
+                    float timeSinceDashStateChange = pic.timeSinceDashStateChange;
+                    DashState dashState = pic.dashState;
+                    DashState initialDashState = dashState;
+                    for (int i = 0; i < Constants.PLAYER_LOOKAHEAD_FRAMES; ++i)
+                    {
+                        // dash meter
+                        if (dashState == DashState.DASHING) {
+                            dashMeter -= Constants.DASH_METER_DEPLETION_RATE * deltaTime;
+                            if (dashMeter <= 0f) {
+                                dashMeter = 0f;
+                                dashState = DashState.DASH_ENDING;
+                            }
+                        }
+
+                        // determine speed based on future dash state
+                        // TODO factor this out so it can be shared with above, keep a spare CharacterComponent?
+                        // TODO maybe we want to
+                        float speed = movement.velocity.len();
+                        if (dashState == DashState.DASH_ENDING)
+                        {
+                            // decelerate dash
+                            float pct = (timeSinceDashStateChange / Constants.DASH_DECEL);
+                            if (pct > 1.0) {
+
+                                // don't allow transition from dash -> dash end -> regular motion
+                                // essentially we're saying we don't want to predict too far in the future
+                                // when we're dashing; this lets us have "crisper" hits right after dashes
+                                // because the dash velocity won't be smoothed out over the regular running frames.
+                                // without this, sometimes it looks like the dash is too long...
+                                if (initialDashState == DashState.DASHING) {
+                                    break;
+                                }
+
+                                pct = 1.0f;
+                                dashState = DashState.NONE;
+                                timeSinceDashStateChange = 0f;
+                            }
+                            speed = MathUtils.lerp(Constants.DASH_SPEED, Constants.PLAYER_SPEED, pct);
+                        }
+                        else if (pic.dashState == DashState.DASHING)
+                        {
+                            float pct = (timeSinceDashStateChange / Constants.DASH_ACCEL);
+                            if (pct > 1.0) {
+                                pct = 1.0f;
+                            }
+                            speed = MathUtils.lerp(Constants.PLAYER_SPEED, Constants.DASH_SPEED, pct);
+                        }
+                        else if (pic.dashState == DashState.NONE)
+                        {
+                            speed = Math.min(speed, Constants.PLAYER_SPEED);
+                        }
+                        timeSinceDashStateChange += deltaTime;
+
+                        // determine displacement due to this frame
+                        displacement += speed * deltaTime;
+
+                        // ball prediction
+                        boolean hit = predictBallCollision(gameState, entity, ballComponent.path, displacement, i);
                         if (hit) {
                             float t = gameState.getPreciseTime() + i * Constants.FRAME_TIME_SEC;
                             ballComponent.path.getPosition(t, _ball);
@@ -529,6 +597,10 @@ public class PlayerMovementSystem extends IteratingSystem {
                                 break;
                             }
                         }
+                    }
+
+                    if (pic.state == HITTING) {
+                        System.out.println("hit speed: " + movement.velocity.len());
                     }
 
                 } else {
