@@ -149,7 +149,7 @@ public class Constants {
     public static final Vector3 CAMERA_NEUTRAL_GAZE = new Vector3(0f, 0f, 50f);
     public static final float CAMERA_CLIP_NEAR = 1200f;
     public static final float CAMERA_CLIP_FAR = 2000f;
-    public static final float CAMERA_NEUTRAL_FOV = 23.7f;
+    public static final float CAMERA_NEUTRAL_FOV = 20.2f;
     public static final float CAMERA_INV_FRAME_FILL = 4f;
     public static final float CAMERA_POSITION_INTENSITY_INV = 0.8f;
     public static final float CAMERA_HORIZONTAL_MOVEMENT_SCALE = 2f;

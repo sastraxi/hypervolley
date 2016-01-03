@@ -5,16 +5,21 @@ import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
+import com.badlogic.ashley.utils.ImmutableArray;
 import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Plane;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.utils.Pool;
+import com.badlogic.gdx.utils.ReflectionPool;
 import com.sastraxi.playground.tennis.Constants;
+import com.sastraxi.playground.tennis.components.BallComponent;
 import com.sastraxi.playground.tennis.components.CameraComponent;
 import com.sastraxi.playground.tennis.components.MovementComponent;
+import com.sastraxi.playground.tennis.components.character.CharacterComponent;
 import com.sastraxi.playground.tennis.components.global.GameStateComponent;
 
-import java.util.ArrayList;
+import java.util.*;
 
 /**
  * Created by sastr on 2015-09-21.
@@ -24,11 +29,13 @@ public class CameraMovementSystem extends IteratingSystem {
     private static final int PRIORITY = 5; // after all movement systems
 
     private static final Family GAME_STATE_FAMILY = Family.one(GameStateComponent.class).get();
-    private ComponentMapper<GameStateComponent> gscm = ComponentMapper.getFor(GameStateComponent.class);
+    private static ComponentMapper<GameStateComponent> gscm = ComponentMapper.getFor(GameStateComponent.class);
+    private static ComponentMapper<CharacterComponent> picm = ComponentMapper.getFor(CharacterComponent.class);
+    private static ComponentMapper<MovementComponent> mcm = ComponentMapper.getFor(MovementComponent.class);
+    private static ComponentMapper<CameraComponent> ccm = ComponentMapper.getFor(CameraComponent.class);
 
-    private ComponentMapper<MovementComponent> mcm = ComponentMapper.getFor(MovementComponent.class);
-    private ComponentMapper<CameraComponent> ccm = ComponentMapper.getFor(CameraComponent.class);
-    private Engine engine = null;
+    private Engine engine;
+    private ImmutableArray<Entity> playerEntities;
 
     public CameraMovementSystem() {
         super(Family.all(CameraComponent.class).get(), PRIORITY);
@@ -38,6 +45,7 @@ public class CameraMovementSystem extends IteratingSystem {
     {
         super.addedToEngine(engine);
         this.engine = engine;
+        this.playerEntities = engine.getEntitiesFor(Family.one(CharacterComponent.class).get());
     }
 
     private Vector3 _camera_target = new Vector3(),
@@ -45,6 +53,7 @@ public class CameraMovementSystem extends IteratingSystem {
                     _basis_u = new Vector3(),
                     _basis_v = new Vector3(),
                     _anticipated_pos = new Vector3();
+
     private ArrayList<Vector3> markers = new ArrayList<>();
 
     public static void closestPointOnPlane(Plane plane, Vector3 point, Vector3 out)
@@ -66,6 +75,7 @@ public class CameraMovementSystem extends IteratingSystem {
         CameraComponent camera = ccm.get(entity);
 
         // expand our list of entities, if need be
+        // FIXME ctor usage in game loop
         while (markers.size() < camera.entities.size()) {
             markers.add(new Vector3());
         }
@@ -86,8 +96,8 @@ public class CameraMovementSystem extends IteratingSystem {
         // u is |proj.| onto camera right, v is |proj.| onto camera up
         float _u_max = Float.NEGATIVE_INFINITY, _v_max = Float.NEGATIVE_INFINITY, _u_min = Float.POSITIVE_INFINITY, _v_min = Float.POSITIVE_INFINITY;
         _basis_u.set(Constants.UP_VECTOR)
-                .crs(camera.eyePlane.normal);
-        _basis_v.set(_basis_u).crs(camera.eyePlane.normal);
+                .crs(camera.eyePlane.normal).nor();
+        _basis_v.set(_basis_u).crs(camera.eyePlane.normal).nor();
         for (i = 0; i < num_markers; ++i) {
             _pt_norm.set(markers.get(i));
             float _u = _pt_norm.dot(_basis_u);
@@ -135,8 +145,92 @@ public class CameraMovementSystem extends IteratingSystem {
         camera.camera.position.lerp(camera.neutralEye, Constants.CAMERA_POSITION_INTENSITY_INV);
         camera.camera.fieldOfView = MathUtils.lerp(camera.neutralVFOV, camera.camera.fieldOfView, Constants.CAMERA_FOV_INTENSITY);
 
+        // add player hit impulses
+        for (Entity playerEntity: playerEntities) {
+            CharacterComponent player = picm.get(playerEntity);
+            if (player.justHitOrServed()) {
+                impulse(player.wasPerfectHit(gameState.getTick()) ? 0.08f : 0.02f);
+            }
+        }
+
+        // calculate total screen shake and add to camera position
+        float shakeMagnitude = tickAndGetImpulse();
+        if (shakeMagnitude > Constants.EPSILON)
+        {
+            shakeMagnitude *= (0.5f + 0.5f * (float) Math.random());
+            System.out.println(shakeMagnitude + " RICHTHER");
+            float theta = (float) Math.random() * MathUtils.PI * 2.0f;
+            camera.camera.position
+                .mulAdd(_basis_u, (float) Math.cos(theta) * shakeMagnitude)
+                .mulAdd(_basis_v, (float) Math.sin(theta) * shakeMagnitude);
+        }
+
         // goldshire footman time
         camera.camera.update();
     }
 
+    ////////////////////////////////////////////////////
+
+    Pool<Impulse> impulsePool = new ReflectionPool<>(Impulse.class, 10);
+
+    /**
+     * Represents a screen shake that "plays" for a certain number of frames.
+     * Interact with the concept below (the two protected impulse(...) methods)
+     *
+     * Impulses decrease in magnitude linearly over a number of frames.
+     */
+    public static class Impulse implements Pool.Poolable
+    {
+        final int IMPULSE_FRAMES = 20;
+        public int frames;
+        public float mag;
+
+        public Impulse() {
+            this.mag = 0f;
+            this.frames = IMPULSE_FRAMES;
+        }
+
+        public Impulse(float mag) {
+            this.mag = mag;
+            this.frames = IMPULSE_FRAMES;
+        }
+
+        @Override
+        public void reset() {
+            this.mag = 0f;
+            this.frames = IMPULSE_FRAMES;
+        }
+
+        public void add(Impulse other) {
+            this.mag += other.mag * Math.pow(other.frames / (float) IMPULSE_FRAMES, 0.5f);
+        }
+    }
+
+    List<Impulse> impulses = new ArrayList<>();
+
+    protected void impulse(float mag) {
+        Impulse impulse = impulsePool.obtain();
+        impulse.mag = mag;
+        impulses.add(impulse);
+    }
+
+    private float tickAndGetImpulse()
+    {
+        Impulse total = impulsePool.obtain();
+
+        Iterator<Impulse> it = impulses.iterator();
+        while (it.hasNext()) {
+            Impulse impulse = it.next();
+            total.add(impulse);
+            impulse.frames--;
+            if (impulse.frames == 0) {
+                it.remove();
+                impulsePool.free(impulse);
+            }
+        }
+
+        float mag = total.mag;
+        impulsePool.free(total);
+        return mag;
+    }
 }
