@@ -415,19 +415,11 @@ public class PlayerMovementSystem extends IteratingSystem {
         float _rot = (float) Math.atan2(_bearing.y, _bearing.x);
 
         // dash state changes; only allow when resting or we've done our animations
-        if (pic.inputFrame.dash && !pic.lastInputFrame.dash
-                && (pic.state == NONE
-                || pic.timeSinceStateChange > Constants.DASH_ACCEL)) // FIXME when accel > decel there is dead time after ending dash when we cannot dash again
+        if (pic.inputFrame.dash && !pic.lastInputFrame.dash && pic.state == NONE && pic.dashMeter >= Constants.DASH_MIN_METER)
         {
-            if (pic.state == DASHING) {
-                // cancel dash
-                pic.state = DASH_ENDING;
-                pic.timeSinceStateChange = 0f;
-            } else if (pic.state == NONE && pic.dashMeter >= Constants.DASH_MIN_METER) {
-                // begin dash
-                pic.state = DASHING;
-                pic.timeSinceStateChange = 0f;
-            }
+            // begin dash
+            pic.state = DASHING;
+            pic.timeSinceStateChange = 0f;
         }
 
         // dash meter
