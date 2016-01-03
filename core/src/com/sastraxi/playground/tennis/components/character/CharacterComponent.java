@@ -17,9 +17,12 @@ import com.sastraxi.playground.tennis.game.*;
  */
 public class CharacterComponent extends Component {
 
+    public enum DashState {
+        NONE, DASHING, DASH_ENDING
+    }
+
     public enum PlayerState {
         NONE,
-        DASHING, DASH_ENDING,
         HITTING, HIT_ENDING,
         SERVE_SETUP /* moving vertically */,
         SERVING /* serve equiv. of HITTING */
@@ -55,7 +58,9 @@ public class CharacterComponent extends Component {
     public final PlayerType type;
     public PlayerState state = PlayerState.NONE;
     public PlayerState lastState = PlayerState.NONE;
-    public float timeSinceStateChange = 0f;
+    public DashState dashState = DashState.NONE;
+    public DashState lastDashState = DashState.NONE;
+    public float timeSinceDashStateChange = 0f;
     public float dashMeter = Constants.DASH_MAX_METER;
     public boolean isServingPlayer;
 
@@ -69,7 +74,6 @@ public class CharacterComponent extends Component {
     {
         return tick == 0 || (lastState != state && lastState != PlayerState.SERVING && state == PlayerState.SERVE_SETUP);
     }
-
 
     public boolean wasPerfectHit(long tick)
     {

@@ -14,6 +14,7 @@ import com.sastraxi.playground.tennis.components.AnimationComponent;
 import com.sastraxi.playground.tennis.components.BallComponent;
 import com.sastraxi.playground.tennis.components.MovementComponent;
 import com.sastraxi.playground.tennis.components.character.CharacterComponent;
+import com.sastraxi.playground.tennis.components.character.CharacterComponent.DashState;
 import com.sastraxi.playground.tennis.components.character.StrikeZoneDebugComponent;
 import com.sastraxi.playground.tennis.components.global.CameraManagementComponent;
 import com.sastraxi.playground.tennis.components.global.GameStateComponent;
@@ -85,7 +86,8 @@ public class PlayerMovementSystem extends IteratingSystem {
 
         CharacterComponent pic = picm.get(entity);
         pic.lastState = pic.state;
-        pic.timeSinceStateChange += deltaTime;
+        pic.lastDashState = pic.dashState;
+        pic.timeSinceDashStateChange += deltaTime;
 
         _left_stick.set(pic.inputFrame.movement);
 
@@ -414,34 +416,36 @@ public class PlayerMovementSystem extends IteratingSystem {
         movement.orientation.transform(_bearing);
         float _rot = (float) Math.atan2(_bearing.y, _bearing.x);
 
-        // dash state changes; only allow when resting or we've done our animations
-        if (pic.inputFrame.dash && !pic.lastInputFrame.dash && pic.state == NONE && pic.dashMeter >= Constants.DASH_MIN_METER)
+        // begin dash
+        if (pic.inputFrame.dash && !pic.lastInputFrame.dash &&
+            pic.state == NONE && pic.dashState == DashState.NONE &&
+            pic.dashMeter >= Constants.DASH_MIN_METER)
         {
-            // begin dash
-            pic.state = DASHING;
-            pic.timeSinceStateChange = 0f;
+            pic.dashState = DashState.DASHING;
+            pic.timeSinceDashStateChange = 0f;
         }
 
         // dash meter
-        if (pic.state == DASHING) {
+        if (pic.dashState == DashState.DASHING) {
             pic.dashMeter -= Constants.DASH_METER_DEPLETION_RATE * deltaTime;
             if (pic.dashMeter <= 0f) {
                 pic.dashMeter = 0f;
-                pic.state = DASH_ENDING;
-                pic.timeSinceStateChange = 0f;
+                pic.dashState = DashState.DASH_ENDING;
+                pic.timeSinceDashStateChange = 0f;
             }
-        } else if (pic.state == NONE) {
+        } else if (pic.dashState == DashState.NONE) {
             pic.dashMeter = Math.min(pic.dashMeter + deltaTime, Constants.DASH_MAX_METER);
         }
 
         // decide on our velocity
-        if (pic.state == DASH_ENDING)
+        if (pic.dashState == DashState.DASH_ENDING)
         {
             // decelerate dash
-            float pct = (pic.timeSinceStateChange / Constants.DASH_DECEL);
+            float pct = (pic.timeSinceDashStateChange / Constants.DASH_DECEL);
             if (pct > 1.0) {
                 pct = 1.0f;
-                pic.state = NONE;
+                pic.dashState = DashState.NONE;
+                pic.timeSinceDashStateChange = 0f;
             }
             float speed = MathUtils.lerp(Constants.DASH_SPEED, Constants.PLAYER_SPEED, pct);
             movement.velocity.set(
@@ -449,17 +453,16 @@ public class PlayerMovementSystem extends IteratingSystem {
                     MathUtils.sin(_rot) * speed,
                     0f);
         }
-        else if (pic.state == DASHING)
+        else if (pic.dashState == DashState.DASHING)
         {
             // if we are just about to dash, allow applying the current movement first.
-            if (pic.lastState != DASHING) {
+            if (pic.lastDashState != DashState.DASHING) {
                 _rot = stickToMovement(_rot, pic, movement, _left_stick);
             }
 
             // accelerate dash
-            float pct = (pic.timeSinceStateChange / Constants.DASH_ACCEL);
+            float pct = (pic.timeSinceDashStateChange / Constants.DASH_ACCEL);
             if (pct > 1.0) {
-                // TODO we should have a *little bit* of control over direction, maybe by some factor
                 pct = 1.0f;
             }
             float speed = MathUtils.lerp(Constants.PLAYER_SPEED, Constants.DASH_SPEED, pct);
@@ -611,10 +614,10 @@ public class PlayerMovementSystem extends IteratingSystem {
         // the boundary is different if we are in a volley or waiting for the opponent to serve
         Rectangle bounds = gameState.isInServe ? pic.receiveBounds : pic.bounds;
         if (!bounds.contains(movement.position.x, movement.position.y)) {
-            if (pic.state == DASHING) {
+            if (pic.dashState == DashState.DASHING) {
                 // cancel dash
-                pic.state = DASH_ENDING;
-                pic.timeSinceStateChange = 0f;
+                pic.dashState = DashState.DASH_ENDING;
+                pic.timeSinceDashStateChange = 0f;
             }
             movement.position.x = Math.max(movement.position.x, bounds.x);
             movement.position.x = Math.min(movement.position.x, bounds.x + bounds.width);

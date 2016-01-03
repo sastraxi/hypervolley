@@ -64,7 +64,7 @@ public class ControllerFeedbackSystem extends IteratingSystem {
             return;
         }
 
-        if (pic.state == CharacterComponent.PlayerState.DASHING)         impulse(eid, 0.2f);
+        if (pic.dashState == CharacterComponent.DashState.DASHING)       impulse(eid, 0.2f);
         if (pic.state == CharacterComponent.PlayerState.HITTING)         combinedVibration += 0.08f;
         if (pic.justHitOrServed()) {  // state transition out
             if (pic.wasPerfectHit(gameState.getTick())) {
