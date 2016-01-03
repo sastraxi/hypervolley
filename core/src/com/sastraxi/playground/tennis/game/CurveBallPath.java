@@ -1,7 +1,9 @@
 package com.sastraxi.playground.tennis.game;
 
+import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
+import com.sastraxi.playground.found.MiscMath;
 import com.sastraxi.playground.tennis.Constants;
 
 import java.util.NavigableSet;
@@ -17,7 +19,8 @@ public class CurveBallPath implements BallPath {
     private final float G;
     private final float speed, radsDelta;
 
-    private static Vector2 _vec = new Vector2();
+    private static Vector2 _vec = new Vector2(),
+                           _isct = new Vector2();
 
     /**
      * Creates a path based on hitting two targets (in xy) from a certain position
@@ -36,17 +39,54 @@ public class CurveBallPath implements BallPath {
 
         // determine angles at start and bounce
         _vec.set(bounceTarget).sub(position.x, position.y);
+        float dx = _vec.x;
         float radsDirect = (float) Math.atan2(_vec.y, _vec.x);
         float dir = curveRight ? -1f: 1f;
         float radsBounce = radsDirect + dir * Constants.BALL_CURVE_BOUNCE_RADS;
-        float radsInitial = radsDirect + dir * Constants.BALL_CURVE_INITIAL_RADS;
 
-        // we know when the ball will hit the ground, and now we also know the parameters of the circular arc
-        // determine arc distance to bounce target, and thus XY speed required to hit it at t_end (== t_bounce)
+        // we know when the ball will hit the ground, and now we also have a fully-specified circular arc
+        // that is, we have 2 points (position.xy, bounceTarget) and a tangent (at bounceTarget)
+        // determine initial tangent and the XY speed required to hit bounceTarget at t_end (== t_bounce)
+        float m = (float) -Math.cos(radsBounce) / (float) Math.sin(radsBounce); // y = mx + c, line through bounceTarget and circle center
+        float c = bounceTarget.y - m * bounceTarget.x;
+        float x_c = bounceTarget.x * bounceTarget.x + bounceTarget.y * bounceTarget.y - 2f * bounceTarget.y * c
+                  - position.x * position.x - position.y * position.y + 2f * position.y * c;
+        x_c /= 2f * bounceTarget.x + 2f * bounceTarget.y * m - 2f * position.x - 2f * position.y * m;
+        float y_c = m * x_c + c; // (x_c, y_c) is the centre of the circle
+        float r = bounceTarget.dst(x_c, y_c);
+        float theta = (float) Math.atan2(position.y - y_c, position.x - x_c);
+        float radsInitial = theta + dir * (float) Math.PI * 0.5f;
         float radsDelta = (radsBounce - radsInitial) / t_end;
         float speed = (radsDelta * (bounceTarget.x - position.x)) / (float) (Math.sin(radsDelta * t_end + radsInitial) - Math.sin(radsInitial));
 
-        return new CurveBallPath(position, radsInitial, radsDelta, speed, G * t_apex, G, timeBase);
+        // determine when the ball will exit the level bounds (x axis)
+        float deathTime = Float.MAX_VALUE;
+        float x_sought = dx > 0 ? Constants.LEVEL_HALF_WIDTH : -Constants.LEVEL_HALF_WIDTH;
+        if (MiscMath.intersectCircleVertical(x_c, y_c, r * r, x_sought, _isct))
+        {
+            // System.out.println("Y isect @ x=" + x_sought + ", y=" + _isct.x + "±" + _isct.y);
+            float theta1 = (float) Math.atan2(_isct.x + _isct.y - y_c, x_sought - x_c);
+            float theta2 = (float) Math.atan2(_isct.x - _isct.y - y_c, x_sought - x_c);
+            float t1 = MiscMath.angularDistance(theta, theta1, !curveRight) * r / speed;
+            float t2 = MiscMath.angularDistance(theta, theta2, !curveRight) * r / speed;
+            // System.out.println(t1 + "/" + t2);
+            deathTime = Math.min(deathTime, Math.min(t1, t2));
+        }
+
+        // determine when the ball will exit the level bounds (y axis)
+        float y_sought = y_c > 0 ? Constants.LEVEL_HALF_DEPTH : -Constants.LEVEL_HALF_DEPTH;
+        if (MiscMath.intersectCircleHorizontal(x_c, y_c, r * r, y_sought, _isct))
+        {
+            // System.out.println("X isect @ x=" + _isct.x + "±" + _isct.y + ", y=" + y_sought);
+            float theta1 = (float) Math.atan2(y_sought - y_c, _isct.x + _isct.y - x_c);
+            float theta2 = (float) Math.atan2(y_sought - y_c, _isct.x - _isct.y - x_c);
+            float t1 = MiscMath.angularDistance(theta, theta1, !curveRight) * r / speed;
+            float t2 = MiscMath.angularDistance(theta, theta2, !curveRight) * r / speed;
+            // System.out.println(t1 + "/" + t2);
+            deathTime = Math.min(deathTime, Math.min(t1, t2));
+        }
+
+        return new CurveBallPath(position, radsInitial, radsDelta, speed, G * t_apex, G, timeBase, deathTime);
     }
 
     /**
@@ -58,8 +98,9 @@ public class CurveBallPath implements BallPath {
      * @param zDelta change of z w.r.t. time
      * @param G
      * @param timeBase
+     * @param maxLife maximum lifetime of this ball (for pre-calculated death time based on level geometry).
      */
-    public CurveBallPath(Vector3 position, float rads, float radsDelta, float speed, float zDelta, float G, float timeBase)
+    public CurveBallPath(Vector3 position, float rads, float radsDelta, float speed, float zDelta, float G, float timeBase, float maxLife)
     {
         float _t, dt;
         this.G = G;
@@ -108,11 +149,10 @@ public class CurveBallPath implements BallPath {
         // drop last bounce (post-death) and figure out death time (x movement is constant)
         if (!bounces.isEmpty()) {
             // death time is, by default, when the "max bounce" was reached
-            deathTime = bounces.pollLast().time;
+            this.deathTime = bounces.pollLast().time;
         }
 
-        // death time is simply going to be the 2nd bounce for now
-        // TODO analytically determine death based on leaving court in x/y
+        this.deathTime = Math.min(this.deathTime, maxLife + timeBase);
     }
 
     @Override

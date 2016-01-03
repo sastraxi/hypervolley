@@ -75,6 +75,19 @@ public class MiscMath {
     }
 
     /**
+     * Determines the angle from a -> b in the direction chosen.
+     * @param a radians
+     * @param b radians
+     * @param direction positive = ccw
+     * @return
+     */
+    public static float angularDistance(float a, float b, boolean direction)
+    {
+        float rv = direction ? b - a : a - b;
+        return (rv < 0 ? MathUtils.PI * 2f - rv : rv);
+    }
+
+    /**
      * Returns the angular distance when increasing (CCW) around the circle.
      */
     public static float incDistDeg(float from, float to)
@@ -171,4 +184,43 @@ public class MiscMath {
         out.set(A, B, C);
     }
 
+    /**
+     * Determine the intersection of a circle on the 2D plane and a vertical line.
+     *
+     * @param x_c x-coordinate of circle centre
+     * @param y_c y-coordinate of circle centre
+     * @param r2 radius of circle squared
+     * @param x_s equation of the vertical line
+     * @param out (write-only) solutions are stored in out as y = out.x +/- out.y
+     * @return whether or not there was an intersection (# can be determined by out.y > EPSILON)
+     */
+    public static boolean intersectCircleVertical(float x_c, float y_c, float r2, float x_s, Vector2 out)
+    {
+        float A = 1f;
+        float B = -2f * y_c;
+        float C = (x_s - x_c) * (x_s - x_c) + y_c * y_c - r2;
+
+        // simple quadratic equation solver
+        float discriminant = B * B - 4 * A * C;
+        if (discriminant < 0f) return false;
+
+        out.x = -B / (2f * A);
+        out.y = (float) Math.sqrt(discriminant) / (2f * A);
+        return true;
+    }
+
+    /**
+     * Determine the intersection of a circle on the 2D plane and a vertical line.
+     *
+     * @param x_c x-coordinate of circle centre
+     * @param y_c y-coordinate of circle centre
+     * @param r2 radius of circle squared
+     * @param y_s equation of the horizontal line
+     * @param out (write-only) solutions are stored in out as y = out.x +/- out.y
+     * @return whether or not there was an intersection (# can be determined by out.y > EPSILON)
+     */
+    public static boolean intersectCircleHorizontal(float x_c, float y_c, float r2, float y_s, Vector2 out)
+    {
+        return intersectCircleVertical(y_c, x_c, r2, y_s, out);
+    }
 }

@@ -200,7 +200,6 @@ public class Constants {
     public static final float MENU_DIAGRAM_HALF_WIDTH = 400f; // pixels
     public static final float MENU_DIAGRAM_HALF_HEIGHT = MENU_DIAGRAM_HALF_WIDTH / 1.77f; // guess
 
-    public static final float BALL_CURVE_BOUNCE_RADS = (float) (Math.PI * 0.15);
-    public static final float BALL_CURVE_INITIAL_RADS = (float) (Math.PI * -0.05);
+    public static final float BALL_CURVE_BOUNCE_RADS = (float) (Math.PI * 0.05);
 
 }
