@@ -164,7 +164,7 @@ public class Constants {
     public static final int PERFECT_HIT_FRAMES = 3;
 
     public static final float SOUND_HIT_MAX_VOLUME = 0.9f;
-    public static final float SOUND_HIT_MAX_VELOCITY = 400f; // anything >= this is max. volume
+    public static final float SOUND_HIT_MAX_VELOCITY = 600f; // anything >= this is max. volume
     public static final float SOUND_BOUNCE_VOLUME = 0.7f;
     public static final float SOUND_SERVE_VOLUME = 0.65f;
     public static final float SOUND_ACQUIRE_VOLUME = 0.6f;

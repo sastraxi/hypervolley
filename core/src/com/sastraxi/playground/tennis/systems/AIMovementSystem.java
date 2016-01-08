@@ -83,6 +83,7 @@ public class AIMovementSystem  extends IteratingSystem {
         // sensible defaults
         pic.inputFrame.swing = false;
         pic.inputFrame.slice = false;
+        pic.inputFrame.curve = false;
         pic.inputFrame.dash = false;
 
         float back_x = pic.bounds.x < 0 ? pic.bounds.x : pic.bounds.x + pic.bounds.width;
@@ -180,7 +181,7 @@ public class AIMovementSystem  extends IteratingSystem {
 
             // do a perfect shot every time
             if (pic.tHitActual - pic.tHit < ((Constants.PERFECT_HIT_FRAMES - 2) * Constants.FRAME_TIME_SEC)) {
-                pic.inputFrame.swing = true;
+                pic.inputFrame.curve = true;
             }
 
         }

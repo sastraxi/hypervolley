@@ -84,7 +84,8 @@ public class MiscMath {
     public static float angularDistance(float a, float b, boolean direction)
     {
         float rv = direction ? b - a : a - b;
-        return (rv < 0 ? MathUtils.PI * 2f - rv : rv);
+        while (rv < 0) rv += MathUtils.PI * 2f;
+        return rv;
     }
 
     /**

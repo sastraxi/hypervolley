@@ -149,7 +149,7 @@ public class CameraMovementSystem extends IteratingSystem {
         for (Entity playerEntity: playerEntities) {
             CharacterComponent player = picm.get(playerEntity);
             if (player.justHitOrServed()) {
-                impulse(player.wasPerfectHit(gameState.getTick()) ? 0.08f : 0.02f);
+                impulse(player.wasPerfectHit(gameState.getTick()) ? 0.06f : 0.02f);
             }
         }
 
@@ -158,7 +158,6 @@ public class CameraMovementSystem extends IteratingSystem {
         if (shakeMagnitude > Constants.EPSILON)
         {
             shakeMagnitude *= (0.5f + 0.5f * (float) Math.random());
-            System.out.println(shakeMagnitude + " RICHTHER");
             float theta = (float) Math.random() * MathUtils.PI * 2.0f;
             camera.camera.position
                 .mulAdd(_basis_u, (float) Math.cos(theta) * shakeMagnitude)

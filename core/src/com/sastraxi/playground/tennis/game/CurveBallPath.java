@@ -1,6 +1,7 @@
 package com.sastraxi.playground.tennis.game;
 
 import com.badlogic.gdx.math.Intersector;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.sastraxi.playground.found.MiscMath;
@@ -41,8 +42,9 @@ public class CurveBallPath implements BallPath {
         _vec.set(bounceTarget).sub(position.x, position.y);
         float dx = _vec.x;
         float radsDirect = (float) Math.atan2(_vec.y, _vec.x);
-        float dir = curveRight ? -1f: 1f;
+        float dir = curveRight ? -1f : 1f;
         float radsBounce = radsDirect + dir * Constants.BALL_CURVE_BOUNCE_RADS;
+        if (radsBounce < 0f) radsBounce += 2f * MathUtils.PI;
 
         // we know when the ball will hit the ground, and now we also have a fully-specified circular arc
         // that is, we have 2 points (position.xy, bounceTarget) and a tangent (at bounceTarget)
@@ -56,8 +58,12 @@ public class CurveBallPath implements BallPath {
         float r = bounceTarget.dst(x_c, y_c);
         float theta = (float) Math.atan2(position.y - y_c, position.x - x_c);
         float radsInitial = theta + dir * (float) Math.PI * 0.5f;
+        if (radsInitial < 0f) radsInitial += 2f * MathUtils.PI;
         float radsDelta = (radsBounce - radsInitial) / t_end;
         float speed = (radsDelta * (bounceTarget.x - position.x)) / (float) (Math.sin(radsDelta * t_end + radsInitial) - Math.sin(radsInitial));
+        if (speed < 0f) speed = -speed;
+
+        System.out.println("Initial ball pos: (" + position.x + ", " + position.y + "), curveRight=" + curveRight + ", bounceTarget: (" + bounceTarget.x + ", " + bounceTarget.y + "), t_end=" + t_end + ", radsInitial=" + radsInitial + ", radsBounce=" + radsBounce + ", radsDelta=" + radsDelta + ", speed=" + speed + ", circle(" + x_c + ", " + y_c + ", r=" + r + ")");
 
         // determine when the ball will exit the level bounds (x axis)
         float deathTime = Float.MAX_VALUE;

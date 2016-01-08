@@ -217,10 +217,11 @@ public class TennisEntry extends ApplicationAdapter {
             public boolean performAction(Engine engine) {
                 boolean fullscreen = !Gdx.graphics.isFullscreen();
                 Gdx.input.setCursorCatched(fullscreen);
-                Gdx.graphics.setDisplayMode(
-                        fullscreen ? 1920 : 1280,
-                        fullscreen ? 1080 : 720,
-                        fullscreen);
+                if (fullscreen) {
+                    Gdx.graphics.setFullscreenMode(Gdx.graphics.getDisplayMode());
+                } else {
+                    Gdx.graphics.setWindowedMode(1280, 720);
+                }
                 return false;
             }
         });

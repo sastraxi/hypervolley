@@ -1,7 +1,6 @@
 package com.sastraxi.playground.tennis.components.global;
 
 import com.badlogic.ashley.core.Component;
-import com.badlogic.gdx.ai.fsm.StateMachine;
 import com.sastraxi.playground.tennis.Constants;
 
 /**

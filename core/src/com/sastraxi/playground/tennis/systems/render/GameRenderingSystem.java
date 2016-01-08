@@ -3,7 +3,6 @@ package com.sastraxi.playground.tennis.systems.render;
 import com.badlogic.ashley.core.*;
 import com.badlogic.ashley.utils.ImmutableArray;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g3d.Environment;
@@ -32,7 +31,6 @@ import com.sastraxi.playground.tennis.components.global.GameStateComponent;
 import com.sastraxi.playground.tennis.components.global.MenuComponent;
 import com.sastraxi.playground.tennis.components.global.SharedRenderStateComponent;
 import com.sastraxi.playground.tennis.graphics.CustomShaderProvider;
-import com.sastraxi.playground.tennis.graphics.Materials;
 import com.sastraxi.playground.tennis.models.MeshUtils;
 import com.sastraxi.playground.tennis.models.Models;
 import com.sastraxi.playground.tennis.models.RenderUtils;
@@ -189,7 +187,7 @@ public class GameRenderingSystem extends EntitySystem {
         for (Entity entity: ballEntities)
         {
             MovementComponent mc = mcm.get(entity);
-            ballLight.setPosition(mc.position);
+            ballLight.position.set(mc.position);
         }
 
         // render the shadow map

@@ -3,6 +3,7 @@ package com.sastraxi.playground.strategy;
 import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.GL30;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.graphics.g3d.Environment;
 import com.badlogic.gdx.graphics.g3d.Model;
@@ -20,7 +21,6 @@ import com.sastraxi.playground.strategy.collision.Collider;
 import com.sastraxi.playground.shaders.CircularColliderShader;
 import com.sastraxi.playground.strategy.controller.StrategyCameraController;
 import com.sastraxi.playground.strategy.terrain.Grid;
-import org.lwjgl.opengl.GL30;
 
 public class PlaygroundEntry extends ApplicationAdapter implements InputProcessor {
 
@@ -60,7 +60,7 @@ public class PlaygroundEntry extends ApplicationAdapter implements InputProcesso
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
         Gdx.gl.glLineWidth(1.0f);
 
-        Gdx.gl.glEnable(GL30.GL_FRAMEBUFFER_SRGB);
+        Gdx.gl.glEnable(org.lwjgl.opengl.GL30.GL_FRAMEBUFFER_SRGB);
 
         camera = new PerspectiveCamera(67.0f, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         camera.position.set(20f, 20f, 20f);
