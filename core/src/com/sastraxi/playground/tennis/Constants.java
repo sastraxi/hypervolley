@@ -89,11 +89,11 @@ public class Constants {
     public static final Rectangle LEFT_SHOT_BOUNDS = new Rectangle(
             -0.9f * COURT_HALF_WIDTH,
             -COURT_HALF_DEPTH,
-            0.6f * COURT_HALF_WIDTH,
+            0.65f * COURT_HALF_WIDTH,
             COURT_HALF_DEPTH * 2f);
 
     public static final Rectangle RIGHT_SHOT_BOUNDS = new Rectangle(
-            0.3f * COURT_HALF_WIDTH,
+            0.25f * COURT_HALF_WIDTH,
             -COURT_HALF_DEPTH,
             0.6f * COURT_HALF_WIDTH,
             COURT_HALF_DEPTH * 2f);

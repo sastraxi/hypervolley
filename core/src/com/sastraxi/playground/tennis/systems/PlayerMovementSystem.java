@@ -533,36 +533,32 @@ public class PlayerMovementSystem extends IteratingSystem {
                     for (int i = 0; i < Constants.PLAYER_LOOKAHEAD_FRAMES; ++i)
                     {
                         // dash meter
+                        // TODO factor this out so it can be shared with above, keep a spare CharacterComponent?
+                        // FIXME by commenting out all the state changes, we work around the fash dash hit bug.
+                        // but this means that we can't predict when the ball's going to be hit very early
+                        // so we're not looking for the player's hit (e.g. if hitFrames == 3 and we know about the
+                        // hit 1 frame in advance, we might miss the player's hit button/perfect hit).
+                        // maybe this is OK in the context that dash-hitting should be challenging.
                         if (dashState == DashState.DASHING) {
                             dashMeter -= Constants.DASH_METER_DEPLETION_RATE * deltaTime;
                             if (dashMeter <= 0f) {
-                                dashMeter = 0f;
-                                dashState = DashState.DASH_ENDING;
+                                // dashMeter = 0f;
+                                // dashState = DashState.DASH_ENDING;
+                                break;
                             }
                         }
 
                         // determine speed based on future dash state
-                        // TODO factor this out so it can be shared with above, keep a spare CharacterComponent?
-                        // TODO maybe we want to
                         float speed = movement.velocity.len();
                         if (dashState == DashState.DASH_ENDING)
                         {
                             // decelerate dash
                             float pct = (timeSinceDashStateChange / Constants.DASH_DECEL);
                             if (pct > 1.0) {
-
-                                // don't allow transition from dash -> dash end -> regular motion
-                                // essentially we're saying we don't want to predict too far in the future
-                                // when we're dashing; this lets us have "crisper" hits right after dashes
-                                // because the dash velocity won't be smoothed out over the regular running frames.
-                                // without this, sometimes it looks like the dash is too long...
-                                if (initialDashState == DashState.DASHING) {
-                                    break;
-                                }
-
-                                pct = 1.0f;
-                                dashState = DashState.NONE;
-                                timeSinceDashStateChange = 0f;
+                                // pct = 1.0f;
+                                // dashState = DashState.NONE;
+                                // timeSinceDashStateChange = 0f;
+                                break;
                             }
                             speed = MathUtils.lerp(Constants.DASH_SPEED, Constants.PLAYER_SPEED, pct);
                         }
