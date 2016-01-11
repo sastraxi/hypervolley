@@ -1,7 +1,10 @@
 package com.sastraxi.playground.desktop;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Graphics;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
+import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Graphics;
 import com.sastraxi.playground.tennis.Constants;
 import com.sastraxi.playground.tennis.TennisEntry;
 
@@ -12,7 +15,6 @@ public class DesktopLauncher {
 		int numSamples = 8;
 
 		config.useVsync(true);
-
         config.setWindowedMode(1280, 720);
 		config.setBackBufferConfig(8, 8, 8, 8, 24, 1, numSamples);
 

@@ -322,8 +322,6 @@ public class GameRenderingSystem extends EntitySystem {
         {
             BallComponent bc = bcm.get(entity);
             RenderableComponent rc = rcm.get(entity);
-            // ColorAttribute colour = (ColorAttribute) rc.modelInstance.getMaterial(Materials.ID_BALL).get(ColorAttribute.Diffuse);
-            // colour.color.set(bc.colour);
             batch.render(rc.modelInstance, environment);
         }
         for (Entity entity: playerEntities)
