@@ -59,7 +59,7 @@ vec4 poissonDOF(vec2 uv)
 
 		// max low- and hi-res taps based on tap blurriness
 		float tapBlur = tapHigh.a;
-		vec4 tap = lerp(tapHigh, tapLow, tapBlur);
+		vec4 tap = mix(tapHigh, tapLow, tapBlur);
 
 		// "smart" blur ignores taps that are closer than the center tap and in focus
 		tap.a = (tap.a >= centerDepth) ? 1.0 : tap.a;
