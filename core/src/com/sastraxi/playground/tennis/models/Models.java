@@ -1,5 +1,6 @@
 package com.sastraxi.playground.tennis.models;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g3d.Material;
@@ -50,8 +51,7 @@ public class Models {
         Model model = assets.get(DUKE_PATH, Model.class);
 
         // make duke visible
-        BlendingAttribute ba = (BlendingAttribute) model.getMaterial("lambert1").get(BlendingAttribute.Type);
-        ba.opacity = 1.0f;
+        model.getMaterial("lambert1").remove(BlendingAttribute.Type);
 
         // give duke the correct colour
         ColorAttribute diffuse = (ColorAttribute) model.getMaterial("lambert1").get(ColorAttribute.Diffuse);
@@ -67,8 +67,7 @@ public class Models {
         Model model = assets.get(BALL_PATH, Model.class);
 
         // make the ball visible
-        BlendingAttribute ba = (BlendingAttribute) model.getMaterial("ballSHADER").get(BlendingAttribute.Type);
-        ba.opacity = 1.0f;
+        model.getMaterial("ballSHADER").remove(BlendingAttribute.Type);
 
         return model;
     }
@@ -80,10 +79,11 @@ public class Models {
         Model model = assets.get(COURT_PATH, Model.class);
 
         // make the court visible
-        BlendingAttribute ba = (BlendingAttribute) model.getMaterial("lambert1").get(BlendingAttribute.Type);
-        ba.opacity = 1.0f;
-        ba = (BlendingAttribute) model.getMaterial("lambert2").get(BlendingAttribute.Type);
-        ba.opacity = 1.0f;
+        model.getMaterial("lambert1").remove(BlendingAttribute.Type);
+        // model.getMaterial("lambert3").remove(BlendingAttribute.Type); // show under-floor; wipes out reflections right now
+
+        BlendingAttribute ba = (BlendingAttribute) model.getMaterial("lambert2").get(BlendingAttribute.Type);
+        ba.opacity = 0.6f;
 
         return model;
     }
@@ -125,8 +125,7 @@ public class Models {
         Model model = assets.get(ALERT_PATH, Model.class);
 
         // make the model visible
-        BlendingAttribute ba = (BlendingAttribute) model.getMaterial("lambert1").get(BlendingAttribute.Type);
-        ba.opacity = 1.0f;
+        model.getMaterial("lambert1").remove(BlendingAttribute.Type);
 
         // give the alert the correct colour
         ColorAttribute diffuse = (ColorAttribute) model.getMaterial("lambert1").get(ColorAttribute.Diffuse);

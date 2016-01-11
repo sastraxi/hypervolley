@@ -38,11 +38,17 @@ public class TennisEntry extends ApplicationAdapter {
     private static final Family PLAYER_ENTITIES = Family.all(CharacterComponent.class).get();
     private final ComponentMapper<CharacterComponent> picm = ComponentMapper.getFor(CharacterComponent.class);
 
+    private final int numSamples;
+
     Engine engine;
     GameStateComponent gameState;
     CameraManagementComponent cameraManagementComponent;
     GameRenderingSystem gameRenderingSystem;
     OverlayRenderingSystem overlayRenderingSystem;
+
+    public TennisEntry(int numSamples) {
+        this.numSamples = numSamples;
+    }
 
     private void addWall(Engine engine, float ax, float ay, float bx, float by)
     {
@@ -252,7 +258,7 @@ public class TennisEntry extends ApplicationAdapter {
         engine.addSystem(new AnimationUpdateSystem());
 
         // rendering
-        gameRenderingSystem = new GameRenderingSystem();
+        gameRenderingSystem = new GameRenderingSystem(numSamples);
         engine.addSystem(gameRenderingSystem);
 
         // menu system

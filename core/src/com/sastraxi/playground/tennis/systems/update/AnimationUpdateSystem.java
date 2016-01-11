@@ -10,6 +10,7 @@ import com.sastraxi.playground.tennis.Constants;
 import com.sastraxi.playground.tennis.components.AnimationComponent;
 import com.sastraxi.playground.tennis.components.MovementComponent;
 import com.sastraxi.playground.tennis.components.RenderableComponent;
+import com.sastraxi.playground.tennis.components.global.GameStateComponent;
 
 /**
  * Created by sastr on 2015-12-29.
@@ -23,6 +24,9 @@ public class AnimationUpdateSystem extends IteratingSystem {
     private final ComponentMapper<MovementComponent> mcm = ComponentMapper.getFor(MovementComponent.class);
     private Engine engine = null;
 
+    private static final Family GAME_STATE_FAMILY = Family.one(GameStateComponent.class).get();
+    private ComponentMapper<GameStateComponent> gscm = ComponentMapper.getFor(GameStateComponent.class);
+
     public AnimationUpdateSystem() {
         super(Family.all(AnimationComponent.class).get(), PRIORITY);
     }
@@ -35,6 +39,9 @@ public class AnimationUpdateSystem extends IteratingSystem {
     @Override
     protected void processEntity(Entity entity, float deltaTime)
     {
+        GameStateComponent gameState = gscm.get(engine.getEntitiesFor(GAME_STATE_FAMILY).get(0));
+        if (gameState.isPaused()) return;
+
         AnimationComponent anim = acm.get(entity);
         MovementComponent mc = mcm.get(entity);
         RenderableComponent rc = rcm.get(entity);

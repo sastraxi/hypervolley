@@ -286,8 +286,7 @@ public class OverlayRenderingSystem extends EntitySystem {
      */
     private void drawHUD(float factor)
     {
-        float y = 45f * easeOut.apply(factor);
-        float frac_y = (y / (float) Gdx.graphics.getHeight());
+        float y = 90f * easeOut.apply(factor);
 
         spriteBatch.getTransformMatrix().idt();
         spriteBatch.begin();
@@ -298,36 +297,10 @@ public class OverlayRenderingSystem extends EntitySystem {
                 cache.draw(spriteBatch);
             }
 
+            playerWinCache[0].setPosition(0, y);
+            playerWinCache[1].setPosition(0, y);
+
         spriteBatch.end();
-
-        /*
-
-        modelBatch.begin(camera);
-
-            CharacterComponent playerOne = picm.get(playerEntities.get(0));
-            float x = -0.06f;
-            for (int i = 0; i < playerOne.wins; ++i)
-            {
-                scoreMarkerOne.transform.setToTranslation(x, 0.45f + frac_y, 0f);
-                modelBatch.render(scoreMarkerOne);
-
-                x -= Constants.HUD_SCORE_MARKER_SIZE;
-                x -= Constants.HUD_SCORE_MARKER_GAP;
-            }
-
-            CharacterComponent playerTwo = picm.get(playerEntities.get(1));
-            x = 0.06f;
-            for (int i = 0; i < playerTwo.wins; ++i)
-            {
-                scoreMarkerTwo.transform.setToTranslation(x, 0.45f + frac_y, 0f);
-                modelBatch.render(scoreMarkerTwo);
-
-                x += Constants.HUD_SCORE_MARKER_SIZE;
-                x += Constants.HUD_SCORE_MARKER_GAP;
-            }
-
-        modelBatch.end();
-        */
     }
 
 }

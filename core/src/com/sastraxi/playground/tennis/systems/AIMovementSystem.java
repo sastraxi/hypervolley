@@ -181,7 +181,11 @@ public class AIMovementSystem  extends IteratingSystem {
 
             // do a perfect shot every time
             if (pic.tHitActual - pic.tHit < ((Constants.PERFECT_HIT_FRAMES - 2) * Constants.FRAME_TIME_SEC)) {
-                pic.inputFrame.curve = true;
+                if (Math.random() > 0.5) {
+                    pic.inputFrame.curve = true;
+                } else {
+                    pic.inputFrame.swing = true;
+                }
             }
 
         }

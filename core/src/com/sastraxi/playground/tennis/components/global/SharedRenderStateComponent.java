@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 public class SharedRenderStateComponent extends Component {
 
     public Mesh fullscreenRect;
-    public FrameBuffer fbPing, fbPong;
+    public FrameBuffer fbPing, fbPong, fbReflect;
+    public FrameBuffer fbReflectBlur;
 
 }

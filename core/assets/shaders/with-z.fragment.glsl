@@ -225,6 +225,30 @@ uniform vec4 u_fogColor;
 varying float v_fog;
 #endif // fogFlag
 
+varying vec3 v_pos;
+varying float v_depth;
+uniform mat4 u_viewTrans;
+uniform vec4 u_cameraPosition;
+uniform vec3 u_cameraDirection;
+
+const float epsilon = 0.1; // don't reflect if this close to the plane
+const float planeZ = 0.0;
+const float maxBlurDepth = 80.0;
+const float maxBlur = 1.0;
+float computeDepthBlur(float depth)
+{
+	// view-space intercept with reflection plane
+	vec3 dir = v_pos - u_cameraPosition.xyz;
+	vec3 planePos = u_cameraPosition.xyz + ((planeZ - u_cameraPosition.z) / dir.z) * dir.xyz;
+	vec4 planePoint = u_viewTrans * vec4(planePos, 1.0);
+	float depthIntercept = -planePoint.z;
+	if (depth - epsilon < depthIntercept) discard;
+	// scale depth value between focal distance and far blur distance to [0, 1] range
+	float f = (depth - depthIntercept) / maxBlurDepth;
+	// clamp the far blur to a maximum blurriness
+	return clamp(f, 0, maxBlur);
+}
+
 void main() {
 	#if defined(normalFlag) 
 		vec3 normal = v_normal;
@@ -296,13 +320,5 @@ void main() {
 		gl_FragColor.rgb = mix(gl_FragColor.rgb, u_fogColor.rgb, v_fog);
 	#endif // end fogFlag
 
-	#ifdef blendedFlag
-		gl_FragColor.a = diffuse.a * v_opacity;
-		#ifdef alphaTestFlag
-			if (gl_FragColor.a <= v_alphaTest)
-				discard;
-		#endif
-	#else
-		gl_FragColor.a = 1.0;
-	#endif
+	gl_FragColor.a = computeDepthBlur(v_depth);
 }

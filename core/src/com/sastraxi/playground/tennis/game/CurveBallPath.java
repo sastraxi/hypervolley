@@ -60,6 +60,8 @@ public class CurveBallPath implements BallPath {
         float radsInitial = theta + dir * (float) Math.PI * 0.5f;
         if (radsInitial < 0f) radsInitial += 2f * MathUtils.PI;
         float radsDelta = (radsBounce - radsInitial) / t_end;
+        if (radsDelta < -MathUtils.PI) radsDelta += 2f * MathUtils.PI;
+        if (radsDelta > MathUtils.PI) radsDelta -= 2f * MathUtils.PI;
         float speed = (radsDelta * (bounceTarget.x - position.x)) / (float) (Math.sin(radsDelta * t_end + radsInitial) - Math.sin(radsInitial));
         if (speed < 0f) speed = -speed;
 

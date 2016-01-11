@@ -10,6 +10,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.sastraxi.playground.tennis.components.BallComponent;
 import com.sastraxi.playground.tennis.components.MovementComponent;
 import com.sastraxi.playground.tennis.components.character.CharacterComponent;
+import com.sastraxi.playground.tennis.components.character.CharacterComponent.PlayerState;
 import com.sastraxi.playground.tennis.components.global.GameStateComponent;
 
 public class GlobalBeforeSystem extends IteratingSystem {
@@ -48,7 +49,7 @@ public class GlobalBeforeSystem extends IteratingSystem {
         {
             gameState.isInServe = true;
 
-            // reset player positions and
+            // reset player positions and states;
             // set the first character to be our server
             for (Entity e: playerEntities)
             {
@@ -58,10 +59,12 @@ public class GlobalBeforeSystem extends IteratingSystem {
 
                 // swap servers every rally
                 character.isServingPlayer = !character.isServingPlayer;
-                if (character.isServingPlayer) {
-                    character.lastState = ccm.get(e).state;
-                    character.state = CharacterComponent.PlayerState.SERVE_SETUP;
-                }
+
+                // reset states
+                character.lastState = character.state;
+                character.state = (character.isServingPlayer ? PlayerState.SERVE_SETUP : PlayerState.NONE);
+                character.lastDashState = character.dashState;
+                character.dashState = CharacterComponent.DashState.NONE;
             }
         }
     }

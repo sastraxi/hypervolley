@@ -14,10 +14,13 @@ import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.environment.PointLight;
 import com.badlogic.gdx.graphics.g3d.utils.DepthShaderProvider;
 import com.badlogic.gdx.graphics.g3d.utils.ShaderProvider;
+import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.graphics.glutils.ImmediateModeRenderer20;
+import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.Vector3;
-import com.sastraxi.playground.gdx.FrameBufferMSAA;
+import com.sastraxi.gdx.graphics.glutils.ProxyReflectionCamera;
 import com.sastraxi.playground.gdx.ShadowLightR32F;
+import com.sastraxi.playground.shaders.PostProcessShaderProgram;
 import com.sastraxi.playground.tennis.Constants;
 import com.sastraxi.playground.tennis.components.BallComponent;
 import com.sastraxi.playground.tennis.components.BounceMarkerComponent;
@@ -60,8 +63,11 @@ public class GameRenderingSystem extends EntitySystem {
     private final ComponentMapper<MenuComponent> menucm = ComponentMapper.getFor(MenuComponent.class);
     private final ComponentMapper<StrikeZoneDebugComponent> szcm = ComponentMapper.getFor(StrikeZoneDebugComponent.class);
 
-    public GameRenderingSystem() {
+    private int numSamples;
+
+    public GameRenderingSystem(int numSamples) {
         super(PRIORITY);
+        this.numSamples = numSamples;
     }
 
     public void addedToEngine(Engine engine) {
@@ -99,19 +105,22 @@ public class GameRenderingSystem extends EntitySystem {
     // graphics
     OrthographicCamera hudCamera;
     Environment environment;
-    ShaderProvider shaderProvider;
-    ModelBatch batch;
+    ShaderProvider shaderProvider, reflectionProvider;
+    ModelBatch batch, shadowBatch, reflectionBatch;
     ShadowLightR32F shadowLight;
     DirectionalLight sunLight;
-    ModelBatch shadowBatch;
     ImmediateModeRenderer20 strikeZoneRenderer;
     PointLight ballLight;
+
+    // reflection
+    ShaderProgram textureCopyShader, gauss3x3Shader, dofShader;
+    ProxyReflectionCamera reflectionCamera;
 
     // things to draw
     ModelInstance tennisCourt;
 
-    private void setup() {
-
+    private void setup()
+    {
         // libgdx
         strikeZoneRenderer = new ImmediateModeRenderer20(Constants.DETAIL_LEVEL_CIRCLE + 1 + 4 + 4, false, true, 0);
         shaderProvider = CustomShaderProvider.create(8 + 25 + 1);
@@ -119,6 +128,8 @@ public class GameRenderingSystem extends EntitySystem {
                 Gdx.files.internal("shaders/depth.vertex.glsl").readString(),
                 Gdx.files.internal("shaders/depth.fragment.glsl").readString()));
         batch = new ModelBatch(shaderProvider);
+        reflectionProvider = CustomShaderProvider.create(8 + 25 + 1, "shaders/with-z.vertex.glsl", "shaders/with-z.fragment.glsl");
+        reflectionBatch = new ModelBatch(reflectionProvider);
 
         // environment
         environment = new Environment();
@@ -165,6 +176,12 @@ public class GameRenderingSystem extends EntitySystem {
         hudCamera = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         hudCamera.update();
 
+        // for calculating reflections
+        reflectionCamera = new ProxyReflectionCamera(Constants.UP_VECTOR, 0f);
+        if (textureCopyShader == null) textureCopyShader = new PostProcessShaderProgram(Gdx.files.internal("shaders/post/texture-copy.fragment.glsl"));
+        if (gauss3x3Shader == null) gauss3x3Shader = new PostProcessShaderProgram(Gdx.files.internal("shaders/post/gauss-3x3.fragment.glsl"));
+        if (dofShader == null) dofShader = new PostProcessShaderProgram(Gdx.files.internal("shaders/post/dof.fragment.glsl"));
+
         resize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
     }
 
@@ -180,6 +197,8 @@ public class GameRenderingSystem extends EntitySystem {
 
     @Override
     public void update(float deltaTime) {
+
+        Gdx.gl.glDisable(Gdx.gl.GL_CULL_FACE);
 
         Gdx.gl.glViewport(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
@@ -217,24 +236,87 @@ public class GameRenderingSystem extends EntitySystem {
         shadowBatch.end();
         shadowLight.end();
 
-        // we'll render off-screen to aid post-processing
+        // create reflections; right now just of players, ball, and bounce markers
+        // TODO stencil test, if MSAA we need to dilate by 1 pixel
+        reflectionCamera.setFrom(cameraManagementComponent.getCamera());
+        renderState.fbReflect.begin();
+        Gdx.gl.glClearColor(0f, 0.2f, 0.3f, 1f);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
+        reflectionBatch.begin(reflectionCamera);
+        // reflectionBatch.render(tennisCourt, environment);
+        for (Entity entity: ballEntities)
+        {
+            BallComponent bc = bcm.get(entity);
+            RenderableComponent rc = rcm.get(entity);
+            // ColorAttribute colour = (ColorAttribute) rc.modelInstance.getMaterial(Materials.ID_BALL).get(ColorAttribute.Diffuse);
+            // colour.color.set(bc.colour);
+            reflectionBatch.render(rc.modelInstance, environment);
+        }
+        for (Entity entity: playerEntities)
+        {
+            CharacterComponent character = picm.get(entity);
+            if (character.state == CharacterComponent.PlayerState.HITTING)
+            {
+                AlertedComponent ac = acm.get(entity);
+                reflectionBatch.render(ac.modelInstance, environment);
+            }
+            reflectionBatch.render(rcm.get(entity).modelInstance, environment);
+        }
+        reflectionBatch.end();
+        renderState.fbReflect.end();
+
+        // generate mipmaps for fbReflect
+        renderState.fbReflect.getColorBufferTexture().bind(0);
+        Gdx.gl.glGenerateMipmap(GL20.GL_TEXTURE_2D);
+        renderState.fbReflectBlur.begin();
+        Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        gauss3x3Shader.begin();
+
+            renderState.fbReflect.getColorBufferTexture().bind(0);
+            gauss3x3Shader.setUniformi("u_texture", 0);
+            gauss3x3Shader.setUniformf("u_inv_resolution", 1f / (0.25f * Gdx.graphics.getWidth()), 1f / (0.25f * Gdx.graphics.getHeight()));
+            renderState.fullscreenRect.render(gauss3x3Shader, GL20.GL_TRIANGLE_FAN);
+
+        gauss3x3Shader.end();
+        renderState.fbReflectBlur.end();
+
+        // we'll render off-screen to aid post-processing if the menu is up
         if (menuState.isActive()) {
             renderState.fbPing.begin();
         }
 
-        // render our regular view
+        // render the reflection onto the backbuffer
         Gdx.gl.glClearColor(0f, 0.2f, 0.3f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
+        dofShader.begin();
+
+            renderState.fbReflect.getColorBufferTexture().bind(0);
+            dofShader.setUniformi("u_texture", 0);
+            dofShader.setUniformf("u_pixel_texture", 1f / (float) Gdx.graphics.getWidth(), 1f / (float) Gdx.graphics.getHeight());
+
+            renderState.fbReflectBlur.getColorBufferTexture().bind(1);
+            dofShader.setUniformi("u_blurred", 1);
+            dofShader.setUniformf("u_pixel_blurred", 1f / (0.25f * Gdx.graphics.getWidth()), 1f / (0.25f * Gdx.graphics.getHeight()));
+
+            renderState.fullscreenRect.render(dofShader, GL20.GL_TRIANGLE_FAN);
+
+        dofShader.end();
+
+        // render the tennis court (with a semi-transparent floor).
         batch.begin(cameraManagementComponent.getCamera());
         batch.render(tennisCourt, environment);
         batch.end();
-        for (Entity entity: playerEntities)
-        {
+
+        // strike zones aren't rendered w/ modelbatch
+        for (Entity entity: playerEntities) {
             StrikeZoneDebugComponent strikeZone = szcm.get(entity);
             if (strikeZone != null) {
                 drawStrikeZone(cameraManagementComponent.getCamera(), strikeZone);
             }
         }
+
+        // render everything else to our regular view
         batch.begin(cameraManagementComponent.getCamera());
         for (Entity entity: ballEntities)
         {
@@ -247,8 +329,6 @@ public class GameRenderingSystem extends EntitySystem {
         for (Entity entity: playerEntities)
         {
             CharacterComponent character = picm.get(entity);
-            MovementComponent mc = mcm.get(entity);
-
             if (character.state == CharacterComponent.PlayerState.HITTING)
             {
                 AlertedComponent ac = acm.get(entity);
@@ -262,7 +342,6 @@ public class GameRenderingSystem extends EntitySystem {
             batch.render(rc.modelInstance, environment);
         }
         batch.end();
-
 
 
         if (menuState.isActive()) {
@@ -308,15 +387,21 @@ public class GameRenderingSystem extends EntitySystem {
     {
         if (renderState.fbPing != null) renderState.fbPing.dispose();
         if (renderState.fbPong != null) renderState.fbPong.dispose();
+        if (renderState.fbReflect != null) renderState.fbReflect.dispose();
 
         // framebuffers for effects
-        // TODO MSAA isn't actually implemented.
-        renderState.fbPing = new FrameBufferMSAA(width, height, true);
-        renderState.fbPong = new FrameBufferMSAA(width, height, false);
+        renderState.fbPing = new FrameBuffer(Pixmap.Format.RGBA8888, width, height, true, true);
+        renderState.fbPong = new FrameBuffer(Pixmap.Format.RGBA8888, width, height, false, false);
+        renderState.fbReflect = new FrameBuffer(Pixmap.Format.RGBA8888, width, height, true, true);
+        renderState.fbReflectBlur = new FrameBuffer(Pixmap.Format.RGBA8888, width / 4, height / 4, false, false);
+
+        // enable + add a mipmap chain for fbReflect
+        renderState.fbReflect.getColorBufferTexture().bind();
+        renderState.fbReflect.getColorBufferTexture().setFilter(Texture.TextureFilter.MipMapLinearLinear, Texture.TextureFilter.MipMapLinearLinear);
+        Gdx.gl.glGenerateMipmap(GL20.GL_TEXTURE_2D);
 
         // full-screen rect
         if (renderState.fullscreenRect == null) renderState.fullscreenRect = MeshUtils.createFullScreenQuad();
-
     }
 
     private void setupShadowLight(int width, int height)
@@ -326,7 +411,7 @@ public class GameRenderingSystem extends EntitySystem {
         int shadow_bounds_w = 1200;
         int shadow_bounds_h = 1100;
 
-        shadowLight = (ShadowLightR32F) new ShadowLightR32F(4096, 4096, shadow_bounds_w, shadow_bounds_h, -1000f, 2000f).set(sunLight);
+        shadowLight = (ShadowLightR32F) new ShadowLightR32F(4096, 4096, shadow_bounds_w, shadow_bounds_h, -4000f, 1000f).set(sunLight);
         environment.shadowMap = shadowLight;
     }
 

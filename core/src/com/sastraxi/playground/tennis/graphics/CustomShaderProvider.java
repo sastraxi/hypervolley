@@ -15,11 +15,17 @@ public class CustomShaderProvider extends DefaultShaderProvider {
 
     public static CustomShaderProvider create(int numPointLights)
     {
+        return create(numPointLights, "shaders/default.vertex.glsl", "shaders/default.fragment.glsl");
+    }
+
+    public static CustomShaderProvider create(int numPointLights, String vertexPath, String fragmentPath)
+    {
         DefaultShader.Config config = new DefaultShader.Config();
         config.numBones = 16;
-        config.vertexShader = Gdx.files.internal("shaders/default.vertex.glsl").readString();
+        config.vertexShader = Gdx.files.internal(vertexPath).readString();
         config.numPointLights = numPointLights;
-        config.fragmentShader = Gdx.files.internal("shaders/default.fragment.glsl").readString();
+        config.numDirectionalLights = 1;
+        config.fragmentShader = Gdx.files.internal(fragmentPath).readString();
         return new CustomShaderProvider(config);
     }
 

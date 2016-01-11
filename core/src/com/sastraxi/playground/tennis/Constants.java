@@ -22,8 +22,8 @@ public class Constants {
     public static final float G_SLICE = 100f;
     public static final float G_NORMAL = 300f;
     public static final float G_PERFECT_FRAME = 600f;
-    public static final float G_CURVE = 225f;
-    public static final float G_PERFECT_CURVE = 450f;
+    public static final float G_CURVE = 200f;
+    public static final float G_PERFECT_CURVE = 400f;
 
     public static final float LEVEL_HALF_WIDTH = 400f;
     public static final float LEVEL_HALF_DEPTH = 300f;
