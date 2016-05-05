@@ -5,6 +5,7 @@ import com.badlogic.ashley.utils.ImmutableArray;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.*;
+import com.badlogic.gdx.graphics.Pixmap.Format;
 import com.badlogic.gdx.graphics.g3d.Environment;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelBatch;
@@ -18,6 +19,7 @@ import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.graphics.glutils.ImmediateModeRenderer20;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.Vector3;
+import com.sastraxi.gdx.graphics.glutils.CustomShaderSorter;
 import com.sastraxi.gdx.graphics.glutils.ProxyReflectionCamera;
 import com.sastraxi.playground.gdx.ShadowLightR32F;
 import com.sastraxi.playground.shaders.PostProcessShaderProgram;
@@ -28,6 +30,7 @@ import com.sastraxi.playground.tennis.components.MovementComponent;
 import com.sastraxi.playground.tennis.components.RenderableComponent;
 import com.sastraxi.playground.tennis.components.character.AlertedComponent;
 import com.sastraxi.playground.tennis.components.character.CharacterComponent;
+import com.sastraxi.playground.tennis.components.character.PlayerPowerComponent;
 import com.sastraxi.playground.tennis.components.character.StrikeZoneDebugComponent;
 import com.sastraxi.playground.tennis.components.global.CameraManagementComponent;
 import com.sastraxi.playground.tennis.components.global.GameStateComponent;
@@ -39,6 +42,8 @@ import com.sastraxi.playground.tennis.models.Models;
 import com.sastraxi.playground.tennis.models.RenderUtils;
 
 import java.nio.ByteBuffer;
+
+import static com.sastraxi.playground.tennis.graphics.CustomShaderAttribute.ShaderType.*;
 
 /**
  * Created by sastr on 2015-11-09.
@@ -62,6 +67,7 @@ public class GameRenderingSystem extends EntitySystem {
     private final ComponentMapper<SharedRenderStateComponent> srscm = ComponentMapper.getFor(SharedRenderStateComponent.class);
     private final ComponentMapper<MenuComponent> menucm = ComponentMapper.getFor(MenuComponent.class);
     private final ComponentMapper<StrikeZoneDebugComponent> szcm = ComponentMapper.getFor(StrikeZoneDebugComponent.class);
+    private final ComponentMapper<PlayerPowerComponent> ppcm = ComponentMapper.getFor(PlayerPowerComponent.class);
 
     private int numSamples;
 
@@ -105,9 +111,9 @@ public class GameRenderingSystem extends EntitySystem {
     // graphics
     OrthographicCamera hudCamera;
     Environment environment;
-    ShaderProvider shaderProvider, reflectionProvider;
-    ModelBatch batch, shadowBatch, reflectionBatch;
+    ModelBatch aboveGroundBatch, mirrorBatch, shadowBatch, reflectionBatch;
     ShadowLightR32F shadowLight;
+    ShaderProvider globalShaderProvider;
     DirectionalLight sunLight;
     ImmediateModeRenderer20 strikeZoneRenderer;
     PointLight ballLight;
@@ -123,13 +129,25 @@ public class GameRenderingSystem extends EntitySystem {
     {
         // libgdx
         strikeZoneRenderer = new ImmediateModeRenderer20(Constants.DETAIL_LEVEL_CIRCLE + 1 + 4 + 4, false, true, 0);
-        shaderProvider = CustomShaderProvider.create(8 + 25 + 1);
         shadowBatch = new ModelBatch(new DepthShaderProvider(
                 Gdx.files.internal("shaders/depth.vertex.glsl").readString(),
                 Gdx.files.internal("shaders/depth.fragment.glsl").readString()));
-        batch = new ModelBatch(shaderProvider);
-        reflectionProvider = CustomShaderProvider.create(8 + 25 + 1, "shaders/with-z.vertex.glsl", "shaders/with-z.fragment.glsl");
-        reflectionBatch = new ModelBatch(reflectionProvider);
+
+        // global shader provider
+        globalShaderProvider = CustomShaderProvider.create(8 + 25 + 1);
+
+        // render the tennis court + players normally
+        aboveGroundBatch = new ModelBatch(globalShaderProvider,
+                new CustomShaderSorter(WORLD_DYNAMIC, WORLD_STATIC, BOUNCE_MARKER, PLAYER_POWER));
+
+        // render a fresnel fade ("mirror") to composite over blitted reflection
+        mirrorBatch = new ModelBatch(globalShaderProvider,
+                new CustomShaderSorter(REFLECTIVE_SURFACE));
+
+        // reflections (only dynamic objects)
+        ShaderProvider reflectionProvider = CustomShaderProvider.create(8 + 25 + 1, "shaders/with-z.vertex.glsl", "shaders/with-z.fragment.glsl");
+        reflectionBatch = new ModelBatch(reflectionProvider,
+                new CustomShaderSorter(WORLD_DYNAMIC));
 
         // environment
         environment = new Environment();
@@ -166,11 +184,10 @@ public class GameRenderingSystem extends EntitySystem {
         // tennis court
         tennisCourt = getTennisCourt();
 
-        // opengl
-        // Gdx.gl.glDisable(GL20.GL_CULL_FACE);
-        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
-        Gdx.gl.glEnable(org.lwjgl.opengl.GL30.GL_FRAMEBUFFER_SRGB);
-        Gdx.gl.glEnable(GL20.GL_BLEND);
+        // particles
+        // ParticleSystem particleSystem = ParticleSystem.get();
+        // PointSpriteParticleBatch pointSpriteBatch = new PointSpriteParticleBatch();
+        // particleSystem.add(pointSpriteBatch);
 
         // hud camera
         hudCamera = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
@@ -187,6 +204,8 @@ public class GameRenderingSystem extends EntitySystem {
 
     public void resize(int width, int height)
     {
+        Gdx.gl.glEnable(org.lwjgl.opengl.GL30.GL_FRAMEBUFFER_SRGB);
+
         hudCamera.viewportWidth = (float) width;
         hudCamera.viewportHeight = (float) height;
         hudCamera.update();
@@ -199,7 +218,6 @@ public class GameRenderingSystem extends EntitySystem {
     public void update(float deltaTime) {
 
         Gdx.gl.glDisable(Gdx.gl.GL_CULL_FACE);
-
         Gdx.gl.glViewport(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
         // FIXME this doesn't belong here -- update the ball light position
@@ -243,13 +261,10 @@ public class GameRenderingSystem extends EntitySystem {
         Gdx.gl.glClearColor(0f, 0.2f, 0.3f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
         reflectionBatch.begin(reflectionCamera);
-        // reflectionBatch.render(tennisCourt, environment);
         for (Entity entity: ballEntities)
         {
             BallComponent bc = bcm.get(entity);
             RenderableComponent rc = rcm.get(entity);
-            // ColorAttribute colour = (ColorAttribute) rc.modelInstance.getMaterial(Materials.ID_BALL).get(ColorAttribute.Diffuse);
-            // colour.color.set(bc.colour);
             reflectionBatch.render(rc.modelInstance, environment);
         }
         for (Entity entity: playerEntities)
@@ -266,14 +281,14 @@ public class GameRenderingSystem extends EntitySystem {
         renderState.fbReflect.end();
 
         // generate mipmaps for fbReflect
-        renderState.fbReflect.getColorBufferTexture().bind(0);
+        renderState.fbReflect.getColorTexture(0).bind(0);
         Gdx.gl.glGenerateMipmap(GL20.GL_TEXTURE_2D);
         renderState.fbReflectBlur.begin();
         Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         gauss3x3Shader.begin();
 
-            renderState.fbReflect.getColorBufferTexture().bind(0);
+            renderState.fbReflect.getColorTexture(0).bind(0);
             gauss3x3Shader.setUniformi("u_texture", 0);
             gauss3x3Shader.setUniformf("u_inv_resolution", 1f / (0.25f * Gdx.graphics.getWidth()), 1f / (0.25f * Gdx.graphics.getHeight()));
             renderState.fullscreenRect.render(gauss3x3Shader, GL20.GL_TRIANGLE_FAN);
@@ -281,21 +296,23 @@ public class GameRenderingSystem extends EntitySystem {
         gauss3x3Shader.end();
         renderState.fbReflectBlur.end();
 
+        // start of blitting onto back-buffer
         // we'll render off-screen to aid post-processing if the menu is up
-        if (menuState.isActive()) {
+        if (menuState.isActive(gameState)) {
             renderState.fbPing.begin();
         }
 
-        // render the reflection onto the backbuffer
+        // blit the reflection onto the backbuffer w/ a post-process effect
+        // that blends between the regular and the blurred mipmap based on depth
         Gdx.gl.glClearColor(0f, 0.2f, 0.3f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
         dofShader.begin();
 
-            renderState.fbReflect.getColorBufferTexture().bind(0);
+            renderState.fbReflect.getColorTexture(0).bind(0);
             dofShader.setUniformi("u_texture", 0);
             dofShader.setUniformf("u_pixel_texture", 1f / (float) Gdx.graphics.getWidth(), 1f / (float) Gdx.graphics.getHeight());
 
-            renderState.fbReflectBlur.getColorBufferTexture().bind(1);
+            renderState.fbReflectBlur.getColorTexture(0).bind(1);
             dofShader.setUniformi("u_blurred", 1);
             dofShader.setUniformf("u_pixel_blurred", 1f / (0.25f * Gdx.graphics.getWidth()), 1f / (0.25f * Gdx.graphics.getHeight()));
 
@@ -303,11 +320,15 @@ public class GameRenderingSystem extends EntitySystem {
 
         dofShader.end();
 
-        // render the tennis court (with a semi-transparent floor).
-        batch.begin(cameraManagementComponent.getCamera());
-        batch.render(tennisCourt, environment);
-        batch.end();
+        // render the tennis court's reflective floor
+        mirrorBatch.begin(cameraManagementComponent.getCamera());
+        mirrorBatch.render(tennisCourt, environment);
+        mirrorBatch.end();
 
+        // render the tennis court (but not the reflective floor).
+        aboveGroundBatch.begin(cameraManagementComponent.getCamera());
+        aboveGroundBatch.render(tennisCourt, environment);
+        aboveGroundBatch.end();
         // strike zones aren't rendered w/ modelbatch
         for (Entity entity: playerEntities) {
             StrikeZoneDebugComponent strikeZone = szcm.get(entity);
@@ -317,12 +338,12 @@ public class GameRenderingSystem extends EntitySystem {
         }
 
         // render everything else to our regular view
-        batch.begin(cameraManagementComponent.getCamera());
+        aboveGroundBatch.begin(cameraManagementComponent.getCamera());
         for (Entity entity: ballEntities)
         {
             BallComponent bc = bcm.get(entity);
             RenderableComponent rc = rcm.get(entity);
-            batch.render(rc.modelInstance, environment);
+            aboveGroundBatch.render(rc.modelInstance, environment);
         }
         for (Entity entity: playerEntities)
         {
@@ -330,19 +351,19 @@ public class GameRenderingSystem extends EntitySystem {
             if (character.state == CharacterComponent.PlayerState.HITTING)
             {
                 AlertedComponent ac = acm.get(entity);
-                batch.render(ac.modelInstance, environment);
+                aboveGroundBatch.render(ac.modelInstance, environment);
             }
-            batch.render(rcm.get(entity).modelInstance, environment);
+            aboveGroundBatch.render(ppcm.get(entity).modelInstance, environment); // power indicator
+            aboveGroundBatch.render(rcm.get(entity).modelInstance, environment); // actual player model
         }
         for (Entity entity: bounceMarkers)
         {
             RenderableComponent rc = rcm.get(entity);
-            batch.render(rc.modelInstance, environment);
+            aboveGroundBatch.render(rc.modelInstance, environment);
         }
-        batch.end();
+        aboveGroundBatch.end();
 
-
-        if (menuState.isActive()) {
+        if (menuState.isActive(gameState)) {
             renderState.fbPing.end();
         }
 
@@ -386,16 +407,17 @@ public class GameRenderingSystem extends EntitySystem {
         if (renderState.fbPing != null) renderState.fbPing.dispose();
         if (renderState.fbPong != null) renderState.fbPong.dispose();
         if (renderState.fbReflect != null) renderState.fbReflect.dispose();
+        if (renderState.fbReflectBlur != null) renderState.fbReflectBlur.dispose();
 
         // framebuffers for effects
-        renderState.fbPing = new FrameBuffer(Pixmap.Format.RGBA8888, width, height, true, true);
-        renderState.fbPong = new FrameBuffer(Pixmap.Format.RGBA8888, width, height, false, false);
-        renderState.fbReflect = new FrameBuffer(Pixmap.Format.RGBA8888, width, height, true, true);
-        renderState.fbReflectBlur = new FrameBuffer(Pixmap.Format.RGBA8888, width / 4, height / 4, false, false);
+        renderState.fbPing = new FrameBuffer(Format.RGBA8888, width, height, true, true);
+        renderState.fbPong = new FrameBuffer(Format.RGBA8888, width, height, false, false);
+        renderState.fbReflect = new FrameBuffer(Format.RGBA8888, width, height, true, true);
+        renderState.fbReflectBlur = new FrameBuffer(Format.RGBA8888, width / 4, height / 4, false, false);
 
         // enable + add a mipmap chain for fbReflect
-        renderState.fbReflect.getColorBufferTexture().bind();
-        renderState.fbReflect.getColorBufferTexture().setFilter(Texture.TextureFilter.MipMapLinearLinear, Texture.TextureFilter.MipMapLinearLinear);
+        renderState.fbReflect.getColorTexture(0).bind();
+        renderState.fbReflect.getColorTexture(0).setFilter(Texture.TextureFilter.MipMapLinearLinear, Texture.TextureFilter.MipMapLinearLinear);
         Gdx.gl.glGenerateMipmap(GL20.GL_TEXTURE_2D);
 
         // full-screen rect
@@ -442,7 +464,7 @@ public class GameRenderingSystem extends EntitySystem {
     private Pixmap getScreenshot(int x, int y, int w, int h, boolean flipY) {
         Gdx.gl.glPixelStorei(GL20.GL_PACK_ALIGNMENT, 1);
 
-        final Pixmap pixmap = new Pixmap(w, h, Pixmap.Format.RGB888);
+        final Pixmap pixmap = new Pixmap(w, h, Format.RGB888);
         ByteBuffer pixels = pixmap.getPixels();
         Gdx.gl.glReadPixels(x, y, w, h, GL20.GL_RGB, GL20.GL_UNSIGNED_BYTE, pixels);
 

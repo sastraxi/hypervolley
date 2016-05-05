@@ -18,6 +18,8 @@ package com.sastraxi.playground.gdx;
 
 import com.badlogic.gdx.Application.ApplicationType;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.GL30;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.Texture.TextureFilter;
@@ -29,22 +31,24 @@ import com.badlogic.gdx.utils.GdxRuntimeException;
 /** This is a {@link FrameBuffer} variant backed by a float texture. */
 public class FrameBufferR32F extends FrameBuffer {
 
-    /** Creates a new FrameBuffer with a single-channel float backing texture, having the given dimensions.
+    /** Creates a new FrameBuffer with a float backing texture, having the given dimensions and potentially a depth buffer attached.
      *
      * @param width the width of the framebuffer in pixels
      * @param height the height of the framebuffer in pixels
+     * @param hasDepth whether to attach a depth buffer
      * @throws GdxRuntimeException in case the FrameBuffer could not be created */
     public FrameBufferR32F(int width, int height, boolean hasDepth) {
-        super(null, width, height, hasDepth);
-    }
+        super(width, height);
 
-    @Override
-    protected Texture createColorTexture () {
-        TextureDataR32F data = new TextureDataR32F(width, height);
-        Texture result = new Texture(data);
-        result.setFilter(TextureFilter.Nearest, TextureFilter.Nearest);
-        result.setWrap(TextureWrap.ClampToEdge, TextureWrap.ClampToEdge);
-        return result;
+        Builder builder = new FrameBuffer.Builder(width, height);
+        builder.addColorTexture(GL30.GL_R32F, GL30.GL_RED, GL20.GL_FLOAT, TextureFilter.Nearest, TextureFilter.Nearest, TextureWrap.ClampToEdge);
+
+        if (hasDepth) {
+            builder.addDepthRenderbuffer(GL30.GL_DEPTH_COMPONENT24, GL30.GL_UNSIGNED_INT);
+        }
+
+        this.attachments = builder.buildAttachments();
+        build();
     }
 
 }

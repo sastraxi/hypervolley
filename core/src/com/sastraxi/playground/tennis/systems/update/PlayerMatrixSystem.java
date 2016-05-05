@@ -10,6 +10,7 @@ import com.sastraxi.playground.tennis.components.MovementComponent;
 import com.sastraxi.playground.tennis.components.RenderableComponent;
 import com.sastraxi.playground.tennis.components.character.AlertedComponent;
 import com.sastraxi.playground.tennis.components.character.CharacterComponent;
+import com.sastraxi.playground.tennis.components.character.PlayerPowerComponent;
 import com.sastraxi.playground.tennis.models.Models;
 
 /**
@@ -23,6 +24,7 @@ public class PlayerMatrixSystem extends IteratingSystem {
     private final ComponentMapper<CharacterComponent> picm = ComponentMapper.getFor(CharacterComponent.class);
     private final ComponentMapper<RenderableComponent> rcm = ComponentMapper.getFor(RenderableComponent.class);
     private final ComponentMapper<MovementComponent> mcm = ComponentMapper.getFor(MovementComponent.class);
+    private final ComponentMapper<PlayerPowerComponent> ppcm = ComponentMapper.getFor(PlayerPowerComponent.class);
     private Engine engine = null;
 
     public PlayerMatrixSystem() {
@@ -54,5 +56,10 @@ public class PlayerMatrixSystem extends IteratingSystem {
                     .rotate(mc.orientation)
                     .mul(Models.ALERT_TRANSFORM);
         }
+
+        ppcm.get(entity).modelInstance.transform
+                .idt()
+                .translate(mc.position);
+
     }
 }

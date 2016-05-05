@@ -5,12 +5,21 @@ import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Pixmap;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.VertexAttributes;
+import com.badlogic.gdx.graphics.g3d.Material;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
+import com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute;
+import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
+import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
+import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.collision.Ray;
 import com.sastraxi.playground.tennis.Constants;
 import com.sastraxi.playground.tennis.components.*;
 import com.sastraxi.playground.tennis.components.character.CharacterComponent;
+import com.sastraxi.playground.tennis.graphics.CustomShaderAttribute;
 import com.sastraxi.playground.tennis.models.BallModel;
 import com.sastraxi.playground.tennis.models.Models;
 
@@ -48,6 +57,10 @@ public class BallFactory {
         path.getVelocity(time, mc.velocity);
         ball.colour.set(Constants.BALL_COLOUR);
         ballEntity.add(ball);
+
+        // trail, for particle effects
+        TrailComponent trail = new TrailComponent(10);
+        ballEntity.add(trail);
 
         // graphics
         RenderableComponent rc = new RenderableComponent(new ModelInstance(ballModel));

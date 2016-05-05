@@ -13,6 +13,8 @@ import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import com.sastraxi.playground.tennis.Constants;
+import com.sastraxi.playground.tennis.graphics.CustomShaderAttribute;
+import com.sastraxi.playground.tennis.graphics.CustomShaderAttribute.ShaderType;
 import com.sastraxi.playground.tennis.graphics.Materials;
 
 /**
@@ -52,6 +54,7 @@ public class Models {
 
         // make duke visible
         model.getMaterial("lambert1").remove(BlendingAttribute.Type);
+        model.getMaterial("lambert1").set(new CustomShaderAttribute(ShaderType.WORLD_DYNAMIC));
 
         // give duke the correct colour
         ColorAttribute diffuse = (ColorAttribute) model.getMaterial("lambert1").get(ColorAttribute.Diffuse);
@@ -68,6 +71,7 @@ public class Models {
 
         // make the ball visible
         model.getMaterial("ballSHADER").remove(BlendingAttribute.Type);
+        model.getMaterial("ballSHADER").set(new CustomShaderAttribute(ShaderType.WORLD_DYNAMIC));
 
         return model;
     }
@@ -80,9 +84,16 @@ public class Models {
 
         // make the court visible
         model.getMaterial("lambert1").remove(BlendingAttribute.Type);
+        model.getMaterial("lambert1").set(new CustomShaderAttribute(ShaderType.WORLD_STATIC));
+
+        // mark the floor as a reflective surface.
+        BlendingAttribute ba = (BlendingAttribute) model.getMaterial("lambert2").get(BlendingAttribute.Type);
+        ba.opacity = 1.0f;
+        model.getMaterial("lambert2").set(new CustomShaderAttribute(ShaderType.REFLECTIVE_SURFACE));
+
         // model.getMaterial("lambert3").remove(BlendingAttribute.Type); // show under-floor; wipes out reflections right now
 
-        BlendingAttribute ba = (BlendingAttribute) model.getMaterial("lambert2").get(BlendingAttribute.Type);
+
         ba.opacity = 0.6f;
 
         return model;
@@ -105,7 +116,8 @@ public class Models {
         Node node;
         ModelBuilder builder = new ModelBuilder();
 
-        Material material = new Material(ColorAttribute.createDiffuse(colour));
+        Material material = new Material(ColorAttribute.createDiffuse(colour),
+                new CustomShaderAttribute(ShaderType.WORLD_DYNAMIC));
         builder.begin();
         node = builder.node();
         node.translation.set(0f, 0f, 0.5f * Constants.PLAYER_HEIGHT);
@@ -126,6 +138,7 @@ public class Models {
 
         // make the model visible
         model.getMaterial("lambert1").remove(BlendingAttribute.Type);
+        model.getMaterial("lambert1").set(new CustomShaderAttribute(ShaderType.WORLD_DYNAMIC));
 
         // give the alert the correct colour
         ColorAttribute diffuse = (ColorAttribute) model.getMaterial("lambert1").get(ColorAttribute.Diffuse);
@@ -195,4 +208,24 @@ public class Models {
 
         return builder.end();
     }
+
+    public static Model buildPlayerPowerMarker(Color colour, float scale)
+    {
+        ModelBuilder builder = new ModelBuilder();
+
+        Texture blankTexture = new Texture(1, 1, Pixmap.Format.RGBA8888);
+        Material material = new Material(
+                ColorAttribute.createDiffuse(colour),
+                new CustomShaderAttribute(CustomShaderAttribute.ShaderType.PLAYER_POWER),
+                TextureAttribute.createDiffuse(blankTexture),
+                new BlendingAttribute(true, 0f));
+        return builder.createRect(
+                -2f * scale, -2f * scale, 0f,
+                2f * scale, -2f * scale, 0f,
+                2f * scale,  2f * scale, 0f,
+                -2f * scale,  2f * scale, 0f,
+                0f, 0f, 1f,
+                material, vertexAttributes | VertexAttributes.Usage.TextureCoordinates);
+    }
+
 }

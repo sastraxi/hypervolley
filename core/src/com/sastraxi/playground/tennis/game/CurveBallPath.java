@@ -18,7 +18,7 @@ public class CurveBallPath implements BallPath {
     private NavigableSet<CurveFrame> bounces = new TreeSet<>();
     private float deathTime;
     private final float G;
-    private final float speed, radsDelta;
+    private final float radsDelta;
 
     private static Vector2 _vec = new Vector2(),
                            _isct = new Vector2();
@@ -112,9 +112,8 @@ public class CurveBallPath implements BallPath {
     {
         float _t, dt;
         this.G = G;
-        this.speed = speed;
         this.radsDelta = radsDelta;
-        this.origin = new CurveFrame(position, rads, zDelta, timeBase, 0);
+        this.origin = new CurveFrame(position, rads, zDelta, speed, timeBase, 0);
 
         // determine critical points of our path
         // http://hyperphysics.phy-astr.gsu.edu/hbase/traj.html
@@ -132,16 +131,17 @@ public class CurveBallPath implements BallPath {
             // we are testing the center point of the ball with a plane pushed up
             dt = _t + (float) Math.sqrt(_t*_t + 2f * (lastFrame.position.z - Constants.BALL_RADIUS) / G);
             floorBounce.time = lastFrame.time + dt;
+            floorBounce.speed = lastFrame.speed;
 
             floorBounce.rads = radsDelta * dt + lastFrame.rads;
             floorBounce.position.set(lastFrame.position);
 
             // two calculations for x/y as we're evaluating a definite integral
             // TODO could cache the lower part of the definite integral
-            floorBounce.position.x += (speed / radsDelta) * (float) Math.sin(floorBounce.rads);
-            floorBounce.position.x -= (speed / radsDelta) * (float) Math.sin(lastFrame.rads);
-            floorBounce.position.y += (speed / radsDelta) * (float) -Math.cos(floorBounce.rads);
-            floorBounce.position.y -= (speed / radsDelta) * (float) -Math.cos(lastFrame.rads);
+            floorBounce.position.x += (lastFrame.speed / radsDelta) * (float) Math.sin(floorBounce.rads);
+            floorBounce.position.x -= (lastFrame.speed / radsDelta) * (float) Math.sin(lastFrame.rads);
+            floorBounce.position.y += (lastFrame.speed / radsDelta) * (float) -Math.cos(floorBounce.rads);
+            floorBounce.position.y -= (lastFrame.speed / radsDelta) * (float) -Math.cos(lastFrame.rads);
             floorBounce.position.z = 0f;
 
             floorBounce.zDelta = -(lastFrame.zDelta - dt * G);
@@ -194,10 +194,10 @@ public class CurveBallPath implements BallPath {
         // two calculations for x/y as we're evaluating a definite integral
         // TODO could cache the lower part of the definite integral
         out.set(chosen.position);
-        out.x += (speed / radsDelta) * (float) Math.sin(radsDelta * dt + chosen.rads);
-        out.x -= (speed / radsDelta) * (float) Math.sin(chosen.rads);
-        out.y += (speed / radsDelta) * (float) -Math.cos(radsDelta * dt + chosen.rads);
-        out.y -= (speed / radsDelta) * (float) -Math.cos(chosen.rads);
+        out.x += (chosen.speed / radsDelta) * (float) Math.sin(radsDelta * dt + chosen.rads);
+        out.x -= (chosen.speed / radsDelta) * (float) Math.sin(chosen.rads);
+        out.y += (chosen.speed / radsDelta) * (float) -Math.cos(radsDelta * dt + chosen.rads);
+        out.y -= (chosen.speed / radsDelta) * (float) -Math.cos(chosen.rads);
         out.z += chosen.zDelta * dt - 0.5f * G * dt * dt;
     }
 
@@ -212,8 +212,8 @@ public class CurveBallPath implements BallPath {
         float dt = t - chosen.time;
 
         // extrapolate based on the "window" that we're in between frames
-        out.x = speed * (float) Math.cos(radsDelta * dt + chosen.rads);
-        out.y = speed * (float) Math.sin(radsDelta * dt + chosen.rads);
+        out.x = chosen.speed * (float) Math.cos(radsDelta * dt + chosen.rads);
+        out.y = chosen.speed * (float) Math.sin(radsDelta * dt + chosen.rads);
         out.z = chosen.zDelta - dt * G;
     }
 
@@ -230,8 +230,8 @@ public class CurveBallPath implements BallPath {
         // angular velocity only changes when a force is applied (i.e. a bounce)
         // therefore it's the same for the entire ball frame
         // TODO act as if our rotation is due to magnus force and apply that angular velocity here
-        out.x = speed * (float) Math.cos(chosen.rads);
-        out.y = speed * (float) Math.sin(chosen.rads);
+        out.x = chosen.speed * (float) Math.cos(chosen.rads);
+        out.y = chosen.speed * (float) Math.sin(chosen.rads);
         out.z = chosen.zDelta;
         out.scl(Constants.BALL_ROTATION_FACTOR);
     }

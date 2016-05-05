@@ -736,20 +736,26 @@ public class PlayerMovementSystem extends IteratingSystem {
                              0.5f * _left_stick.y * pic.shotBounds.height);
         }
 
+        // determine gravity multiple due to shot depth
+        // we add a little more gravity to close shots to increase the viability of that sort of shot.
+        // 0f = close to net, 1f = far from net
+        float shotDepth = (_ball_target.x - pic.shotBounds.x) / pic.shotBounds.width;
+        if (pic.shotBounds.x < 0f) shotDepth = 1f - shotDepth;
+        float G = MathUtils.lerp(Constants.G_MULTIPLIER_FRONT, Constants.G_MULTIPLIER_BACK, shotDepth);
+
         // craft the new path. FIXME ctor usage in game loop
-        float G;
         switch (pic.chosenHitType)
         {
             case NORMAL:
             case SLICE:
-                G = pic.chosenHitType == HitType.SLICE ? Constants.G_SLICE :
+                G *= pic.chosenHitType == HitType.SLICE ? Constants.G_SLICE :
                         (isPerfectHit ? Constants.G_PERFECT_FRAME : Constants.G_NORMAL);
                 ball.path = StraightBallPath.fromMaxHeightTarget(ballMovement.position, Constants.HIT_HEIGHT,
                         _ball_target, G, gameState.getPreciseTime());
                 break;
 
             case CURVE:
-                G = isPerfectHit ? Constants.G_PERFECT_CURVE : Constants.G_CURVE;
+                G *= isPerfectHit ? Constants.G_PERFECT_CURVE : Constants.G_CURVE;
 
                 // direction + perpendicular of the "hit line" (current ball position -> bounce position)
                 _hit_line.set(_ball_target).sub(ballMovement.position.x, ballMovement.position.y);

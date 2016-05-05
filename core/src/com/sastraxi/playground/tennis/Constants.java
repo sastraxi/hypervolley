@@ -19,11 +19,15 @@ public class Constants {
     public static final float FRAME_TIME_SEC = 1f / (float) FRAME_RATE;
     public static final double FRAME_TIME_SEC_DBL = 1f / (double) FRAME_RATE;
 
-    public static final float G_SLICE = 100f;
-    public static final float G_NORMAL = 300f;
-    public static final float G_PERFECT_FRAME = 600f;
-    public static final float G_CURVE = 200f;
-    public static final float G_PERFECT_CURVE = 400f;
+    public static final float G_SLICE = 200f;
+    public static final float G_NORMAL = 350f;
+    public static final float G_PERFECT_FRAME = 700f;
+    public static final float G_CURVE = 230f;
+    public static final float G_PERFECT_CURVE = 460f;
+
+    // ball dynamics differ based on the shot's depth
+    public static final float G_MULTIPLIER_FRONT = 1.2f;
+    public static final float G_MULTIPLIER_BACK = 1.0f;
 
     public static final float LEVEL_HALF_WIDTH = 400f;
     public static final float LEVEL_HALF_DEPTH = 300f;
@@ -126,7 +130,7 @@ public class Constants {
 
     // when we're set to a collision course (anywhere in the "strike zone") this many frames in the future,
     // put the player's movement on auto-pilot and use input instead to aim/take the shot (w/perfect frame detection)
-    public static final float PLAYER_LOOKAHEAD_FRAMES = 20;
+    public static final float PLAYER_LOOKAHEAD_FRAMES = 15;
     public static final float PLAYER_SPEED = 110f;
     public static final float PLAYER_REACH = 3.2f * PLAYER_RADIUS;                   // units
     public static final float PLAYER_WALL_HALF_WIDTH = 4f * PLAYER_RADIUS;           // units
@@ -177,13 +181,14 @@ public class Constants {
     public static final float STRIKE_ZONE_BALL_RADIUS = Constants.BALL_RADIUS;
 
     // system priorities
+    public static final int SYSTEM_PRIORITY_PARTICLES = 1000;
     public static final int SYSTEM_PRIORITY_ANIMATION = 1000;
     public static final int SYSTEM_PRIORITY_MATRIX = 1001;
     public static final int SYSTEM_PRIORITY_RENDER = 1002;
 
     // in-game menu
     public static final float MENU_SHOW_TIME = 0.2f; // seconds
-    public static final float MENU_CHOICE_SPEED = 5f; // 1/s
+    public static final float MENU_INTERACT_DELAY = 0.1f; // seconds
     public static final float MENU_Y_LEADING = 50f; // pixels
     public static final float MENU_CHOICE_PADDING = 10f; // pixels
     public static final float MENU_CHOICE_ALPHA = 0.75f;

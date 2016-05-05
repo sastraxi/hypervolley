@@ -27,19 +27,7 @@ public class MenuUpdateSystem extends IteratingSystem {
     {
         MenuComponent menuState = menucm.get(entity);
 
-        // update menu state
-        if (menuState.showing && menuState.lerp < 1f)
-        {
-            menuState.lerp += deltaTime / Constants.MENU_SHOW_TIME;
-            if (menuState.lerp > 1f) menuState.lerp = 1f;
-        }
-        else if (!menuState.showing && menuState.lerp > 0f)
-        {
-            menuState.lerp -= deltaTime / Constants.MENU_SHOW_TIME;
-            if (menuState.lerp < 0f) menuState.lerp = 0f;
-        }
-
         GameStateComponent gameState = gscm.get(entity);
-        gameState.paused = menuState.isActive();
+        gameState.paused = menuState.isActive(gameState);
     }
 }

@@ -127,6 +127,14 @@ public class TennisEntry extends ApplicationAdapter {
             AlertedComponent ac = new AlertedComponent(new ModelInstance(Models.buildAlert()));
             players[i].add(ac);
 
+            // a power indicator (circular) around the player
+            // to describe the player's current power level
+            PlayerPowerComponent ppc = new PlayerPowerComponent(new ModelInstance(Models.buildPlayerPowerMarker(
+                    new Color(1.0f, 0.8f, 0.5f, 1.0f),
+                    10f
+            )));
+            players[i].add(ppc);
+
             // movement + orientation
             MovementComponent mc = new MovementComponent();
             Vector2 center = bounds.getCenter(new Vector2());
@@ -248,6 +256,9 @@ public class TennisEntry extends ApplicationAdapter {
         gameStateEntity.add(menuComponent);
         gameStateEntity.add(new SharedRenderStateComponent());
         engine.addEntity(gameStateEntity);
+
+        // effects
+        engine.addSystem(new TrailSystem());
 
         // matrix updates
         engine.addSystem(new BallMatrixSystem());

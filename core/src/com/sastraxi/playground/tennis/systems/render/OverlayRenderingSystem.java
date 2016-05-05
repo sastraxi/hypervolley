@@ -156,23 +156,26 @@ public class OverlayRenderingSystem extends EntitySystem {
     @Override
     public void update(float deltaTime)
     {
+        float menuLerp = menuState.activation.getValue(gameState);
+        boolean menuIsActive = menuState.isActive(gameState);
+
         // update player win caches with scores
         updateWins();
 
         // render the HUD and vignette
-        if (menuState.isActive()) {
+        if (menuIsActive) {
             renderState.fbPing.begin();
         }
-        drawVignette(menuState.lerp);
-        drawHUD(menuState.lerp);
-        if (menuState.isActive()) {
+        drawVignette(menuLerp);
+        drawHUD(menuLerp);
+        if (menuIsActive) {
             renderState.fbPing.end();
         }
 
         // render our post-processing
-        if (menuState.isActive()) {
-            drawPostProcessing(menuState.lerp);
-            drawMenu(menuState.lerp);
+        if (menuIsActive) {
+            drawPostProcessing(menuLerp);
+            drawMenu(menuLerp);
         }
     }
 
@@ -199,7 +202,7 @@ public class OverlayRenderingSystem extends EntitySystem {
     {
         menuShaderA.begin();
 
-            renderState.fbPing.getColorBufferTexture().bind(0);
+            renderState.fbPing.getColorTexture(0).bind(0);
             menuShaderA.setUniformi("u_texture", 0);
             menuShaderA.setUniformf("u_resolution", Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
             menuShaderA.setUniformf("u_anim", factor);
@@ -212,7 +215,7 @@ public class OverlayRenderingSystem extends EntitySystem {
 
         menuShaderB.begin();
 
-            renderState.fbPong.getColorBufferTexture().bind(0);
+            renderState.fbPong.getColorTexture(0).bind(0);
             menuShaderB.setUniformi("u_texture", 0);
             menuShaderB.setUniformf("u_resolution", Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
             menuShaderB.setUniformf("u_anim", factor);
@@ -246,7 +249,7 @@ public class OverlayRenderingSystem extends EntitySystem {
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
 
-        MenuChoice currentChoice = menuState.choices.get(menuState.choice);
+        MenuChoice currentChoice = menuState.choices.get(menuState.getChoice());
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(playerColour);
         shapeRenderer.getColor().a = Constants.MENU_CHOICE_ALPHA * factor * factor;

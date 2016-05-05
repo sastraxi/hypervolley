@@ -7,14 +7,16 @@ import com.badlogic.gdx.math.MathUtils;
  * Created by sastr on 2015-09-23.
  */
 public class CustomShaderAttribute extends Attribute {
-    public final static String Alias = "UseMyBleepinShader";
+    public final static String Alias = "ShaderID";
     public final static long ID = register(Alias);
 
     public final ShaderType shaderType;
 
     public enum ShaderType {
-        TENNIS_COURT_FLOOR,
-        BOUNCE_MARKER
+        BOUNCE_MARKER, PLAYER_POWER,
+        WORLD_DYNAMIC,
+        WORLD_STATIC,
+        REFLECTIVE_SURFACE
     }
     public CustomShaderAttribute (final ShaderType shaderType) {
         super(ID);
@@ -35,6 +37,6 @@ public class CustomShaderAttribute extends Attribute {
     public int compareTo (Attribute o) {
         if (type != o.type) return type < o.type ? -1 : 1;
         ShaderType otherType = ((CustomShaderAttribute)o).shaderType;
-        return MathUtils.isEqual(shaderType.ordinal(), otherType.ordinal()) ? 0 : (shaderType.ordinal() < otherType.ordinal() ? -1 : 1);
+        return Integer.compare(shaderType.ordinal(), otherType.ordinal());
     }
 }

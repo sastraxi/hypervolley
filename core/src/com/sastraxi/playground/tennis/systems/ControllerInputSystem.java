@@ -18,7 +18,7 @@ public class ControllerInputSystem extends IteratingSystem {
 
     private static final int PRIORITY = 1; // after global-before
 
-    private static final Family GAME_STATE_FAMILY = Family.all(GameStateComponent.class, CameraManagementComponent.class).get();
+    private static final Family GAME_STATE_FAMILY = Family.all(GameStateComponent.class).get();
 
     private ComponentMapper<CharacterComponent> picm = ComponentMapper.getFor(CharacterComponent.class);
     private ComponentMapper<ControllerInputComponent> cicm = ComponentMapper.getFor(ControllerInputComponent.class);
@@ -51,6 +51,7 @@ public class ControllerInputSystem extends IteratingSystem {
     @Override
     protected void processEntity(Entity entity, float deltaTime)
     {
+        GameStateComponent gameState = gscm.get(gameStateEntity);
         MenuComponent menuState = mscm.get(gameStateEntity);
         CharacterComponent pic = picm.get(entity);
         ControllerInputComponent cic = cicm.get(entity);
@@ -79,26 +80,27 @@ public class ControllerInputSystem extends IteratingSystem {
         // open/close the menu
         // make sure if the menu is already open ("active") we can only interact with it via. the opening player
         if (pic.inputFrame.toggleMenu && !pic.lastInputFrame.toggleMenu) {
-            if (!menuState.isActive() || menuState.menuOpenedByPlayerEID == entity.getId())
+            if (!menuState.isActive(gameState) || menuState.menuOpenedByPlayerEID == entity.getId())
             {
-                menuState.showing = !menuState.showing;
+                menuState.activation.accept(menuState.activation.getTo() == 0f ? 1f : 0f, gameState);
                 menuState.menuOpenedByPlayerEID = entity.getId();
             }
         }
 
         // interact with the menu
-        if (menuState.isActive() && menuState.menuOpenedByPlayerEID == entity.getId())
+        if (menuState.isActive(gameState) && menuState.menuOpenedByPlayerEID == entity.getId())
         {
+
             if (pic.inputFrame.up && !pic.lastInputFrame.up) {
-                menuState.choice = mod(menuState.choice - 1, menuState.choices.size());
+                menuState.choice.accept((float) mod(menuState.getChoice() - 1, menuState.choices.size()), gameState);
             }
             if (pic.inputFrame.down && !pic.lastInputFrame.down) {
-                menuState.choice = mod(menuState.choice + 1, menuState.choices.size());
+                menuState.choice.accept((float) mod(menuState.getChoice() + 1, menuState.choices.size()), gameState);
             }
             if (pic.inputFrame.swing && !pic.lastInputFrame.swing) {
-                boolean hideMenu = menuState.choices.get(menuState.choice).performAction(engine);
+                boolean hideMenu = menuState.choices.get(menuState.getChoice()).performAction(engine);
                 if (hideMenu) {
-                    menuState.showing = false;
+                    menuState.activation.accept(0f, gameState);
                 }
             }
         }

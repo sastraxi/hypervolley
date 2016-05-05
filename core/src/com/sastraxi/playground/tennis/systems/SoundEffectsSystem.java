@@ -16,7 +16,7 @@ public class SoundEffectsSystem extends EntitySystem {
 
     private static final int PRIORITY = 4; // after player movement system
 
-    private static final Family GAME_STATE_FAMILY = Family.all(GameStateComponent.class, CameraManagementComponent.class).get();
+    private static final Family GAME_STATE_FAMILY = Family.all(GameStateComponent.class).get();
 
     private ComponentMapper<BallComponent> bcm = ComponentMapper.getFor(BallComponent.class);
     private ComponentMapper<MovementComponent> mcm = ComponentMapper.getFor(MovementComponent.class);

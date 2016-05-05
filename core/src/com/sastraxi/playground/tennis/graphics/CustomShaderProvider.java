@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.g3d.Shader;
 import com.badlogic.gdx.graphics.g3d.shaders.DefaultShader;
 import com.badlogic.gdx.graphics.g3d.utils.DefaultShaderProvider;
 import com.sastraxi.playground.shaders.BounceMarkerShader;
+import com.sastraxi.playground.shaders.PlayerPowerShader;
 import com.sastraxi.playground.shaders.TennisCourtShader;
 
 /**
@@ -15,6 +16,7 @@ public class CustomShaderProvider extends DefaultShaderProvider {
 
     public static CustomShaderProvider create(int numPointLights)
     {
+        // we have a customized default shader that implements PCSS shadows
         return create(numPointLights, "shaders/default.vertex.glsl", "shaders/default.fragment.glsl");
     }
 
@@ -29,16 +31,17 @@ public class CustomShaderProvider extends DefaultShaderProvider {
         return new CustomShaderProvider(config);
     }
 
+    DefaultShader.Config reflectiveSurfaceConfig;
+
     protected CustomShaderProvider(DefaultShader.Config config) {
         super(config);
-    }
 
-    public CustomShaderProvider() {
-        // we have a customized default shader that implements PCSS shadows
-        super(
-            Gdx.files.internal("shaders/default.vertex.glsl").readString(),
-            Gdx.files.internal("shaders/default.fragment.glsl").readString()
-        );
+        reflectiveSurfaceConfig = new DefaultShader.Config(
+                Gdx.files.internal("shaders/mirror.vertex.glsl").readString(),
+                Gdx.files.internal("shaders/mirror.fragment.glsl").readString());
+        reflectiveSurfaceConfig.numDirectionalLights = config.numDirectionalLights;
+        reflectiveSurfaceConfig.numPointLights = config.numPointLights;
+        reflectiveSurfaceConfig.numBones = config.numBones;
     }
 
     /**
@@ -51,10 +54,12 @@ public class CustomShaderProvider extends DefaultShaderProvider {
             // FIXME move definitions somehow to CustomShaderAttribute?
             CustomShaderAttribute attrib = (CustomShaderAttribute) renderable.material.get(CustomShaderAttribute.ID);
             switch (attrib.shaderType) {
+                case PLAYER_POWER:
+                    return PlayerPowerShader.create(renderable);
                 case BOUNCE_MARKER:
                     return BounceMarkerShader.create(renderable);
-                case TENNIS_COURT_FLOOR:
-                    return TennisCourtShader.create(renderable);
+                case REFLECTIVE_SURFACE:
+                    return new DefaultShader(renderable, reflectiveSurfaceConfig);
             }
         }
         return super.createShader(renderable);

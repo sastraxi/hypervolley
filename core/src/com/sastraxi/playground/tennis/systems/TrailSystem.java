@@ -10,7 +10,7 @@ import com.sastraxi.playground.tennis.components.TrailComponent;
 
 public class TrailSystem extends IteratingSystem {
 
-    private static final int PRIORITY = 6; // after camera movement system
+    private static final int PRIORITY = 3; // after ball movement system
 
     private ComponentMapper<MovementComponent> mcm = ComponentMapper.getFor(MovementComponent.class);
     private ComponentMapper<TrailComponent> tcm = ComponentMapper.getFor(TrailComponent.class);

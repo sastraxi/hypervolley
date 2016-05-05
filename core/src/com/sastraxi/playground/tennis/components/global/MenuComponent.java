@@ -2,7 +2,10 @@ package com.sastraxi.playground.tennis.components.global;
 
 import com.badlogic.ashley.core.Component;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.sastraxi.playground.tennis.Constants;
 import com.sastraxi.playground.tennis.menu.MenuChoice;
+import com.sastraxi.playground.tennis.util.FloatValue;
+import com.sastraxi.playground.tennis.util.Value;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,17 +22,19 @@ public class MenuComponent extends Component {
         }
     }
 
-    public boolean showing = false;
-    public float lerp = 0f; // 1f = menu totally showing
+    // ~ opacity
+    public Value<Float> activation = new FloatValue(0f, Constants.MENU_SHOW_TIME);
+
+    // linear selection
+    public Value<Float> choice = new FloatValue(0f, Constants.MENU_INTERACT_DELAY);
 
     public long menuOpenedByPlayerEID = 0L;
 
-    public int choice = 0;
-    public int nextChoice = 0;
-    public float currentChoiceLerp = 0f; // fractional position of input box
-
-    public boolean isActive() {
-        return lerp > 0f;
+    public boolean isActive(GameStateComponent state) {
+        return activation.getValue(state) > 0f;
     }
 
+    public int getChoice() {
+        return (int) Math.floor(choice.getTo());
+    }
 }

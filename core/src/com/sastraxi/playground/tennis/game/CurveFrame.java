@@ -12,15 +12,17 @@ import com.sastraxi.playground.tennis.Constants;
  */
 public class CurveFrame extends BallFrame {
 
-    public CurveFrame(Vector3 position, float rads, float zDelta, float time, int bounceNumber) {
+    public CurveFrame(Vector3 position, float rads, float zDelta, float speed, float time, int bounceNumber) {
         super(position, Constants.UP_VECTOR, time, bounceNumber);
         this.rads = rads;
         this.zDelta = zDelta;
+        this.speed = speed;
     }
 
     public CurveFrame() {}
 
     public float zDelta;
     public float rads;
+    public float speed;
 
 }
