@@ -1,6 +1,7 @@
 package com.sastraxi.playground.tennis.util;
 
 import com.badlogic.gdx.math.MathUtils;
+import com.sastraxi.playground.tennis.Constants;
 import com.sastraxi.playground.tennis.components.global.GameStateComponent;
 
 /**
@@ -8,15 +9,19 @@ import com.sastraxi.playground.tennis.components.global.GameStateComponent;
  */
 public class FloatValue extends Value<Float> {
 
-    public FloatValue(float value, float length) {
+    public FloatValue(float value, float lengthInSeconds) {
+        this(value, (long) (lengthInSeconds * Constants.FRAME_RATE));
+    }
+
+    public FloatValue(float value, long length) {
         super(value, length);
     }
 
     @Override
     public Float getValue(GameStateComponent state) {
         if (start == null) return to;
-        if (state.getTick() >= start + length) return to;
-        return MathUtils.lerp(from, to, ((float) (state.getTick() - start)) / length);
+        if (state.getAnimationTick() >= start + length) return to;
+        return MathUtils.lerp(from, to, ((float) (state.getAnimationTick() - start)) / (float) length);
     }
 
 }

@@ -24,7 +24,7 @@ public class DesktopLauncher {
 		// config.width = 960; config.height = 540; config.samples = 2;
 
 		//config.useGL30 = true;
-		//new Lwjgl3Application(new TennisEntry(numSamples), config);
-		new Lwjgl3Application(new MenuEntry(numSamples), config);
+		new Lwjgl3Application(new TennisEntry(numSamples), config);
+		// new Lwjgl3Application(new MenuEntry(numSamples), config);
 	}
 }

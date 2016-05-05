@@ -11,11 +11,9 @@ public class GameStateComponent extends Component {
     public Long firstFrameTime, lastSampleTime, lastTime;
     public double totalJitter;
 
-    private long frames = 0;
+    ////////////////////////////////////////////////////////////
 
-    public void tick() {
-        frames += 1;
-    }
+    private long frames = 0;
 
     public float getPreciseTime() {
         return frames / (float) Constants.FRAME_RATE;
@@ -25,10 +23,23 @@ public class GameStateComponent extends Component {
 
     ////////////////////////////////////////////////////////////
 
+    private long animationFrames = 0;
+
+    public long getAnimationTick() { return animationFrames; }
+
+    ////////////////////////////////////////////////////////////
+
     public boolean paused = false;
 
     public boolean isPaused() {
         return paused;
+    }
+
+    public void tick() {
+        if (!isPaused()) {
+            frames += 1;
+        }
+        animationFrames += 1;
     }
 
     ////////////////////////////////////////////////////////////

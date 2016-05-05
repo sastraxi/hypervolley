@@ -31,27 +31,55 @@ vec3 hsv2rgb(vec3 c)
 
 varying MED vec2 v_UV;
 // uniform sampler2D u_tex_a, u_tex_b;
-// uniform vec2 u_resolution;
+uniform vec2 u_resolution;
 uniform float u_anim;
 
-#define TINT vec3(1.0, 0.95, 0.88)
-#define TINT_BLEND 0.7
-#define VIGNETTE_COLOUR vec4(0.2, 0.17, 0.0, 1.0)
-#define VIGNETTE_RADIUS 0.3
+#define SPEED 0.1
+#define WIDTH 1.5
+#define REPEAT 60.0
 
-#define SPEED 0.03
-#define WIDTH 0.3
+#define FROM_COLOUR vec3(0.95, 0.88, 0.7)
+#define TO_COLOUR vec3(1.0, 0.99, 0.9)
+
+float parameter(vec2 coord)
+{
+	float f_x = coord.x - 0.3 * coord.y + SPEED * u_anim;
+	f_x = mod(f_x, WIDTH) / WIDTH;
+	if (f_x > 0.5) {
+		f_x = 1.0 - f_x;
+	}
+	f_x *= 2.0;
+	f_x = 0.1 + 0.8 * smoothstep(0.0, 1.0, f_x);
+	return f_x;
+}
+
+float diamond(vec2 uv, vec2 centre, vec2 size)
+{
+	float aspect = size.y / size.x;
+	vec2 dist = uv - centre;
+	if (aspect * abs(dist.x) + abs(dist.y) < size.y) {
+		return 1.0;
+	}
+	return 0.0;
+}
 
 void main()
 {
-	// determine our function
-	float f_x = v_UV.x + SPEED * u_anim;
-	f_x = mod(f_x, WIDTH) / WIDTH;
-	if (f_x > 0.5) {
-		f_x = 1 - f_x;
-	}
-	f_x *= 2.0;
-	f_x = smoothstep(0.0, 1.0, f_x);
+	// the grid, in general
+	float aspect = u_resolution.x / u_resolution.y;
+	float cell_size_x = 1.0 / REPEAT;
+	vec2 cell_uv = vec2(cell_size_x, aspect * cell_size_x);
+	vec2 half_cell_uv = 0.5 * cell_uv;
 
-	gl_FragColor = vec4(f_x, f_x, f_x, 1.0);
+	// our specific cell
+	vec2 cell_centre = floor(v_UV / cell_uv);
+	cell_centre *= cell_uv;
+	cell_centre += half_cell_uv;
+
+	// determine our function at the grid square centre
+	float f_x = parameter(cell_centre);
+
+	// test to see if we're in the diamond created by that parameter value/grid cell
+	float factor = diamond(v_UV, cell_centre, f_x * cell_uv);
+	gl_FragColor = vec4(mix(FROM_COLOUR, TO_COLOUR, factor), 1.0);
 }

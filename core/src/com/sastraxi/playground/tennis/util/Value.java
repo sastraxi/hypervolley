@@ -11,7 +11,7 @@ import java.util.function.Function;
  */
 public abstract class Value<T> {
 
-    protected final float length;
+    protected final long length;
     protected Long start; // if start == null just use initial "to" value
     protected T from, to;
     protected float lerp; // 0..length
@@ -20,16 +20,16 @@ public abstract class Value<T> {
         return to;
     }
 
-    public Value(T value, float length) {
+    public Value(T value, long length) {
         this.to = value;
-        this.length = Constants.FRAME_TIME_SEC * length;
+        this.length = length;
     }
 
     public void accept(T newValue, GameStateComponent state) {
         this.from = this.to;
         this.to = newValue;
         this.lerp = 0f;
-        this.start = state.getTick();
+        this.start = state.getAnimationTick();
     }
 
     public abstract T getValue(GameStateComponent state);

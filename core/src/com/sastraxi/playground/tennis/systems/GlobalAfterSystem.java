@@ -44,12 +44,12 @@ public class GlobalAfterSystem extends IteratingSystem {
             gameState.totalJitter += Math.abs(dt - Constants.FRAME_TIME_SEC_DBL) * 100.0;
             gameState.lastTime = System.nanoTime();
 
-            if (gameState.getTick() % Constants.FRAME_RATE == Constants.FRAME_RATE - 1)
+            if (gameState.getAnimationTick() % Constants.FRAME_RATE == Constants.FRAME_RATE - 1)
             {
                 double dtSample = (System.nanoTime() - gameState.lastSampleTime) * Constants.SEC_TO_NS;
                 double avgJitter = gameState.totalJitter * Constants.FRAME_TIME_SEC_DBL;
 
-                System.out.printf("t=%7d   fps=%f   dt=%f   jitter%%=%f\n", gameState.getTick(), (double) Constants.FRAME_RATE / dtSample, dtSample, avgJitter);
+                System.out.printf("t=%7d   fps=%f   dt=%f   jitter%%=%f\n", gameState.getAnimationTick(), (double) Constants.FRAME_RATE / dtSample, dtSample, avgJitter);
 
                 gameState.lastSampleTime = System.nanoTime();
                 gameState.totalJitter = 0.0;
@@ -61,9 +61,7 @@ public class GlobalAfterSystem extends IteratingSystem {
     protected void processEntity(Entity entity, float deltaTime)
     {
         GameStateComponent gameState = gscm.get(entity);
-        if (!gameState.paused) {
-            gameState.tick();
-        }
+        gameState.tick();
         __debug(entity, gameState);
     }
 

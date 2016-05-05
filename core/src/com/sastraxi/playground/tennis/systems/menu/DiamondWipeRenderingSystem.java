@@ -146,15 +146,12 @@ public class DiamondWipeRenderingSystem extends EntitySystem {
 
         renderState.fbPing.end();
 
-        // ffmpeg webm -> gfycat
-        // if (gameState.getTick() < 900) saveScreenshot();
-
         // actually blit everything to the back-buffer
         diamondWipeShader.begin();
 
             renderState.fbPing.getColorTexture(0).bind(0);
             // diamondWipeShader.setUniformi("u_texture", 0);
-            // menuShaderA.setUniformf("u_resolution", Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+            diamondWipeShader.setUniformf("u_resolution", Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
             diamondWipeShader.setUniformf("u_anim", gameState.getPreciseTime());
 
             renderState.fullscreenRect.render(diamondWipeShader, GL20.GL_TRIANGLE_FAN);
