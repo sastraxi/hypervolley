@@ -2,7 +2,7 @@
 
 Built by Ryan Yeung and Cameron Gorrie
 
-Two-player local competitive tennis game (Windows only), written in Java and libgdx
+Two-player local competitive tennis game (Windows only), written in Java and libgdx. When I figure out why it's not building, I'll upload a windows build here. It probably works with wine / proton too, but I've never tried.
 
 [![hypervolley gameplay](./hypervolley.png)](https://www.youtube.com/watch?v=HZMu63v4b34 "hypervolley gameplay")
 
